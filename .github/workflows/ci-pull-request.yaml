@@ -1,0 +1,54 @@
+name: CI - Pull Request
+
+on:
+  pull_request:
+    branches:
+      - master
+env:
+  GO_VERSION: "^1.20"
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v2
+      - run: make fmt
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Lint
+        run: make lint
+
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Cache modules
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Get dependencies
+        run: |
+          go install github.com/onsi/ginkgo/ginkgo@latest
+      - name: Test
+        run: make test
