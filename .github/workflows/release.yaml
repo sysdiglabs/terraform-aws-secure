@@ -43,14 +43,3 @@ jobs:
           draft: true
           prerelease: false
           body_path: RELEASE_CHANGELOG.md
-
-      # Check if we need to build using dockerfile in the release. If yes, uncomment below.
-      #- name: Build and push Docker image
-      #  uses: docker/build-push-action@v1
-      #  with:
-      #    username: ${{ secrets.SYSDIGLABS_DOCKERHUB_USER }}
-      #    password: ${{ secrets.SYSDIGLABS_DOCKERHUB_TOKEN }}
-      #    repository: ${{ env.GITHUB_REPOSITORY }}
-      #    add_git_labels: true
-      #    dockerfile: build/Dockerfile
-      #    tags: latest, ${{ steps.tag.outputs.VERSION }}

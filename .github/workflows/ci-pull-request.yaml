@@ -50,8 +50,5 @@ jobs:
       - name: Get dependencies
         run: |
           go install github.com/onsi/ginkgo/ginkgo@latest
-      # Check if we need to build any go packages in this repo. If not, remove below.
-      # - name: Build
-      #   run: go build ./...
       - name: Test
         run: make test
