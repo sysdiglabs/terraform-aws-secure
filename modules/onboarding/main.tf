@@ -65,6 +65,7 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   component {
     type     = "COMPONENT_TRUSTED_ROLE"
     instance = "secure-onboarding"
+    version  = "v0.1.0"
     trusted_role_metadata = jsonencode({
       aws = {
         role_name = local.onboarding_role_name
