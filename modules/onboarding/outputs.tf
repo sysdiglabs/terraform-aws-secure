@@ -3,7 +3,7 @@ output "account_id" {
   description = "sysdig secure cloud account identifier"
 }
 
-output "organizational" {
-  value       = var.organizational
+output "is_organizational" {
+  value       = var.is_organizational
   description = "onboard the organization in which account resides"
 }

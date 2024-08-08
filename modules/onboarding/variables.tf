@@ -12,7 +12,7 @@ variable "external_id" {
   description = "Random string generated unique to a customer"
 }
 
-variable "organizational" {
+variable "is_organizational" {
   type        = bool
   default     = false
   description = "true/false whether secure-for-cloud should be deployed in an organizational setup (all accounts of org) or not (only on default aws provider account)"
