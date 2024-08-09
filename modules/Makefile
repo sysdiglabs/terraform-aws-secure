@@ -1,0 +1,2 @@
+lint:
+	tflint --recursive --module
