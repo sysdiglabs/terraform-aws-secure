@@ -7,3 +7,8 @@ output "is_organizational" {
   value       = var.is_organizational
   description = "onboard the organization in which account resides"
 }
+
+output "organizational_unit_ids" {
+  value       = var.organizational_unit_ids
+  description = "organizational unit ids to onboard"
+}
