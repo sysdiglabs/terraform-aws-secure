@@ -4,8 +4,8 @@ This module will deploy an Onboarding Trust Relationship (IAM Role) into a singl
 
 The following resources will be created in each instrumented account:
 - An IAM Role and associated IAM Policies mentioned below to grant Sysdig read only permissions to secure you AWS Account:
-    - `arn:aws:iam::aws:policy/SecurityAudit`
-    - a custom policy (`custom_resources_policy`)
+    - `arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess`
+    - `arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess` (for organizational setup)
     - An Access Policy attached to this role using a Sysdig provided `ExternalId`. 
 
 If instrumenting an AWS Organization, an `aws_cloudformation_stack_set` will be created in the Management Account. 
