@@ -110,3 +110,20 @@ data "aws_iam_policy_document" "custom_resources_policy" {
   }
 }
 
+#--------------------------------------------------------------------------------------------------------------
+# Call Sysdig Backend to add the trusted role for Config Posture to the Sysdig Cloud Account
+#
+# Note (optional): To ensure this gets called after all cloud resources are created, add
+# explicit dependency using depends_on
+#--------------------------------------------------------------------------------------------------------------
+resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
+  account_id                 = var.sysdig_secure_account_id
+  type                       = "COMPONENT_TRUSTED_ROLE"
+  instance                   = "config-posture"
+    version                  = "v0.1.0"
+  trusted_role_metadata = jsonencode({
+        aws = {
+          role_name = var.role_name
+        }
+      })
+}
