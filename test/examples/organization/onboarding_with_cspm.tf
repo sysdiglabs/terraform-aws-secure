@@ -29,7 +29,7 @@ module "config-posture" {
   trusted_identity  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
   external_id       = "81145517f4fafde4ade30b01762b7b0b"
   role_name         = "sysdig-secure-2u6g"
-  org_units         = []
+  org_units         = [module.onboarding.organizational_unit_ids]
   is_organizational = true
 }
 
