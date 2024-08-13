@@ -120,7 +120,7 @@ resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
   account_id                 = var.sysdig_secure_account_id
   type                       = "COMPONENT_TRUSTED_ROLE"
   instance                   = "config-posture"
-    version                  = "v0.1.0"
+  version                    = "v0.1.0"
   trusted_role_metadata = jsonencode({
         aws = {
           role_name = var.role_name

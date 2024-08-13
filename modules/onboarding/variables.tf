@@ -57,4 +57,3 @@ variable "delegated_admin" {
   type        = bool
   default     = false
 }
-
