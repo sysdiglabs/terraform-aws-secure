@@ -7,10 +7,6 @@ resource "random_id" "suffix" {
   byte_length = 3
 }
 
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
 locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
 }
