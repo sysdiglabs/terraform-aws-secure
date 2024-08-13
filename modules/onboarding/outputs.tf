@@ -1,4 +1,4 @@
-output "account_id" {
+output "sysdig_secure_account_id" {
   value       = sysdig_secure_cloud_auth_account.cloud_auth_account.id
   description = "sysdig secure cloud account identifier"
 }

@@ -7,7 +7,7 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  org_units_to_deploy  = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.org_units
+  org_units_to_deploy  = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
 }
 
 #----------------------------------------------------------
@@ -17,7 +17,7 @@ locals {
 resource "aws_cloudformation_stack_set" "stackset" {
   count = var.is_organizational ? 1 : 0
 
-  name             = var.role_name
+  name             = local.onboarding_role_name
   tags             = var.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
@@ -42,7 +42,7 @@ Resources:
   SysdigOnboardingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ${var.role_name}
+      RoleName: ${local.onboarding_role_name}
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
