@@ -2,31 +2,31 @@ provider "aws" {
   region = "us-east-1"
 }
 
-provider "sysdig" {
-  sysdig_secure_url       = "https://secure-staging.sysdig.com"
-  sysdig_secure_api_token = "<API_TOKEN>"
-}
-
 terraform {
   required_providers {
     sysdig = {
       source  = "sysdiglabs/sysdig"
-      version = "~> 1.28"
     }
   }
+}
+
+provider "sysdig" {
+  sysdig_secure_url       = "https://secure-staging.sysdig.com"
+  sysdig_secure_api_token =  "<API_TOKEN>"
 }
 
 module "onboarding" {
   source            = "../../../modules/onboarding"
   trusted_identity  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       = "81145517f4fafde4ade30b01762b7b0b"
+  external_id       = "1e6db1374740711eb39a012afd9be51d"
 }
 
 module "config-posture" {
   source           = "../../../modules/config-posture"
-  role_name        = "sysdig-secure-2u6g"
+  role_name        = "sysdig-secure-r1bn"
   trusted_identity = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id      = "81145517f4fafde4ade30b01762b7b0b"
+  external_id      = "1e6db1374740711eb39a012afd9be51d"
+  sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "config_posture" {

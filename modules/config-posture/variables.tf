@@ -63,3 +63,8 @@ variable "delegated_admin" {
   type        = bool
   default     = false
 }
+
+variable "sysdig_secure_account_id" {
+  type        = string
+  description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"
+}

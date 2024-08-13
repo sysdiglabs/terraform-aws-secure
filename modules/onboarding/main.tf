@@ -40,7 +40,7 @@ resource "aws_iam_role" "onboarding_role" {
 EOF
   managed_policy_arns = compact([
     "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess",
-    var.organizational ? "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess" : ""
+    var.is_organizational ? "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess" : ""
   ])
 
   lifecycle {
