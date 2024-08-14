@@ -19,7 +19,7 @@ terraform {
 module "onboarding" {
   source            	  = "../../../modules/onboarding"
   trusted_identity  	  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       	  = "1e6db1374740711eb39a012afd9be51d"
+  external_id       	  = "<EXTERNAL_ID>"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
   is_organizational 	  = true
 }
@@ -27,7 +27,7 @@ module "onboarding" {
 module "config-posture" {
   source            = "../../../modules/config-posture"
   trusted_identity  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       = "1e6db1374740711eb39a012afd9be51d"
+  external_id       = "<EXTERNAL_ID>"
   role_name         = "sysdig-secure-r1bn"
   org_units         = module.onboarding.organizational_unit_ids
   is_organizational = module.onboarding.is_organizational
