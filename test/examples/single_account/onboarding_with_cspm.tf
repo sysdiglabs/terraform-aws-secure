@@ -6,6 +6,7 @@ terraform {
   required_providers {
     sysdig = {
       source  = "sysdiglabs/sysdig"
+      version = "~> 1.33.0"
     }
   }
 }
@@ -17,15 +18,10 @@ provider "sysdig" {
 
 module "onboarding" {
   source            = "../../../modules/onboarding"
-  trusted_identity  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       = "<EXTERNAL_ID>"
 }
 
 module "config-posture" {
-  source           = "../../../modules/config-posture"
-  role_name        = "sysdig-secure-r1bn"
-  trusted_identity = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id      = "<EXTERNAL_ID>"
+  source                   = "../../../modules/config-posture"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
 }
 

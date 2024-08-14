@@ -11,6 +11,12 @@ locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
 }
 
+data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
+	cloud_provider = "aws"
+}
+
+data "sysdig_secure_tenant_external_id" "external_id" {}
+
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
 #----------------------------------------------------------
@@ -26,12 +32,12 @@ resource "aws_iam_role" "onboarding_role" {
             "Sid": "",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "${var.trusted_identity}"
+                "AWS": "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
             },
             "Action": "sts:AssumeRole",
             "Condition": {
                 "StringEquals": {
-                    "sts:ExternalId": "${var.external_id}"
+                    "sts:ExternalId": "${data.sysdig_secure_tenant_external_id.external_id.external_id}"
                 }
             }
         }

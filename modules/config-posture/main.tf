@@ -1,10 +1,25 @@
+// generate a random suffix for the config-posture role name
+
+resource "random_id" "suffix" {
+  byte_length = 3
+}
+
+locals {
+  config_posture_role_name = "sysdig-secure-config-posture-${random_id.suffix.hex}"
+}
+
+data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
+	cloud_provider = "aws"
+}
+
+data "sysdig_secure_tenant_external_id" "external_id" {}
 
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
 #----------------------------------------------------------
 resource "aws_iam_role" "cspm_role" {
   count               = var.delegated_admin ? 0 : 1
-  name                = var.role_name
+  name                = local.config_posture_role_name
   tags                = var.tags
   assume_role_policy  = <<EOF
 {
@@ -14,12 +29,12 @@ resource "aws_iam_role" "cspm_role" {
             "Sid": "",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "${var.trusted_identity}"
+                "AWS": "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
             },
             "Action": "sts:AssumeRole",
             "Condition": {
                 "StringEquals": {
-                    "sts:ExternalId": "${var.external_id}"
+                    "sts:ExternalId": "${data.sysdig_secure_tenant_external_id.external_id.external_id}"
                 }
             }
         }
@@ -28,7 +43,7 @@ resource "aws_iam_role" "cspm_role" {
 EOF
   managed_policy_arns = ["arn:aws:iam::aws:policy/SecurityAudit"]
   inline_policy {
-    name   = var.role_name
+    name   = local.config_posture_role_name
     policy = data.aws_iam_policy_document.custom_resources_policy.json
   }
 }
@@ -123,7 +138,7 @@ resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
   version                    = "v0.1.0"
   trusted_role_metadata = jsonencode({
         aws = {
-          role_name = var.role_name
+          role_name = local.config_posture_role_name
         }
       })
 }

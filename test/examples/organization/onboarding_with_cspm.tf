@@ -11,26 +11,21 @@ terraform {
   required_providers {
     sysdig = {
       source  = "sysdiglabs/sysdig"
-      version = "~> 1.28"
+      version = "~> 1.33.0"
     }
   }
 }
 
 module "onboarding" {
   source            	  = "../../../modules/onboarding"
-  trusted_identity  	  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       	  = "<EXTERNAL_ID>"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
   is_organizational 	  = true
 }
 
 module "config-posture" {
-  source            = "../../../modules/config-posture"
-  trusted_identity  = "arn:aws:iam::064689838359:role/us-east-1-integration01-secure-assume-role"
-  external_id       = "<EXTERNAL_ID>"
-  role_name         = "sysdig-secure-r1bn"
-  org_units         = module.onboarding.organizational_unit_ids
-  is_organizational = module.onboarding.is_organizational
+  source                   = "../../../modules/config-posture"
+  org_units                = module.onboarding.organizational_unit_ids
+  is_organizational        = module.onboarding.is_organizational
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
 }
 

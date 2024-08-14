@@ -2,22 +2,6 @@
 # optionals - with default
 #---------------------------------
 
-variable "trusted_identity" {
-  type        = string
-  description = "The name of sysdig trusted identity"
-}
-
-variable "external_id" {
-  type        = string
-  description = "Random string generated unique to a customer"
-}
-
-variable "role_name" {
-  type        = string
-  description = "The name of the IAM Role that will be created."
-  default     = "sysdig-secure"
-}
-
 variable "is_organizational" {
   type        = bool
   default     = false

@@ -47,11 +47,11 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: [ ${var.trusted_identity} ]
+              AWS: [ ${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity} ]
             Action: [ 'sts:AssumeRole' ]
             Condition:
               StringEquals:
-                sts:ExternalId: ${var.external_id}
+                sts:ExternalId: ${data.sysdig_secure_tenant_external_id.external_id.external_id}
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess"
         - "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess"

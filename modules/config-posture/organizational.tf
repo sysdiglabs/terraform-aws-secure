@@ -17,7 +17,7 @@ locals {
 resource "aws_cloudformation_stack_set" "stackset" {
   count = var.is_organizational ? 1 : 0
 
-  name             = var.role_name
+  name             = local.config_posture_role_name
   tags             = var.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
@@ -42,20 +42,20 @@ Resources:
   SysdigCSPMRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ${var.role_name}
+      RoleName: ${local.config_posture_role_name}
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: [ ${var.trusted_identity} ]
+              AWS: [ ${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity} ]
             Action: [ 'sts:AssumeRole' ]
             Condition:
               StringEquals:
-                sts:ExternalId: ${var.external_id}
+                sts:ExternalId: ${data.sysdig_secure_tenant_external_id.external_id.external_id}
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/SecurityAudit"
       Policies:
-        - PolicyName: ${var.role_name}
+        - PolicyName: ${local.config_posture_role_name}
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
