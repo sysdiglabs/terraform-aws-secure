@@ -1,12 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
-provider "sysdig" {
-  sysdig_secure_url       = "https://secure-staging.sysdig.com"
-  sysdig_secure_api_token =  "<API_TOKEN>"
-}
-
 terraform {
   required_providers {
     sysdig = {
@@ -14,6 +5,15 @@ terraform {
       version = "~> 1.33.0"
     }
   }
+}
+
+provider "sysdig" {
+  sysdig_secure_url       = "https://secure-staging.sysdig.com"
+  sysdig_secure_api_token =  "<API_TOKEN>"
+}
+
+provider "aws" {
+  region = "us-east-1"
 }
 
 module "onboarding" {
