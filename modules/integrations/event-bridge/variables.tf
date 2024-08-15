@@ -26,7 +26,7 @@ variable "tags" {
   description = "(Optional) Tags to be attached to all Sysdig resources."
   type        = map(string)
   default = {
-    "product" = "sysdig"
+    "product" = "sysdig-secure-for-cloud"
   }
 }
 
@@ -101,4 +101,9 @@ variable "stackset_execution_role_name" {
   description = "(Optional) stackset execution role name to run SELF_MANAGED stackset"
     type        = string
     default     = ""
+}
+
+variable "sysdig_secure_account_id" {
+  type        = string
+  description = "ID of the Sysdig Cloud Account to enable Event Bridge integration for (incase of organization, ID of the Sysdig management account)"
 }

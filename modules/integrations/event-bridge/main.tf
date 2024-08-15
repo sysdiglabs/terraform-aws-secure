@@ -36,17 +36,15 @@ locals {
 #-----------------------------------------------------------------------------------------------------------------------
 locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
-  eb_resource_name = "${var.name}-${random_string.random.result}-${local.account_id_hash}"
+  eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
-# A random resource is used to generate unique Event Bridge name for resources.
+# A random resource is used to generate unique Event Bridge name suffix for resources.
 # This prevents conflicts when recreating an Event Bridge resources with the same name.
 #-----------------------------------------------------------------------------------------------------------------------
-resource "random_string" "random" {
-  length  = 4
-  special = false
-  upper   = false
+resource "random_id" "suffix" {
+  byte_length = 3
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -111,8 +109,6 @@ EOF
     "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess",
     "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
   ]
-
-  depends_on = [aws_iam_role.event_bus_stackset_admin_role]
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -266,6 +262,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
   account_id                 = var.sysdig_secure_account_id
   type                       = "COMPONENT_EVENT_BRIDGE"
   instance                   = "secure-runtime"
+  version                    = "v0.1.0"
   event_bridge_metadata = jsonencode({
     aws = {
       role_name = local.eb_resource_name
