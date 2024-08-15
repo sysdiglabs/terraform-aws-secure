@@ -3,11 +3,6 @@
 # installing additional Sysdig features.
 #---------------------------------------------------------------------------------------------
 
-# TODO: might not be needed in subsequent install snippets
-provider "aws" {
-  region = "us-east-1" # primary region
-}
-
 module "event-bridge" {
   source                   = "../../../modules/integrations/event-bridge"
   regions                  = ["us-east-1", "us-west-1", "us-west-2"]
