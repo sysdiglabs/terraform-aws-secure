@@ -1,19 +1,19 @@
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------
 # For both Single Account and Organizational installs, resources are created using CloudFormation StackSet.
-# For Organizational installs, see organizational.tf. The resources in this file are used to instrument the singleton
-# account including the management account (StackSets do not include the management account they are create in,
-# even if this account is within the target Organization).
+# For Organizational installs, see organizational.tf.
 #
-# For single installs, resources in this file get created whether they are management account or a member account.
-# (delegated admin account is a noop here for single installs)
+# For single installs, the resources in this file are used to instrument the singleton account, whether it is a management account or a
+# member account. (delegated admin account is a noop here for single installs)
 #
-# For organizational installs, resources in this file get created for management account only.
-# If a delegated admin account is used (determined via var.delegated_admin flag), resources will skip creation.
-#-----------------------------------------------------------------------------------------------------------------------
+# For organizational installs, resources in this file get created for management account only. (because service-managed stacksets do not
+# include the management account they are create in, even if this account is within the target Organization).
+# If a delegated admin account is used (determined via delegated_admin flag), resources will skip creation. This is because we don't want
+# to create these stacksets if user provides a delegated admin account instead of management account.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 # Fetch the data sources
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 
 data "sysdig_secure_cloud_ingestion_assets" "assets" {}
@@ -24,16 +24,16 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 # These locals indicate the region list passed.
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 locals {
   region_set = toset(var.regions)
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 # Generate a unique name for resources using random suffix and account ID hash
-#-----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------
 locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
@@ -56,7 +56,7 @@ resource "random_id" "suffix" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_stackset_admin_role" {
-  count = var.delegated_admin || !var.auto_create_stackset_roles ? 0 : 1
+  count = !var.auto_create_stackset_roles ? 0 : 1
   name  = "AWSCloudFormationStackSetAdministrationRoleForEB"
   tags  = var.tags
 
@@ -86,7 +86,7 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_stackset_execution_role" {
-  count      = var.delegated_admin || !var.auto_create_stackset_roles ? 0 : 1
+  count      = !var.auto_create_stackset_roles ? 0 : 1
   name       = "AWSCloudFormationStackSetExecutionRoleForEB"
   tags       = var.tags
 
@@ -120,7 +120,6 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
-  count = var.delegated_admin ? 0 : 1
   name  = local.eb_resource_name
   tags  = var.tags
 
@@ -201,7 +200,6 @@ data "aws_iam_policy_document" "cloud_trail_events" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudformation_stack_set" "single-acc-stackset" {
-  count                   = var.delegated_admin ? 0 : 1
   name                    = join("-", [local.eb_resource_name, "EBRuleSingleAcc"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
@@ -233,7 +231,7 @@ resource "aws_cloudformation_stack_set" "single-acc-stackset" {
 
 // stackset instance to deploy rule in all regions of single account
 resource "aws_cloudformation_stack_set_instance" "single_acc_stackset_instance" {
-  for_each       = var.delegated_admin ? toset([]) : local.region_set
+  for_each       = local.region_set
   region         = each.key
   stack_set_name = aws_cloudformation_stack_set.single-acc-stackset[0].name
 

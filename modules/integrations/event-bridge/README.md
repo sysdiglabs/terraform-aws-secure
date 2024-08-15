@@ -7,7 +7,9 @@ The following resources will be created in each instrumented account through Clo
 - An `EventBridge Target` that sends these events to an EventBridge Bus is Sysdig's AWS Account
 - An `IAM Role` and associated policies that gives the EventBridge Bus in the source account permission to call PutEvent on the EventBridge Bus in Sysdig's Account.
 
-When run in Organizational mode, the CloudFormation StackSet should be applied to the management account. This will create the above resources in each account in the organization, and automatically in any member accounts that are later added to the organization.
+When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization,
+and automatically in any member accounts that are later added to the organization. If a delegated admin account is used, only SERVICE_MANAGED stacksets will be created in the delegated admin account,
+responsible for creating the above resources in each account in the organization.
 
 This module will also deploy an Event Bridge Component in Sysdig Backend for onboarded Sysdig Cloud Account.
 
