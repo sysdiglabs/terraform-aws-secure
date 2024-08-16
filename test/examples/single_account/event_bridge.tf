@@ -22,5 +22,5 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement" {
   type       = "FEATURE_SECURE_IDENTITY_ENTITLEMENT"
   enabled    = true
   components = [module.config-posture.config_posture_component_id, module.event-bridge.event_bridge_component_id]
-  depends_on = [module.config-posture, module.event-bridge]
+  depends_on = [sysdig_secure_cloud_auth_account_feature.config_posture, sysdig_secure_cloud_auth_account_feature.threat_detection]
 }
