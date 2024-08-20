@@ -38,7 +38,6 @@ locals {
 locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
-  eb_stackset_name = var.is_organizational ? "EBRuleMgmtAcc" : "EBRuleSingleAcc"
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -208,11 +207,12 @@ data "aws_iam_policy_document" "cloud_trail_events" {
 # Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
-resource "aws_cloudformation_stack_set" "acc-stackset" {
+resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
   # skip self managed stacksets in org case if delegated_admin is used
   count = var.is_organizational && var.delegated_admin ? 0 : 1
 
-  name                    = join("-", [local.eb_resource_name, local.eb_stackset_name])
+  # for single installs, primary account is the singleton account provided. for org installs, it is the mgmt account
+  name                    = join("-", [local.eb_resource_name, "EBRulePrimaryAcc"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
@@ -242,11 +242,11 @@ resource "aws_cloudformation_stack_set" "acc-stackset" {
 }
 
 // stackset instance to deploy rule in all regions of given account
-resource "aws_cloudformation_stack_set_instance" "acc_stackset_instance" {
+resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance" {
   # skip self managed stackset instances in org case if delegated_admin is used
   for_each       = var.is_organizational && var.delegated_admin ? toset([]) : local.region_set
   region         = each.key
-  stack_set_name = aws_cloudformation_stack_set.acc-stackset[0].name
+  stack_set_name = aws_cloudformation_stack_set.primary-acc-stackset[0].name
 
   operation_preferences {
     max_concurrent_percentage    = 100
