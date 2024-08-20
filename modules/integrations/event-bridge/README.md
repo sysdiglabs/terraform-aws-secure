@@ -7,9 +7,8 @@ The following resources will be created in each instrumented account through Clo
 - An `EventBridge Target` that sends these events to an EventBridge Bus is Sysdig's AWS Account
 - An `IAM Role` and associated policies that gives the EventBridge Bus in the source account permission to call PutEvent on the EventBridge Bus in Sysdig's Account.
 
-When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization,
-and automatically in any member accounts that are later added to the organization. If a delegated admin account is used, only SERVICE_MANAGED stacksets will be created in the delegated admin account,
-responsible for creating the above resources in each account in the organization.
+When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization, and automatically in any member accounts that are later added to the organization. If a delegated admin account is used, only
+SERVICE_MANAGED stacksets will be created in the delegated admin account, responsible for creating the above resources in each account in the organization.
 
 This module will also deploy an Event Bridge Component in Sysdig Backend for onboarded Sysdig Cloud Account.
 
@@ -42,14 +41,19 @@ No modules.
 | [aws_iam_role.event_bus_invoke_remote_event_bus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.event_bus_stackset_admin_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.event_bus_stackset_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_cloudformation_stack_set.single-acc-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
-| [aws_cloudformation_stack_set_instance.single_acc_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
+| [aws_cloudformation_stack_set.acc-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set_instance.acc_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
 | [sysdig_secure_cloud_auth_account_component.aws_event_bridge](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/resources/secure_cloud_auth_account_component) | resource |
+| [aws_cloudformation_stack_set.eb-rule-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set.eb-role-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set_instance.eb_rule_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
+| [aws_cloudformation_stack_set_instance.eb_role_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
 | [aws_iam_policy_document.cloud_trail_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [sysdig_secure_cloud_ingestion_assets.assets](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_cloud_ingestion_assets) | data source |
 | [sysdig_secure_trusted_cloud_identity.trusted_identity](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_trusted_cloud_identity) | data source |
 | [sysdig_secure_tenant_external_id.external_id](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_tenant_external_id) | data source |
+| [aws_organizations_organization.org](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/organizations_organization) | data source |
 
 ## Inputs
 
@@ -63,7 +67,7 @@ No modules.
 | <a name="input_org_units"></a> [org\_units](#input\_org\_units) | (Optional) List of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false` | `set(string)` | `[]` | no |
 | <a name="input_regions"></a> [regions](#input\_regions) | (Optional) List of regions in which to setup EventBridge. By default, current region is selected | `set(string)` | `[]` | no |
 | <a name="input_rule_state"></a> [rule\_state](#input\_rule\_state) | State of the rule. When state is ENABLED, the rule is enabled for all events except those delivered by CloudTrail. To also enable the rule for events delivered by CloudTrail, set state to ENABLED\_WITH\_ALL\_CLOUDTRAIL\_MANAGEMENT\_EVENTS. | `string` | `"ENABLED_WITH_ALL_CLOUDTRAIL_MANAGEMENT_EVENTS"` | no |
-| <a name="input_stackset_admin_role_arn"></a> [stackset\_admin\_role\_arn](#input\_stackset\_admin\_role\_arn) | (Optional) stackset admin role to run SELF\_MANAGED stackset | `string` | `""` | no |
+| <a name="input_stackset_admin_role_arn"></a> [stackset\_admin\_role\_arn](#input\_stackset\_admin\_role\_arn) | (Optional) stackset admin role arn to run SELF\_MANAGED stackset | `string` | `""` | no |
 | <a name="input_stackset_execution_role_name"></a> [stackset\_execution\_role\_name](#input\_stackset\_execution\_role\_name) | (Optional) stackset execution role name to run SELF\_MANAGED stackset | `string` | `""` | no |
 | <a name="auto_create_stackset_roles"></a> [auto\_create\_stackset\_roles](#input\_auto\_create\_stackset\_roles) | Whether to auto create the custom stackset roles to run SELF_MANAGED stackset | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | (Optional) Tags to be attached to all Sysdig resources. | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |

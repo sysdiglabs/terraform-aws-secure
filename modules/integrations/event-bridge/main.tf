@@ -6,9 +6,10 @@
 # member account. (delegated admin account is a noop here for single installs)
 #
 # For organizational installs, resources in this file get created for management account only. (because service-managed stacksets do not
-# include the management account they are create in, even if this account is within the target Organization).
-# If a delegated admin account is used (determined via delegated_admin flag), resources will skip creation. This is because we don't want
-# to create these stacksets if user provides a delegated admin account instead of management account.
+# include the management account they are created in, even if this account is within the target Organization).
+# If a delegated admin account is used instead (determined via delegated_admin flag), resources will skip creation. This is because we
+# don't want to create these stacksets if user provides a delegated admin account instead of management account. (because service-managed
+# stacksets include the delegated admin account already)
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------
@@ -56,9 +57,11 @@ resource "random_id" "suffix" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_stackset_admin_role" {
-  count = !var.auto_create_stackset_roles ? 0 : 1
-  name  = "AWSCloudFormationStackSetAdministrationRoleForEB"
-  tags  = var.tags
+  # skip resource creation in org case if delegated_admin is used
+  count = (var.is_organizational && var.delegated_admin) || !var.auto_create_stackset_roles ? 0 : 1
+
+  name = "AWSCloudFormationStackSetAdministrationRoleForEB"
+  tags = var.tags
 
   assume_role_policy = <<EOF
 {
@@ -86,9 +89,11 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_stackset_execution_role" {
-  count      = !var.auto_create_stackset_roles ? 0 : 1
-  name       = "AWSCloudFormationStackSetExecutionRoleForEB"
-  tags       = var.tags
+  # skip resource creation in org case if delegated_admin is used
+  count = (var.is_organizational && var.delegated_admin) || !var.auto_create_stackset_roles ? 0 : 1
+
+  name = "AWSCloudFormationStackSetExecutionRoleForEB"
+  tags = var.tags
 
   assume_role_policy = <<EOF
 {
@@ -120,8 +125,11 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
-  name  = local.eb_resource_name
-  tags  = var.tags
+  # skip resource creation in org case if delegated_admin is used
+  count = var.is_organizational && var.delegated_admin ? 0 : 1
+
+  name = local.eb_resource_name
+  tags = var.tags
 
   assume_role_policy = <<EOF
 {
@@ -199,8 +207,12 @@ data "aws_iam_policy_document" "cloud_trail_events" {
 # Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
-resource "aws_cloudformation_stack_set" "single-acc-stackset" {
-  name                    = join("-", [local.eb_resource_name, "EBRuleSingleAcc"])
+resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
+  # skip self managed stacksets in org case if delegated_admin is used
+  count = var.is_organizational && var.delegated_admin ? 0 : 1
+
+  # for single installs, primary account is the singleton account provided. for org installs, it is the mgmt account
+  name                    = join("-", [local.eb_resource_name, "EBRulePrimaryAcc"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
@@ -229,11 +241,12 @@ resource "aws_cloudformation_stack_set" "single-acc-stackset" {
   ]
 }
 
-// stackset instance to deploy rule in all regions of single account
-resource "aws_cloudformation_stack_set_instance" "single_acc_stackset_instance" {
-  for_each       = local.region_set
+// stackset instance to deploy rule in all regions of given account
+resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance" {
+  # skip self managed stackset instances in org case if delegated_admin is used
+  for_each       = var.is_organizational && var.delegated_admin ? toset([]) : local.region_set
   region         = each.key
-  stack_set_name = aws_cloudformation_stack_set.single-acc-stackset[0].name
+  stack_set_name = aws_cloudformation_stack_set.primary-acc-stackset[0].name
 
   operation_preferences {
     max_concurrent_percentage    = 100
