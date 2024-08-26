@@ -16,7 +16,7 @@ resource "sysdig_secure_cloud_auth_account_feature" "threat_detection" {
   type       = "FEATURE_SECURE_THREAT_DETECTION"
   enabled    = true
   components = [module.event-bridge.event_bridge_component_id]
-  depends_on = [ module.event-bridge ]
+  depends_on = [module.event-bridge]
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement" {

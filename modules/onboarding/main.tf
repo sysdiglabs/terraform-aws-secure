@@ -12,7 +12,7 @@ locals {
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-	cloud_provider = "aws"
+  cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
@@ -53,11 +53,12 @@ EOF
   ])
 
   lifecycle {
-    ignore_changes = [ tags ]
+    ignore_changes = [tags]
   }
 }
 
 resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
+
   enabled        = true
   provider_id    = data.aws_caller_identity.current.account_id
   provider_type  = "PROVIDER_AWS"
