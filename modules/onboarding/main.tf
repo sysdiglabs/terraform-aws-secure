@@ -9,6 +9,7 @@ resource "random_id" "suffix" {
 
 locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
+  current_acct_id      = var.account_id
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
@@ -19,6 +20,8 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 
 data "aws_caller_identity" "current" {}
 data "aws_iam_account_alias" "current" {}
+
+
 
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
@@ -54,6 +57,10 @@ EOF
 
   lifecycle {
     ignore_changes = [tags]
+    precondition {
+      condition     = var.account_id == data.aws_caller_identity.current.account_id
+      error_message = "The provided account_id does not match the current AWS account ID."
+    }
   }
 }
 
