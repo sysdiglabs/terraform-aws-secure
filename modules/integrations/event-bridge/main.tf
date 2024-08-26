@@ -278,7 +278,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
     aws = {
       role_name = local.eb_resource_name
       rule_name = local.eb_resource_name
-      #TODO: regions once support added
+      regions   = var.regions
     }
   })
 }
