@@ -5,7 +5,7 @@ resource "random_id" "suffix" {
 }
 
 locals {
-  config_posture_role_name = "sysdig-secure-config-posture-${random_id.suffix.hex}"
+  config_posture_role_name = "sysdig-secure-posture-${random_id.suffix.hex}"
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
@@ -134,7 +134,7 @@ data "aws_iam_policy_document" "custom_resources_policy" {
 resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
   account_id                 = var.sysdig_secure_account_id
   type                       = "COMPONENT_TRUSTED_ROLE"
-  instance                   = "config-posture"
+  instance                   = "sysdig-posture"
   version                    = "v0.1.0"
   trusted_role_metadata = jsonencode({
         aws = {
