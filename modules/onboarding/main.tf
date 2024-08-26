@@ -17,6 +17,9 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
+data "aws_caller_identity" "current" {}
+data "aws_iam_account_alias" "current" {}
+
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
 #----------------------------------------------------------
@@ -53,9 +56,6 @@ EOF
     ignore_changes = [ tags ]
   }
 }
-
-data "aws_caller_identity" "current" {}
-data "aws_iam_account_alias" "current" {}
 
 resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   enabled        = true

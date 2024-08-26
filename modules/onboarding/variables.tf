@@ -2,6 +2,16 @@
 # optionals - with default
 #---------------------------------
 
+variable "account_id" {
+  type        = string
+  description = "Account ID in which to create secure cloud onboarding resources"
+
+  validation {
+    condition     = var.account_id == data.aws_caller_identity.current.account_id
+    error_message = "The provided account_id does not match the current AWS account ID."
+  }
+}
+
 variable "is_organizational" {
   type        = bool
   default     = false

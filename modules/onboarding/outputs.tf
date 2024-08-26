@@ -1,3 +1,8 @@
+output "account_id" {
+  value       = var.account_id
+  description = "Account ID in which secure cloud onboarding resources are created. For organizational installs it is the Management Account ID"
+}
+
 output "sysdig_secure_account_id" {
   value       = sysdig_secure_cloud_auth_account.cloud_auth_account.id
   description = "sysdig secure cloud account identifier"
