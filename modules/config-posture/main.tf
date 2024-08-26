@@ -134,7 +134,7 @@ data "aws_iam_policy_document" "custom_resources_policy" {
 resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
   account_id                 = var.sysdig_secure_account_id
   type                       = "COMPONENT_TRUSTED_ROLE"
-  instance                   = "sysdig-posture"
+  instance                   = "secure-posture"
   version                    = "v0.1.0"
   trusted_role_metadata = jsonencode({
         aws = {
