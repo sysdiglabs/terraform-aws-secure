@@ -17,9 +17,10 @@ provider "aws" {
 }
 
 module "onboarding" {
-  source            	  = "../../../modules/onboarding"
+  source            	    = "../../../modules/onboarding"
+  account_id              = "123456789012"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
-  is_organizational 	  = true
+  is_organizational 	    = true
 }
 
 module "config-posture" {
