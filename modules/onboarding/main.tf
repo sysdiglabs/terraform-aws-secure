@@ -9,7 +9,6 @@ resource "random_id" "suffix" {
 
 locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
-  current_acct_id      = var.account_id
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
