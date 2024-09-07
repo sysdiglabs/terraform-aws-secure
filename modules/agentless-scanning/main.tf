@@ -7,13 +7,10 @@
 # For Organizational installs, see organizational.tf.
 #
 # For single installs, the resources in this file are used to instrument the singleton account, whether it is a management account or a
-# member account. (delegated admin account is a noop here for single installs)
+# member account.
 #
 # For organizational installs, resources in this file get created for management account only. (because service-managed stacksets do not
 # include the management account they are created in, even if this account is within the target Organization).
-# If a delegated admin account is used instead (determined via delegated_admin flag), resources will skip creation. This is because we
-# don't want to create these stacksets if user provides a delegated admin account instead of management account. (because service-managed
-# stacksets include the delegated admin account already)
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------
@@ -69,8 +66,7 @@ resource "random_id" "suffix" {
 
 # IAM Policy Document used by Stackset roles for the KMS operations policy
 data "aws_iam_policy_document" "kms_operations" {
-  # skip in org case if delegated_admin is used
-  count = (var.is_organizational && var.delegated_admin) || !var.auto_create_stackset_roles ? 0 : 1
+  count = !var.auto_create_stackset_roles ? 0 : 1
 
   statement {
     sid = "KmsOperationsAccess"
@@ -85,8 +81,7 @@ data "aws_iam_policy_document" "kms_operations" {
 }
 
 resource "aws_iam_role" "scanning_stackset_admin_role" {
-  # skip resource creation in org case if delegated_admin is used
-  count = (var.is_organizational && var.delegated_admin) || !var.auto_create_stackset_roles ? 0 : 1
+  count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetAdministrationRoleForScanning"
   tags = var.tags
@@ -121,8 +116,7 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "scanning_stackset_execution_role" {
-  # skip resource creation in org case if delegated_admin is used
-  count = (var.is_organizational && var.delegated_admin) || !var.auto_create_stackset_roles ? 0 : 1
+  count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetExecutionRoleForScanning"
   tags = var.tags
@@ -157,9 +151,6 @@ EOF
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 data "aws_iam_policy_document" "scanning" {
-  # skip in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   # General read permission, necessary for the discovery phase.
   statement {
     sid = "Read"
@@ -322,12 +313,9 @@ data "aws_iam_policy_document" "scanning" {
 }
 
 resource "aws_iam_policy" "scanning_policy" {
-  # skip resource creation in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   name        = local.scanning_resource_name
   description = "Grants Sysdig Secure access to volumes and snapshots"
-  policy      = data.aws_iam_policy_document.scanning[0].json
+  policy      = data.aws_iam_policy_document.scanning.json
   tags        = var.tags
 }
 
@@ -336,9 +324,6 @@ resource "aws_iam_policy" "scanning_policy" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 data "aws_iam_policy_document" "scanning_assume_role_policy" {
-  # skip resource creation in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   statement {
     sid = "SysdigSecureScanning"
 
@@ -367,21 +352,15 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "scanning_role" {
-  # skip resource creation in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   name               = local.scanning_resource_name
   tags               = var.tags
-  assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy[0].json
+  assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy.json
 }
 
 resource "aws_iam_policy_attachment" "scanning_policy_attachment" {
-  # skip resource creation in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   name       = local.scanning_resource_name
-  roles      = [aws_iam_role.scanning_role[0].name]
-  policy_arn = aws_iam_policy.scanning_policy[0].arn
+  roles      = [aws_iam_role.scanning_role.name]
+  policy_arn = aws_iam_policy.scanning_policy.arn
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -393,9 +372,6 @@ resource "aws_iam_policy_attachment" "scanning_policy_attachment" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudformation_stack_set" "primary_acc_stackset" {
-  # skip self managed stacksets in org case if delegated_admin is used
-  count = var.is_organizational && var.delegated_admin ? 0 : 1
-
   name                    = join("-", [local.scanning_resource_name, "ScanningKmsPrimaryAcc"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
@@ -458,11 +434,10 @@ TEMPLATE
 
 # stackset instance to deploy resources for agentless scanning, in all regions of given account
 resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance" {
-  # skip self managed stackset instances in org case if delegated_admin is used
-  for_each = var.is_organizational && var.delegated_admin ? toset([]) : local.region_set
+  for_each = local.region_set
   region   = each.key
 
-  stack_set_name = aws_cloudformation_stack_set.primary_acc_stackset[0].name
+  stack_set_name = aws_cloudformation_stack_set.primary_acc_stackset.name
   operation_preferences {
     max_concurrent_percentage    = 100
     failure_tolerance_percentage = var.failure_tolerance_percentage

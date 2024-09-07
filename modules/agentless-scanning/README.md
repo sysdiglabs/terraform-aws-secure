@@ -6,7 +6,7 @@ The following resources will be created in each instrumented account through Clo
 - An `IAM Role` and associated `policies` that allows Sysdig to perform tasks necessary for agentless scanning.
 - A `KMS key` used to transcript volume snapshots in the each region. `Alias` for this key in each region.
 
-When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization, and automatically in any member accounts that are later added to the organization. If a delegated admin account is used, only SERVICE_MANAGED stacksets will be created in the delegated admin account, responsible for creating the above resources in each account in the organization.
+When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization, and automatically in any member accounts that are later added to the organization.
 
 This module will also deploy a Trusted Role Component and a Crypto Key Component in Sysdig Backend for onboarded Sysdig Cloud Account.
 
@@ -74,7 +74,6 @@ No modules.
 | <a name="auto_create_stackset_roles"></a> [auto\_create\_stackset\_roles](#input\_auto\_create\_stackset\_roles) | Whether to auto create the custom stackset roles to run SELF_MANAGED stackset | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
-| <a name="delegated_admin"></a> [delegated_admin](#input\_delegated\_admin) | Whether to create the resources using an delegated admin account | `bool` | `false` | no |
 | <a name="input_sysdig_secure_account_id"></a> [sysdig\_secure\_account\_id](#input\_sysdig\_secure\_account\_id) | ID of the Sysdig Cloud Account to enable Agentless Scanning for (incase of organization, ID of the Sysdig management account) | `string` | n/a | yes |
 
 ## Outputs

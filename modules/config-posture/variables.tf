@@ -41,13 +41,6 @@ variable "failure_tolerance_percentage" {
   default     = 90
 }
 
-
-variable "delegated_admin" {
-  description = "Whether a delegated admin account will be used"
-  type        = bool
-  default     = false
-}
-
 variable "sysdig_secure_account_id" {
   type        = string
   description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"

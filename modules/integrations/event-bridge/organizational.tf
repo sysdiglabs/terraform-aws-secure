@@ -2,9 +2,6 @@
 # These resources set up an EventBridge Rule and Target to forward all CloudTrail events from the source account to
 # Sysdig in all accounts in an AWS Organization via service-managed CloudFormation StackSets.
 # For a single account installation, see main.tf.
-#
-# If a delegated admin account is used (determined via delegated_admin flag), service-managed stacksets will be created
-# acting as delegated_admin to deploy resources in all acocunts within AWS Organization.
 #-----------------------------------------------------------------------------------------------------------------------
 
 data "aws_organizations_organization" "org" {
@@ -37,8 +34,6 @@ resource "aws_cloudformation_stack_set" "eb-rule-stackset" {
     ignore_changes = [administration_role_arn]
   }
 
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
-
   template_body = templatefile("${path.module}/stackset_template_body.tpl", {
     name                 = local.eb_resource_name
     event_pattern        = var.event_pattern
@@ -68,8 +63,6 @@ resource "aws_cloudformation_stack_set" "eb-role-stackset" {
   lifecycle {
     ignore_changes = [administration_role_arn]
   }
-
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
 
   template_body = <<TEMPLATE
 Resources:
@@ -123,8 +116,6 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
     region_concurrency_type      = "PARALLEL"
   }
 
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
-
   timeouts {
     create = var.timeout
     update = var.timeout
@@ -146,8 +137,6 @@ resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
     concurrency_mode             = "SOFT_FAILURE_TOLERANCE"
     # Roles are not regional and hence do not need regional parallelism
   }
-
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
 
   timeouts {
     create = var.timeout

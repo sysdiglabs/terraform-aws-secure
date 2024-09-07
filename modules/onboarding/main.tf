@@ -21,7 +21,6 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 # Since this is not an Organizational deploy, create role/polices directly
 #----------------------------------------------------------
 resource "aws_iam_role" "onboarding_role" {
-  count              = var.delegated_admin ? 0 : 1
   name               = local.onboarding_role_name
   tags               = var.tags
   assume_role_policy = <<EOF
