@@ -5,9 +5,6 @@
 # Non-global / Regional resources:
 # - a KMS Primary key is created, in each region of region list,
 # - an Alias by the same name for the respective key, in each region of region list.
-#
-# If a delegated admin account is used (determined via delegated_admin flag), service-managed stacksets will be created
-# acting as delegated_admin to deploy resources in all acocunts within AWS Organization.
 #-----------------------------------------------------------------------------------------------------------------------
 
 data "aws_organizations_organization" "org" {
@@ -43,8 +40,6 @@ resource "aws_cloudformation_stack_set" "scanning_role_stackset" {
   lifecycle {
     ignore_changes = [administration_role_arn]
   }
-
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
 
   template_body = <<TEMPLATE
 Resources:
@@ -143,8 +138,6 @@ resource "aws_cloudformation_stack_set_instance" "scanning_role_stackset_instanc
     # Roles are not regional and hence do not need regional parallelism
   }
 
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
-
   timeouts {
     create = var.timeout
     update = var.timeout
@@ -179,8 +172,6 @@ resource "aws_cloudformation_stack_set" "ou_resources_stackset" {
   lifecycle {
     ignore_changes = [administration_role_arn]
   }
-
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
 
   template_body = <<TEMPLATE
 Resources:
@@ -238,8 +229,6 @@ resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
     concurrency_mode             = "SOFT_FAILURE_TOLERANCE"
     region_concurrency_type      = "PARALLEL"
   }
-
-  call_as = var.delegated_admin ? "DELEGATED_ADMIN" : "SELF"
 
   timeouts {
     create = var.timeout

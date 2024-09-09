@@ -79,12 +79,6 @@ variable "failure_tolerance_percentage" {
   default     = 90
 }
 
-variable "delegated_admin" {
-  description = "Whether a delegated admin account will be used"
-  type        = bool
-  default     = false
-}
-
 variable "auto_create_stackset_roles" {
   description = "Whether to auto create the custom stackset roles to run SELF_MANAGED stackset. Default is true"
   type        = bool
