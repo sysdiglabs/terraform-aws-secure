@@ -1,0 +1,44 @@
+variable "sysdig_secure_account_id" {
+  type        = string
+  description = "ID of the Sysdig Cloud Account to enable Cloud Logs integration for (in case of organization, ID of the Sysdig management account)"
+}
+
+variable "bucket_arn" {
+  description = "(Required) The ARN of your s3 bucket associated with your Cloudtrail trail"
+  type        = string
+}
+
+variable "folder_arn" {
+  description = "(Required) The ARN of your CloudTrail Bucket Folder"
+  type        = string
+}
+
+variable "role_name" {
+  description = "(Required) The name of the IAM Role that will enable access to the Cloudtrail logs"
+  type        = string
+  default     = "cloudtrail-s3-bucket-read-access"
+}
+
+variable "external_id" {
+  description = "(Required) Random string generated unique to a customer"
+  type        = string
+}
+
+variable "region" {
+  description = "Region in which to deploy singleton resources such as Stacksets."
+  type        = string
+}
+
+variable "trusted_identity" {
+  description = "(Required) The name of Sysdig trusted identity"
+  type        = string
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "(Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning"
+
+  default = {
+    "product" = "sysdig-secure-for-cloud"
+  }
+}
