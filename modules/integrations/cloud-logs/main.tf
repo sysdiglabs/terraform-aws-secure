@@ -10,6 +10,12 @@
 # required setup operations before applying the Terraform module.
 #-----------------------------------------------------------------------------------------------------------------------
 
+data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
+  cloud_provider = "aws"
+}
+
+data "sysdig_secure_tenant_external_id" "external_id" {}
+
 # AWS IAM Role that will be used by CloudIngestion to access the CloudTrail-associated s3 bucket
 resource "aws_iam_role" "cloudlogs_s3_access" {
   name = var.role_name
@@ -29,7 +35,7 @@ data "aws_iam_policy_document" "assume_cloudlogs_s3_access_role" {
 
     principals {
       type        = "AWS"
-      identifiers = [var.trusted_identity]
+        identifiers = [data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity]
     }
 
     actions = ["sts:AssumeRole"]
@@ -37,7 +43,7 @@ data "aws_iam_policy_document" "assume_cloudlogs_s3_access_role" {
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
-      values   = [var.external_id]
+      values   = [data.sysdig_secure_tenant_external_id.external_id.external_id]
     }
   }
 }
@@ -91,7 +97,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       cloudtrailS3Bucket = {
         folder_arn    = var.folder_arn
         role_name     = var.role_name
-        external_id   = var.external_id
+        external_id   = data.sysdig_secure_tenant_external_id.external_id.external_id
         region        = var.region
       }
     }
