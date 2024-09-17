@@ -35,12 +35,13 @@ No modules.
 
 ## Inputs
 
-| Name                                                               | Description | Type | Default | Required |
-|--------------------------------------------------------------------|-------------|------|---------|:--------:|
-| <a name="input_folder_arn"></a> [folder\_arn](#input\_folder\_arn) | (Required) The ARN of your CloudTrail Bucket Folder | `string` | n/a | yes |
-| <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | (Required) The ARN of your s3 bucket associated with your Cloudtrail trail | `string` | n/a | yes |
-| <a name="input_role_name"></a> [role\_name](#input\_role\_name)    | (Required) The name of the IAM Role that will enable access to the Cloudtrail logs | `string` | `"cloudtrail-s3-bucket-read-access"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags)                     | (Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
+| Name                                                               | Description | Type | Default                                                     | Required |
+|--------------------------------------------------------------------|-------------|------|-------------------------------------------------------------|:--------:|
+| <a name="input_folder_arn"></a> [folder\_arn](#input\_folder\_arn) | (Required) The ARN of your CloudTrail Bucket Folder | `string` | n/a                                                         |   yes    |
+| <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | (Required) The ARN of your s3 bucket associated with your Cloudtrail trail | `string` | n/a                                                         |   yes    |
+| <a name="input_region"></a> [region](#input\_region)               | (Required) Region in which to deploy singleton resources such as Stacksets. | `string` | n/a                                                         |   yes    |
+| <a name="input_tags"></a> [tags](#input\_tags)                     | (Optional) Name to be assigned to all child resources. A suffix may be added internally when required. | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> |    no    |
+| <a name="input_name"></a> [name](#input\_name)                     | (Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `string` | sysdig-secure-cloudlogs |    no    |
 
 ## Outputs
 

@@ -13,12 +13,6 @@ variable "bucket_arn" {
   type        = string
 }
 
-variable "role_name" {
-  description = "(Required) The name of the IAM Role that will enable access to the Cloudtrail logs"
-  type        = string
-  default     = "cloudtrail-s3-bucket-read-access"
-}
-
 variable "region" {
   description = "Region in which to deploy singleton resources such as Stacksets."
   type        = string
@@ -31,4 +25,10 @@ variable "tags" {
   default = {
     "product" = "sysdig-secure-for-cloud"
   }
+}
+
+variable "name" {
+  description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required. Use default value unless you need to install multiple instances"
+  type        = string
+  default     = "sysdig-secure-cloudlogs"
 }

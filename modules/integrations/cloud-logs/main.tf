@@ -10,15 +10,36 @@
 # required setup operations before applying the Terraform module.
 #-----------------------------------------------------------------------------------------------------------------------
 
+#-----------------------------------------------------------------------------------------
+# Fetch the data sources
+#-----------------------------------------------------------------------------------------
+data "aws_caller_identity" "current" {}
+
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
+#-----------------------------------------------------------------------------------------
+# Generate a unique name for resources using random suffix and account ID hash
+#-----------------------------------------------------------------------------------------
+locals {
+  account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
+  role_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+# A random resource is used to generate unique role name suffix.
+# This prevents conflicts when recreating an role with the same name.
+#-----------------------------------------------------------------------------------------------------------------------
+resource "random_id" "suffix" {
+  byte_length = 3
+}
+
 # AWS IAM Role that will be used by CloudIngestion to access the CloudTrail-associated s3 bucket
 resource "aws_iam_role" "cloudlogs_s3_access" {
-  name = var.role_name
+  name = local.role_name
   tags = var.tags
 
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
@@ -35,7 +56,7 @@ data "aws_iam_policy_document" "assume_cloudlogs_s3_access_role" {
 
     principals {
       type        = "AWS"
-        identifiers = [data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity]
+      identifiers = [data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity]
     }
 
     actions = ["sts:AssumeRole"]
@@ -96,7 +117,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
     aws = {
       cloudtrailS3Bucket = {
         folder_arn    = var.folder_arn
-        role_name     = var.role_name
+        role_name     = local.role_name
         external_id   = data.sysdig_secure_tenant_external_id.external_id.external_id
         region        = var.region
       }
