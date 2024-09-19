@@ -27,6 +27,8 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   role_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+
+  bucket_arn = regex("^([^/]+)", var.folder_arn)[0]
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -81,8 +83,8 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
     ]
 
     resources = [
-      var.bucket_arn,
-      "${var.bucket_arn}/*"
+      local.bucket_arn,
+      "${local.bucket_arn}/*"
     ]
   }
 
@@ -96,14 +98,14 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
     ]
 
     resources = [
-      var.bucket_arn,
-      "${var.bucket_arn}/*"
+      local.bucket_arn,
+      "${local.bucket_arn}/*"
     ]
   }
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# Call Sysdig Backend to add the event-bridge integration to the Sysdig Cloud Account
+# Call Sysdig Backend to add the cloud logs integration to the Sysdig Cloud Account
 #
 # Note (optional): To ensure this gets called after all cloud resources are created, add
 # explicit dependency using depends_on

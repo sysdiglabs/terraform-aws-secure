@@ -8,11 +8,6 @@ variable "folder_arn" {
   type        = string
 }
 
-variable "bucket_arn" {
-  description = "(Required) The ARN of your s3 bucket associated with your Cloudtrail trail"
-  type        = string
-}
-
 variable "region" {
   description = "Region in which to deploy singleton resources such as Stacksets."
   type        = string
