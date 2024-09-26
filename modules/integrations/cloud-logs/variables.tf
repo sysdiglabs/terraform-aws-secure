@@ -8,11 +8,6 @@ variable "folder_arn" {
   type        = string
 }
 
-variable "region" {
-  description = "Region in which to deploy singleton resources such as Stacksets."
-  type        = string
-}
-
 variable "tags" {
   type        = map(string)
   description = "(Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning"
