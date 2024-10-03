@@ -120,6 +120,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       cloudtrailS3Bucket = {
         folder_arn    = var.folder_arn
         role_name     = local.role_name
+        regions       = var.regions
       }
     }
   })
