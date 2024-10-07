@@ -12,7 +12,7 @@ locals {
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-	cloud_provider = "aws"
+  cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
@@ -49,7 +49,7 @@ EOF
   ])
 
   lifecycle {
-    ignore_changes = [ tags ]
+    ignore_changes = [tags]
   }
 }
 

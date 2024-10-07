@@ -56,8 +56,8 @@ variable "stackset_admin_role_arn" {
 
 variable "stackset_execution_role_name" {
   description = "(Optional) stackset execution role name to run SELF_MANAGED stackset"
-    type        = string
-    default     = ""
+  type        = string
+  default     = ""
 }
 
 variable "timeout" {

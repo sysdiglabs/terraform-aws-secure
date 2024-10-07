@@ -26,7 +26,7 @@ data "aws_iam_session_context" "current" {
 data "sysdig_secure_agentless_scanning_assets" "assets" {}
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-	cloud_provider = "aws"
+  cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
@@ -64,29 +64,13 @@ resource "random_id" "suffix" {
 # predefined/default AWSCloudFormationStackSetAdministrationRole.
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
-# IAM Policy Document used by Stackset roles for the KMS operations policy
-data "aws_iam_policy_document" "kms_operations" {
-  count = !var.auto_create_stackset_roles ? 0 : 1
-
-  statement {
-    sid = "KmsOperationsAccess"
-    effect = "Allow"
-    actions = [
-      "kms:*",
-    ]
-    resources = [
-      "*",
-    ]
-  }
-}
-
 resource "aws_iam_role" "scanning_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetAdministrationRoleForScanning"
   tags = var.tags
 
-  assume_role_policy = <<EOF
+  assume_role_policy  = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -101,10 +85,25 @@ resource "aws_iam_role" "scanning_stackset_admin_role" {
 }
 EOF
   managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"]
-  inline_policy {
-    name   = "KmsOperationsAccess"
-    policy = data.aws_iam_policy_document.kms_operations[0].json
-  }
+}
+
+resource "aws_iam_role_policy" "scanning_stackset_admin_role_policy" {
+  count = !var.auto_create_stackset_roles ? 0 : 1
+
+  name = "KmsOperationsAccess"
+  role = aws_iam_role.scanning_stackset_admin_role[0].id
+  policy = jsonencode({
+    Statement = [
+      {
+        Sid = "KmsOperationsAccess"
+        Action = [
+          "kms:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -139,10 +138,25 @@ EOF
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"
   ]
-  inline_policy {
-    name   = "KmsOperationsAccess"
-    policy = data.aws_iam_policy_document.kms_operations[0].json
-  }
+}
+
+resource "aws_iam_role_policy" "scanning_stackset_execution_role_policy" {
+  count = !var.auto_create_stackset_roles ? 0 : 1
+
+  name = "KmsOperationsAccess"
+  role = aws_iam_role.scanning_stackset_execution_role[0].id
+  policy = jsonencode({
+    Statement = [
+      {
+        Sid = "KmsOperationsAccess"
+        Action = [
+          "kms:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -368,7 +382,7 @@ resource "aws_iam_policy_attachment" "scanning_policy_attachment" {
 #   - KMS Primary Key, and
 #   - KMS Primary alias
 #
-# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
+# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudformation_stack_set" "primary_acc_stackset" {
@@ -428,7 +442,9 @@ TEMPLATE
   depends_on = [
     aws_iam_role.scanning_role,
     aws_iam_role.scanning_stackset_admin_role,
-    aws_iam_role.scanning_stackset_execution_role
+    aws_iam_role_policy.scanning_stackset_admin_role_policy,
+    aws_iam_role.scanning_stackset_execution_role,
+    aws_iam_role_policy.scanning_stackset_execution_role_policy
   ]
 }
 
@@ -459,10 +475,10 @@ resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance"
 # explicit dependency using depends_on
 #-----------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "aws_scanning_role" {
-  account_id                 = var.sysdig_secure_account_id
-  type                       = "COMPONENT_TRUSTED_ROLE"
-  instance                   = "secure-scanning"
-  version                    = "v0.1.0"
+  account_id = var.sysdig_secure_account_id
+  type       = "COMPONENT_TRUSTED_ROLE"
+  instance   = "secure-scanning"
+  version    = "v0.1.0"
   trusted_role_metadata = jsonencode({
     aws = {
       role_name = local.scanning_resource_name
@@ -477,16 +493,16 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_scanning_role" {
 # explicit dependency using depends_on
 #-----------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "aws_crypto_key" {
-  account_id                 = var.sysdig_secure_account_id
-  type                       = "COMPONENT_CRYPTO_KEY"
-  instance                   = "secure-scanning"
-  version                    = "v0.1.0"
+  account_id = var.sysdig_secure_account_id
+  type       = "COMPONENT_CRYPTO_KEY"
+  instance   = "secure-scanning"
+  version    = "v0.1.0"
   crypto_key_metadata = jsonencode({
     aws = {
       kms = {
-          alias   = "alias/${local.scanning_resource_name}"
-          regions = var.regions
-        }
+        alias   = "alias/${local.scanning_resource_name}"
+        regions = var.regions
+      }
     }
   })
 }
