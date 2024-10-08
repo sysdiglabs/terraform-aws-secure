@@ -9,7 +9,7 @@ locals {
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-	cloud_provider = "aws"
+  cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
@@ -41,89 +41,57 @@ resource "aws_iam_role" "cspm_role" {
 }
 EOF
   managed_policy_arns = ["arn:aws:iam::aws:policy/SecurityAudit"]
-  inline_policy {
-    name   = local.config_posture_role_name
-    policy = data.aws_iam_policy_document.custom_resources_policy.json
-  }
 }
 
-# Custom IAM Policy Document used by trust-relationship role
-data "aws_iam_policy_document" "custom_resources_policy" {
-
-  statement {
-    sid = "DescribeEFSAccessPoints"
-
-    effect = "Allow"
-
-    actions = [
-      "elasticfilesystem:DescribeAccessPoints",
+resource "aws_iam_role_policy" "cspm_role_policy" {
+  name = local.config_posture_role_name
+  role = aws_iam_role.cspm_role.id
+  policy = jsonencode({
+    Statement = [
+      {
+        Sid = "DescribeEFSAccessPoints"
+        Action = [
+          "elasticfilesystem:DescribeAccessPoints",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid = "ListWafRegionalRulesAndRuleGroups"
+        Action = [
+          "waf-regional:ListRules",
+          "waf-regional:ListRuleGroups",
+        ]
+        Effect = "Allow"
+        Resource = [
+          "arn:aws:waf-regional:*:*:rule/*",
+          "arn:aws:waf-regional:*:*:rulegroup/*"
+        ]
+      },
+      {
+        Sid      = "ListJobsOnConsole"
+        Action   = "macie2:ListClassificationJobs"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid = "GetFunctionDetails"
+        Action = [
+          "lambda:GetRuntimeManagementConfig",
+          "lambda:GetFunction",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "account:GetContactInformation"
+        Effect   = "Allow"
+        Resource = "*"
+      },
     ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    sid = "ListWafRegionalRulesAndRuleGroups"
-
-    effect = "Allow"
-
-    actions = [
-      "waf-regional:ListRules",
-      "waf-regional:ListRuleGroups",
-    ]
-
-    resources = [
-      "arn:aws:waf-regional:*:*:rule/*",
-      "arn:aws:waf-regional:*:*:rulegroup/*"
-    ]
-  }
-
-  statement {
-    sid = "ListJobsOnConsole"
-
-    effect = "Allow"
-
-    actions = [
-      "macie2:ListClassificationJobs",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    sid = "GetFunctionDetails"
-
-    effect = "Allow"
-
-    actions = [
-      "lambda:GetRuntimeManagementConfig",
-      "lambda:GetFunction",
-    ]
-
-    resources = [
-      "*"
-    ]
-  }
-
-  statement {
-    sid = "AccessAccountContactInfo"
-
-    effect = "Allow"
-
-    actions = [
-      "account:GetContactInformation",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
+  })
 }
-
 #--------------------------------------------------------------------------------------------------------------
 # Call Sysdig Backend to add the trusted role for Config Posture to the Sysdig Cloud Account
 #
@@ -131,13 +99,13 @@ data "aws_iam_policy_document" "custom_resources_policy" {
 # explicit dependency using depends_on
 #--------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "config_posture_role" {
-  account_id                 = var.sysdig_secure_account_id
-  type                       = "COMPONENT_TRUSTED_ROLE"
-  instance                   = "secure-posture"
-  version                    = "v0.1.0"
+  account_id = var.sysdig_secure_account_id
+  type       = "COMPONENT_TRUSTED_ROLE"
+  instance   = "secure-posture"
+  version    = "v0.1.0"
   trusted_role_metadata = jsonencode({
-        aws = {
-          role_name = local.config_posture_role_name
-        }
-      })
+    aws = {
+      role_name = local.config_posture_role_name
+    }
+  })
 }

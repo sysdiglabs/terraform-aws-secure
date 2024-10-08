@@ -17,7 +17,7 @@ data "aws_caller_identity" "current" {}
 data "sysdig_secure_cloud_ingestion_assets" "assets" {}
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-	cloud_provider = "aws"
+  cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
@@ -59,7 +59,7 @@ resource "aws_iam_role" "event_bus_stackset_admin_role" {
   name = "AWSCloudFormationStackSetAdministrationRoleForEB"
   tags = var.tags
 
-  assume_role_policy = <<EOF
+  assume_role_policy  = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -149,43 +149,37 @@ resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
   ]
 }
 EOF
-  inline_policy {
-    name   = local.eb_resource_name
-    policy = data.aws_iam_policy_document.cloud_trail_events.json
-  }
 }
 
-# IAM Policy Document used by EventBridge role for the cloudtrail events policy
-data "aws_iam_policy_document" "cloud_trail_events" {
 
-  statement {
-    sid = "CloudTrailEventsPut"
-
-    effect = "Allow"
-
-    actions = [
-      "events:PutEvents",
+resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
+  name = local.eb_resource_name
+  role = aws_iam_role.event_bus_invoke_remote_event_bus.id
+  policy = jsonencode({
+    Statement = [
+      {
+        Sid = "CloudTrailEventsPut"
+        Action = [
+          "events:PutEvents",
+        ]
+        Effect = "Allow"
+        Resource = [
+          data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN,
+        ]
+      },
+      {
+        Sid = "CloudTrailEventRuleAccess"
+        Action = [
+          "events:DescribeRule",
+          "events:ListTargetsByRule",
+        ]
+        Effect = "Allow"
+        Resource = [
+          "arn:aws:events:*:*:rule/${local.eb_resource_name}",
+        ]
+      },
     ]
-
-    resources = [
-      data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN,
-    ]
-  }
-
-  statement {
-    sid = "CloudTrailEventRuleAccess"
-
-    effect = "Allow"
-
-    actions = [
-      "events:DescribeRule",
-      "events:ListTargetsByRule",
-    ]
-
-    resources = [
-      "arn:aws:events:*:*:rule/${local.eb_resource_name}",
-    ]
-  }
+  })
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -258,10 +252,10 @@ resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance"
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
-  account_id                 = var.sysdig_secure_account_id
-  type                       = "COMPONENT_EVENT_BRIDGE"
-  instance                   = "secure-runtime"
-  version                    = "v0.1.0"
+  account_id = var.sysdig_secure_account_id
+  type       = "COMPONENT_EVENT_BRIDGE"
+  instance   = "secure-runtime"
+  version    = "v0.1.0"
   event_bridge_metadata = jsonencode({
     aws = {
       role_name = local.eb_resource_name
