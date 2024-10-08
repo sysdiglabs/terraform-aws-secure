@@ -24,7 +24,7 @@ variable "name" {
 }
 
 variable "regions" {
-  description = "(Optional) The list of AWS regions we want to scraper data from"
+  description = "(Optional) The list of AWS regions we want to scrape data from"
   type        = set(string)
   default     = []
 }
