@@ -27,7 +27,6 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   role_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
-
   bucket_arn = regex("^([^/]+)", var.folder_arn)[0]
 }
 
@@ -43,12 +42,14 @@ resource "random_id" "suffix" {
 resource "aws_iam_role" "cloudlogs_s3_access" {
   name = local.role_name
   tags = var.tags
-
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
-  inline_policy {
-    name   = "cloudlogs_s3_access_policy"
-    policy = data.aws_iam_policy_document.cloudlogs_s3_access.json
-  }
+}
+
+// AWS IAM Role Policy that will be used by CloudIngestion to access the CloudTrail-associated s3 bucket
+resource "aws_iam_role_policy" "cloudlogs_s3_access_policy" {
+  name   = "cloudlogs_s3_access_policy"
+  role   = aws_iam_role.cloudlogs_s3_access.name
+  policy = data.aws_iam_policy_document.cloudlogs_s3_access.json
 }
 
 # IAM Policy Document used for the assume role policy
@@ -120,6 +121,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       cloudtrailS3Bucket = {
         folder_arn    = var.folder_arn
         role_name     = local.role_name
+        regions       = var.regions
       }
     }
   })

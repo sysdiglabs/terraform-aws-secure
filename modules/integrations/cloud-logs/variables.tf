@@ -22,3 +22,9 @@ variable "name" {
   type        = string
   default     = "sysdig-secure-cloudlogs"
 }
+
+variable "regions" {
+  description = "(Optional) The list of AWS regions we want to scrape data from"
+  type        = set(string)
+  default     = []
+}
