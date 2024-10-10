@@ -54,13 +54,12 @@ EOF
 }
 
 data "aws_caller_identity" "current" {}
-data "aws_iam_account_alias" "current" {}
 
 resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   enabled        = true
   provider_id    = data.aws_caller_identity.current.account_id
   provider_type  = "PROVIDER_AWS"
-  provider_alias = data.aws_iam_account_alias.current.account_alias
+  provider_alias = var.account_alias
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"

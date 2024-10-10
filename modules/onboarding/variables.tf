@@ -40,3 +40,10 @@ variable "failure_tolerance_percentage" {
   description = "The percentage of accounts, per Region, for which stack operations can fail before AWS CloudFormation stops the operation in that Region"
   default     = 90
 }
+
+variable "account_alias" {
+  type        = string
+  description = "Account Alias"
+  default     = ""
+}
+
