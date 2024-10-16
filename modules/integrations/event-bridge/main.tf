@@ -59,7 +59,7 @@ resource "aws_iam_role" "event_bus_stackset_admin_role" {
   name = "AWSCloudFormationStackSetAdministrationRoleForEB"
   tags = var.tags
 
-  assume_role_policy  = <<EOF
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -73,7 +73,14 @@ resource "aws_iam_role" "event_bus_stackset_admin_role" {
   ]
 }
 EOF
-  managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"]
+}
+
+resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_admin_role_managed_policy" {
+  count     = !var.auto_create_stackset_roles ? 0 : 1
+  role_name = aws_iam_role.event_bus_stackset_admin_role[0].id
+  policy_arns = [
+    "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"
+  ]
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +112,12 @@ resource "aws_iam_role" "event_bus_stackset_execution_role" {
   ]
 }
 EOF
-  managed_policy_arns = [
+}
+
+resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_execution_role_managed_policy" {
+  count     = !var.auto_create_stackset_roles ? 0 : 1
+  role_name = aws_iam_role.event_bus_stackset_execution_role[0].id
+  policy_arns = [
     "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess",
     "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
   ]
