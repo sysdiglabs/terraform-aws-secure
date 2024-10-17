@@ -43,23 +43,28 @@ resource "aws_iam_role" "onboarding_role" {
     ]
 }
 EOF
-  managed_policy_arns = compact([
-    "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess",
-    var.is_organizational ? "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess" : ""
-  ])
 
   lifecycle {
     ignore_changes = [tags]
   }
 }
 
+resource "aws_iam_role_policy_attachments_exclusive" "onboarding_role_managed_policy" {
+  role_name = aws_iam_role.onboarding_role.id
+  policy_arns = compact([
+    "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess",
+    var.is_organizational ? "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess" : ""
+  ])
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
-  enabled        = true
-  provider_id    = data.aws_caller_identity.current.account_id
-  provider_type  = "PROVIDER_AWS"
-  provider_alias = var.account_alias
+  enabled              = true
+  provider_id          = data.aws_caller_identity.current.account_id
+  provider_type        = "PROVIDER_AWS"
+  provider_alias       = var.account_alias
+  regulatory_framework = "REGULATORY_FRAMEWORK_UNSPECIFIED"
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"

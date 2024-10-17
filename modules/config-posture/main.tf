@@ -18,9 +18,9 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 # Since this is not an Organizational deploy, create role/polices directly
 #----------------------------------------------------------
 resource "aws_iam_role" "cspm_role" {
-  name                = local.config_posture_role_name
-  tags                = var.tags
-  assume_role_policy  = <<EOF
+  name               = local.config_posture_role_name
+  tags               = var.tags
+  assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -40,7 +40,13 @@ resource "aws_iam_role" "cspm_role" {
     ]
 }
 EOF
-  managed_policy_arns = ["arn:aws:iam::aws:policy/SecurityAudit"]
+}
+
+resource "aws_iam_role_policy_attachments_exclusive" "cspm_role_managed_policy" {
+  role_name = aws_iam_role.cspm_role.id
+  policy_arns = [
+    "arn:aws:iam::aws:policy/SecurityAudit"
+  ]
 }
 
 resource "aws_iam_role_policy" "cspm_role_policy" {
