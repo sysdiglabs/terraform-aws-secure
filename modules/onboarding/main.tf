@@ -64,7 +64,6 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   provider_id          = data.aws_caller_identity.current.account_id
   provider_type        = "PROVIDER_AWS"
   provider_alias       = var.account_alias
-  regulatory_framework = "REGULATORY_FRAMEWORK_UNSPECIFIED"
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"
