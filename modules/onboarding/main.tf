@@ -1,3 +1,13 @@
+#-----------------------------------------------------------------------------------------
+# Fetch the data sources
+#-----------------------------------------------------------------------------------------
+
+data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
+  cloud_provider = "aws"
+}
+
+data "sysdig_secure_tenant_external_id" "external_id" {}
+
 #----------------------------------------------------------
 # Fetch & compute required data
 #----------------------------------------------------------
@@ -9,13 +19,9 @@ resource "random_id" "suffix" {
 
 locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
+  trusted_identity     = var.is_gov_cloud ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  arn_prefix           = var.is_gov_cloud ? "arn:aws-us-gov" : "arn:aws"
 }
-
-data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
-  cloud_provider = "aws"
-}
-
-data "sysdig_secure_tenant_external_id" "external_id" {}
 
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
@@ -31,7 +37,7 @@ resource "aws_iam_role" "onboarding_role" {
             "Sid": "",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
+                "AWS": "${local.trusted_identity}"
             },
             "Action": "sts:AssumeRole",
             "Condition": {
@@ -49,12 +55,30 @@ EOF
   }
 }
 
+resource "aws_iam_role_policy" "onboarding_role_policy" {
+  name  = local.onboarding_role_name
+  role  = aws_iam_role.onboarding_role.id
+  policy = jsonencode({
+    Statement = [
+      {
+        Sid = "AccountManagementReadAccess"
+        Action = [
+          "account:Get*",
+          "account:List*",
+        ]
+        Effect = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachments_exclusive" "onboarding_role_managed_policy" {
+  count     = var.is_organizational ? 1 : 0
   role_name = aws_iam_role.onboarding_role.id
-  policy_arns = compact([
-    "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess",
-    var.is_organizational ? "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess" : ""
-  ])
+  policy_arns = [
+    "${local.arn_prefix}:iam::aws:policy/AWSOrganizationsReadOnlyAccess"
+  ]
 }
 
 data "aws_caller_identity" "current" {}
@@ -64,6 +88,7 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   provider_id          = data.aws_caller_identity.current.account_id
   provider_type        = "PROVIDER_AWS"
   provider_alias       = var.account_alias
+  regulatory_framework = var.is_gov_cloud ? "REGULATORY_FRAMEWORK_US_FEDRAMP" : ""
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"

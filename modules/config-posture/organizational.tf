@@ -45,13 +45,13 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: [ ${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity} ]
+              AWS: [ ${local.trusted_identity} ]
             Action: [ 'sts:AssumeRole' ]
             Condition:
               StringEquals:
                 sts:ExternalId: ${data.sysdig_secure_tenant_external_id.external_id.external_id}
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/SecurityAudit"
+        - "${local.arn_prefix}:iam::aws:policy/SecurityAudit"
       Policies:
         - PolicyName: ${local.config_posture_role_name}
           PolicyDocument:
@@ -67,8 +67,8 @@ Resources:
                   - "waf-regional:ListRules"
                   - "waf-regional:ListRuleGroups"
                 Resource:
-                  - "arn:aws:waf-regional:*:*:rule/*"
-                  - "arn:aws:waf-regional:*:*:rulegroup/*"
+                  - "${local.arn_prefix}:waf-regional:*:*:rule/*"
+                  - "${local.arn_prefix}:waf-regional:*:*:rulegroup/*"
               - Sid: "ListJobsOnConsole"
                 Effect: "Allow"
                 Action: "macie2:ListClassificationJobs"

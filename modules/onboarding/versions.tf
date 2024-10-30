@@ -10,7 +10,8 @@ terraform {
       version = ">= 3.1"
     }
     sysdig = {
-      source = "sysdiglabs/sysdig"
+      source  = "local/sysdiglabs/sysdig" // TODO: remove after test
+      version = "~> 1.0.0"
     }
   }
 }
