@@ -4,11 +4,6 @@ variable "cspm_role_arn" {
   type        = string
 }
 
-variable "trusted_identity" {
-  type        = string
-  description = "This value should be provided by Sysdig. The field refers to Sysdig's IAM role that will be authorized to pull ECR images"
-}
-
 variable "tags" {
   type        = map(string)
   description = "sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning"

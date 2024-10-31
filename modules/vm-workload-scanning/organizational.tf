@@ -25,10 +25,10 @@ Resources:
               Effect: "Allow"
               Action: "sts:AssumeRole"
               Principal:
-                AWS: "${var.trusted_identity}"
+                AWS: "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
               Condition:
                 StringEquals:
-                  sts:ExternalId: "${data.sysdig_secure_tenant_external_id.external_id.external_id}"
+                  sts:ExternalId: "${data.sysdig_secure_tenant_external_id.cloud_auth_external_id.external_id}"
         Policies:
           - PolicyName: ${local.ecr_role_name}
             PolicyDocument:
@@ -61,10 +61,10 @@ Resources:
               Effect: "Allow"
               Action: "sts:AssumeRole"
               Principal:
-                AWS: "${var.trusted_identity}"
+                AWS: "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
               Condition:
                 StringEquals:
-                  sts:ExternalId: "${data.sysdig_secure_tenant_external_id.external_id.external_id}"
+                  sts:ExternalId: "${data.sysdig_secure_tenant_external_id.cloud_auth_external_id.external_id}"
         Policies:
           - PolicyName: ${local.ecr_role_name}
             PolicyDocument:

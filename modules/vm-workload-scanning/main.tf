@@ -1,4 +1,8 @@
-data "sysdig_secure_tenant_external_id" "external_id" {}
+data "sysdig_secure_tenant_external_id" "cloud_auth_external_id" {}
+
+data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
+  cloud_provider = "aws"
+}
 
 ###########################################
 # Workload Controller IAM roles and stuff #
@@ -65,7 +69,7 @@ data "aws_iam_policy_document" "functions" {
 resource "aws_iam_policy" "ecr_scanning" {
   name        = local.ecr_role_name
   description = "Grants Sysdig Secure access to ECR images"
-  policy      = data.aws_iam_policy_document.scanning[0].json
+  policy      = data.aws_iam_policy_document.scanning.json
   tags        = var.tags
 }
 
@@ -89,14 +93,14 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        var.trusted_identity,
+        data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
       ]
     }
 
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
-      values   = [data.sysdig_secure_tenant_external_id.external_id.external_id]
+      values   = [data.sysdig_secure_tenant_external_id.cloud_auth_external_id.external_id]
     }
   }
 }
@@ -104,20 +108,20 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
 resource "aws_iam_role" "scanning" {
   name               = local.ecr_role_name
   tags               = var.tags
-  assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy[0].json
+  assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy.json
 }
 
 resource "aws_iam_policy_attachment" "scanning" {
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning[0].name]
-  policy_arn = aws_iam_policy.ecr_scanning[0].arn
+  roles      = [aws_iam_role.scanning.name]
+  policy_arn = aws_iam_policy.ecr_scanning.arn
 }
 
 resource "aws_iam_policy_attachment" "functions" {
   count = var.lambda_scanning_enabled ? 1 : 0
 
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning[0].name]
+  roles      = [aws_iam_role.scanning.name]
   policy_arn = aws_iam_policy.functions_scanning[0].arn
 }
 
