@@ -36,10 +36,45 @@ data "aws_iam_policy_document" "scanning" {
   }
 }
 
+data "aws_iam_policy_document" "functions" {
+  count = var.lambda_scanning_enabled ? 1 : 0
+
+  statement {
+    sid = "Full ready-only lambda permissions"
+
+    effect = "Allow"
+
+    actions = [
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:GetRuntimeManagementConfig",
+      "lambda:ListFunctions",
+      "lambda:ListTagsForResource",
+      "lambda:GetLayerVersionByArn",
+      "lambda:GetLayerVersion",
+      "lambda:ListLayers",
+      "lambda:ListLayerVersions"
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+}
+
 resource "aws_iam_policy" "ecr_scanning" {
   name        = local.ecr_role_name
   description = "Grants Sysdig Secure access to ECR images"
   policy      = data.aws_iam_policy_document.scanning[0].json
+  tags        = var.tags
+}
+
+resource "aws_iam_policy" "functions_scanning" {
+  count = var.lambda_scanning_enabled ? 1 : 0
+
+  name        = local.ecr_role_name
+  description = "Grants Sysdig Secure access to AWS Lambda"
+  policy      = data.aws_iam_policy_document.functions[0].json
   tags        = var.tags
 }
 
@@ -78,6 +113,14 @@ resource "aws_iam_policy_attachment" "scanning" {
   policy_arn = aws_iam_policy.ecr_scanning[0].arn
 }
 
+resource "aws_iam_policy_attachment" "functions" {
+  count = var.lambda_scanning_enabled ? 1 : 0
+
+  name       = local.ecr_role_name
+  roles      = [aws_iam_role.scanning[0].name]
+  policy_arn = aws_iam_policy.functions_scanning[0].arn
+}
+
 #--------------------------------------------------------------------------------------------------------------
 # Call Sysdig Backend to add the trusted role for Config Posture to the Sysdig Cloud Account
 #
@@ -104,5 +147,7 @@ resource "sysdig_secure_cloud_auth_account_component" "vm_workload_scanning_acco
     aws_cloudformation_stack_set_instance.scanning_role_stackset_instance,
     aws_eks_access_entry.viewer,
     aws_eks_access_policy_association.viewer,
+    aws_iam_policy.functions_scanning,
+    aws_iam_policy_attachment.functions,
   ]
 }

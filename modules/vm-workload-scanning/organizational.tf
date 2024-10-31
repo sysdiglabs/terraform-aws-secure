@@ -11,39 +11,8 @@ locals {
   organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.org_units)
 }
 
-#-----------------------------------------------------------------------------------------------------------------------
-# The resources in this file set up an Agentless Workload Scanning IAM Role and Policies in all accounts
-# in an AWS Organization via a CloudFormation StackSet.
-# Global resources: IAM Role and Policy
-#-----------------------------------------------------------------------------------------------------------------------
-
-#-----------------------------------------------------------------------------------------------------------------------
-# stackset and stackset instance deployed in organization units for Agentless Scanning IAM Role, Policies
-#-----------------------------------------------------------------------------------------------------------------------
-
-# stackset to deploy agentless workload scanning role in organization unit
-resource "aws_cloudformation_stack_set" "scanning_role_stackset" {
-  count = var.is_organizational ? 1 : 0
-
-  name             = join("-", [local.ecr_role_name, "ScanningRoleOrg"])
-  tags             = var.tags
-  permission_model = "SERVICE_MANAGED"
-  capabilities     = ["CAPABILITY_NAMED_IAM"]
-
-  managed_execution {
-    active = true
-  }
-
-  auto_deployment {
-    enabled                          = true
-    retain_stacks_on_account_removal = false
-  }
-
-  lifecycle {
-    ignore_changes = [administration_role_arn]
-  }
-
-  template_body = <<TEMPLATE
+locals {
+  policy_document_no_lambda = <<TEMPLATE
 Resources:
   SysdigAgentlessWorkloadRole:
       Type: AWS::IAM::Role
@@ -76,6 +45,85 @@ Resources:
                   Resource: "*"
 
 TEMPLATE
+}
+
+locals {
+  policy_document_lambda = <<TEMPLATE
+Resources:
+  SysdigAgentlessWorkloadRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${local.ecr_role_name}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "SysdigSecureScanning"
+              Effect: "Allow"
+              Action: "sts:AssumeRole"
+              Principal:
+                AWS: "${var.trusted_identity}"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "${data.sysdig_secure_tenant_external_id.external_id.external_id}"
+        Policies:
+          - PolicyName: ${local.ecr_role_name}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: "EcrReadPermissions"
+                  Effect: "Allow"
+                  Action:
+                    - "ecr:GetDownloadUrlForLayer"
+                    - "ecr:BatchGetImage"
+                    - "ecr:BatchCheckLayerAvailability"
+                    - "ecr:ListImages"
+                    - "ecr:GetAuthorizationToken"
+                    - "lambda:GetFunction"
+                    - "lambda:GetFunctionConfiguration"
+                    - "lambda:GetRuntimeManagementConfig"
+                    - "lambda:ListFunctions"
+                    - "lambda:ListTagsForResource"
+                    - "lambda:GetLayerVersionByArn"
+                    - "lambda:GetLayerVersion"
+                    - "lambda:ListLayers"
+                    - "lambda:ListLayerVersions"
+                  Resource: "*"
+TEMPLATE
+}
+
+#-----------------------------------------------------------------------------------------------------------------------
+# The resources in this file set up an Agentless Workload Scanning IAM Role and Policies in all accounts
+# in an AWS Organization via a CloudFormation StackSet.
+# Global resources: IAM Role and Policy
+#-----------------------------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
+# stackset and stackset instance deployed in organization units for Agentless Scanning IAM Role, Policies
+#-----------------------------------------------------------------------------------------------------------------------
+
+# stackset to deploy agentless workload scanning role in organization unit
+resource "aws_cloudformation_stack_set" "scanning_role_stackset" {
+  count = var.is_organizational ? 1 : 0
+
+  name             = join("-", [local.ecr_role_name, "ScanningRoleOrg"])
+  tags             = var.tags
+  permission_model = "SERVICE_MANAGED"
+  capabilities     = ["CAPABILITY_NAMED_IAM"]
+
+  managed_execution {
+    active = true
+  }
+
+  auto_deployment {
+    enabled                          = true
+    retain_stacks_on_account_removal = false
+  }
+
+  lifecycle {
+    ignore_changes = [administration_role_arn]
+  }
+
+  template_body = var.lambda_scanning_enabled ? local.policy_document_lambda : local.policy_document_no_lambda
 }
 
 # stackset instance to deploy agentless scanning role, in all organization units
