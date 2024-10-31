@@ -27,9 +27,9 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 #-----------------------------------------------------------------------------------------
 locals {
   region_set           = toset(var.regions)
-  trusted_identity     = var.is_gov_cloud ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  target_event_bus_arn = var.is_gov_cloud ? data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARNGov : data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
-  arn_prefix           = var.is_gov_cloud ? "arn:aws-us-gov" : "arn:aws"
+  trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  target_event_bus_arn = var.is_gov_cloud_onboarding ? data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARNGov : data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
+  arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
 }
 
 #-----------------------------------------------------------------------------------------

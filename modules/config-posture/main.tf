@@ -19,8 +19,8 @@ resource "random_id" "suffix" {
 
 locals {
   config_posture_role_name = "sysdig-secure-posture-${random_id.suffix.hex}"
-  trusted_identity         = var.is_gov_cloud ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  arn_prefix               = var.is_gov_cloud ? "arn:aws-us-gov" : "arn:aws"
+  trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  arn_prefix               = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
 }
 
 #----------------------------------------------------------

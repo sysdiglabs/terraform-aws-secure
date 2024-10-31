@@ -74,7 +74,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | (Optional) Tags to be attached to all Sysdig resources. | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
 | <a name="input_sysdig_secure_account_id"></a> [sysdig\_secure\_account\_id](#input\_sysdig\_secure\_account\_id) | ID of the Sysdig Cloud Account to enable Event Bridge integration for (incase of organization, ID of the Sysdig management account) | `string` | n/a | yes |
-| <a name="input_is_gov_cloud"></a> [is\_gov\_cloud](#input\_is\_gov\_cloud) | true/false whether Event Bridge should be deployed in a govcloud account/org or not | `bool` | `false` | no |
+| <a name="input_is_gov_cloud_onboarding"></a> [is\_gov\_cloud\_onboarding](#input\_is\_gov\_cloud\_onboarding) | true/false whether Event Bridge should be deployed in a govcloud account/org or not | `bool` | `false` | no |
 
 ## Outputs
 

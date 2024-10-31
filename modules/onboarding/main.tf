@@ -19,8 +19,8 @@ resource "random_id" "suffix" {
 
 locals {
   onboarding_role_name = "sysdig-secure-onboarding-${random_id.suffix.hex}"
-  trusted_identity     = var.is_gov_cloud ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  arn_prefix           = var.is_gov_cloud ? "arn:aws-us-gov" : "arn:aws"
+  trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
 }
 
 #----------------------------------------------------------
@@ -88,7 +88,7 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   provider_id          = data.aws_caller_identity.current.account_id
   provider_type        = "PROVIDER_AWS"
   provider_alias       = var.account_alias
-  regulatory_framework = var.is_gov_cloud ? "REGULATORY_FRAMEWORK_US_FEDRAMP" : ""
+  regulatory_framework = var.is_gov_cloud_onboarding ? "REGULATORY_FRAMEWORK_US_FEDRAMP" : ""
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"

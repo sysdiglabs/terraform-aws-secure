@@ -59,7 +59,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
 | <a name="input_account_alias"></a> [account_alias](#input\_account\_alias) | Alias name of the AWS account | `string` | `""` | no |
-| <a name="input_is_gov_cloud"></a> [is\_gov\_cloud](#input\_is\_gov\_cloud) | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not | `bool` | `false` | no |
+| <a name="input_is_gov_cloud_onboarding"></a> [is\_gov\_cloud\_onboarding](#input\_is\_gov\_cloud\_onboarding) | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not | `bool` | `false` | no |
 
 ## Outputs
 
@@ -68,7 +68,7 @@ No modules.
 | <a name="output_sysdig_secure_account_id"></a> [sysdig\_secure\_account\_id](#output\_sysdig\_secure\_account\_id) | ID of the Sysdig Cloud Account created |
 | <a name="output_is_organizational"></a> [is\_organizational](#output\_is\_organizational) | Boolean value to indicate if secure-for-cloud is deployed to an entire AWS organization or not |
 | <a name="output_organizational_unit_ids"></a> [organizational\_unit\_ids](#output\_organizational\_unit\_ids) | organizational unit ids onboarded |
-| <a name="output_is_gov_cloud"></a> [is\_gov\_cloud](#output\_is\_gov\_cloud) | Boolean value to indicate if the govcloud account/organization is onboarded |
+| <a name="output_is_gov_cloud_onboarding"></a> [is\_gov\_cloud\_onboarding](#output\_is\_gov\_cloud\_onboarding) | Boolean value to indicate if a govcloud account/organization is being onboarded |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
 ## Authors

@@ -18,16 +18,16 @@ provider "aws" {
 }
 
 module "onboarding" {
-  source            	  = "../../../modules/onboarding"
+  source            	    = "../../../modules/onboarding"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
-  is_organizational 	  = true
+  is_organizational 	    = true
 }
 
 module "config-posture" {
   source                   = "../../../modules/config-posture"
-  org_units                = module.onboarding.organizational_unit_ids
-  is_organizational        = module.onboarding.is_organizational
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
+  org_units                = ["ou-ks5g-dofso0kc"]
+  is_organizational        = true
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "config_posture" {

@@ -18,14 +18,14 @@ provider "aws" {
 }
 
 module "onboarding" {
-  source            = "../../../modules/onboarding"
-  is_gov_cloud      = true
+  source                  = "../../../modules/onboarding"
+  is_gov_cloud_onboarding = true
 }
 
 module "config-posture" {
   source                   = "../../../modules/config-posture"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
-  is_gov_cloud             = true
+  is_gov_cloud_onboarding  = true
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "config_posture" {

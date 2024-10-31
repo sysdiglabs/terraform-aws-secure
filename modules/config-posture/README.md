@@ -56,7 +56,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
 | <a name="input_sysdig_secure_account_id"></a> [sysdig\_secure\_account\_id](#input\_sysdig\_secure\_account\_id) | (Required) The GUID of the management project or single project per sysdig representation | `string` | n/a | yes |
-| <a name="input_is_gov_cloud"></a> [is\_gov\_cloud](#input\_is\_gov\_cloud) | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not | `bool` | `false` | no |
+| <a name="input_is_gov_cloud_onboarding"></a> [is\_gov\_cloud\_onboarding](#input\_is\_gov\_cloud\_onboarding) | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not | `bool` | `false` | no |
 
 ## Outputs
 

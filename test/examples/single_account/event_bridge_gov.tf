@@ -7,7 +7,7 @@ module "event-bridge" {
   source                   = "../../../modules/integrations/event-bridge"
   regions                  = ["us-gov-east-1"]
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
-  is_gov_cloud             = module.onboarding.is_gov_cloud
+  is_gov_cloud_onboarding  = module.onboarding.is_gov_cloud_onboarding
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "threat_detection" {
