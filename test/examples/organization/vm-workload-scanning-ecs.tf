@@ -5,8 +5,6 @@ module "vm_workload_scanning" {
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   cspm_role_arn = module.config-posture.cspm_role_arn
   trusted_identity = module.config-posture.sysdig_secure_account_id
-
-  eks_scanning_enabled = false
 }
 
 
