@@ -54,7 +54,12 @@ No modules.
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_config_posture_component_id"></a> [config_posture_component_id](#output_config_posture_component_id) | Component identifier of trusted identity created in Sysdig Backend for Config Posture |
+| <a name="output_cspm_role_arn"></a> [cspm_role_arn](#output_cspm_role_arn) | The ARN of the CSPM role |
+| <a name="output_sysdig_secure_account_id"></a> [sysdig_secure_account_id](#output_sysdig_secure_account_id) | ID of the Sysdig Cloud Account to enable Config Posture for (in case of organization, ID of the Sysdig management account) |
+
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
 ## Authors
