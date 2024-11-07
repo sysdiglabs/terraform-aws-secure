@@ -88,7 +88,7 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
   provider_id          = data.aws_caller_identity.current.account_id
   provider_type        = "PROVIDER_AWS"
   provider_alias       = var.account_alias
-  regulatory_framework = var.is_gov_cloud_onboarding ? "REGULATORY_FRAMEWORK_US_FEDRAMP" : ""
+  provider_partition   = var.is_gov_cloud_onboarding ? "PROVIDER_PARTITION_AWS_GOVCLOUD" : ""
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"
