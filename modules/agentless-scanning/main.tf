@@ -41,11 +41,18 @@ locals {
 }
 
 #-----------------------------------------------------------------------------------------
-# Generate a unique name for resources using random suffix and account ID hash
+# Generate a unique name for resources using random suffix
 #-----------------------------------------------------------------------------------------
 locals {
-  account_id_hash        = substr(md5(local.account_id), 0, 4)
-  scanning_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  scanning_resource_name = "${var.name}-${random_id.suffix.hex}"
+}
+
+#-----------------------------------------------------------------------------------------
+# set StackSet roles
+#-----------------------------------------------------------------------------------------
+locals {
+  administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.scanning_stackset_admin_role[0].arn : var.stackset_admin_role_arn
+  execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.scanning_stackset_execution_role[0].name : var.stackset_execution_role_name
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -86,26 +93,20 @@ resource "aws_iam_role" "scanning_stackset_admin_role" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachments_exclusive" "scanning_stackset_admin_role_managed_policy" {
-  count       = !var.auto_create_stackset_roles ? 0 : 1
-  role_name   = aws_iam_role.scanning_stackset_admin_role[0].id
-  policy_arns = ["arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"]
-}
-
 resource "aws_iam_role_policy" "scanning_stackset_admin_role_policy" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
-  name = "KmsOperationsAccess"
+  name_prefix = "AssumeExecutionRole"
   role = aws_iam_role.scanning_stackset_admin_role[0].id
   policy = jsonencode({
     Statement = [
       {
-        Sid = "KmsOperationsAccess"
+        Sid = "AssumeExecutionRole"
         Action = [
-          "kms:*",
+          "sts:AssumeRole",
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = "arn:aws:iam:::role/${local.scanning_resource_name}-ExecutionRole"
       },
     ]
   })
@@ -122,7 +123,7 @@ resource "aws_iam_role_policy" "scanning_stackset_admin_role_policy" {
 resource "aws_iam_role" "scanning_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
-  name = "AWSCloudFormationStackSetExecutionRoleForScanning"
+  name = "${local.scanning_resource_name}-ExecutionRole"
   tags = var.tags
 
   assume_role_policy = <<EOF
@@ -145,261 +146,30 @@ EOF
 resource "aws_iam_role_policy_attachments_exclusive" "scanning_stackset_execution_role_managed_policy" {
   count       = !var.auto_create_stackset_roles ? 0 : 1
   role_name   = aws_iam_role.scanning_stackset_execution_role[0].id
-  policy_arns = ["arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"]
+  policy_arns = [
+    "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
+    "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess",
+  ]
 }
 
-resource "aws_iam_role_policy" "scanning_stackset_execution_role_policy" {
-  count = !var.auto_create_stackset_roles ? 0 : 1
-
-  name = "KmsOperationsAccess"
-  role = aws_iam_role.scanning_stackset_execution_role[0].id
-  policy = jsonencode({
-    Statement = [
-      {
-        Sid = "KmsOperationsAccess"
-        Action = [
-          "kms:*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
-}
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# These resources create a custom Agentless Scanning IAM Policy in the source account, referring a custom IAM Policy Document defining
-# the respective permissions for scanning.
-#-----------------------------------------------------------------------------------------------------------------------------------------
-
-data "aws_iam_policy_document" "scanning" {
-  # General read permission, necessary for the discovery phase.
-  statement {
-    sid = "Read"
-
-    actions = [
-      "ec2:Describe*",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  # Allow the listing of KMS keys, necessary to find the right one.
-  statement {
-    sid = "AllowKMSKeysListing"
-
-    actions = [
-      "kms:ListKeys",
-      "kms:ListAliases",
-      "kms:ListResourceTags",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    sid = "AllowKMSEncryptDecrypt"
-
-    actions = [
-      "kms:DescribeKey",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:ReEncrypt*",
-      "kms:GenerateDataKey*",
-      "kms:CreateGrant",
-    ]
-
-    resources = [
-      "*"
-    ]
-
-    condition {
-      test     = "StringLike"
-      variable = "kms:ViaService"
-      values = [
-        "ec2.*.amazonaws.com",
-      ]
-    }
-  }
-
-  # Allows the creation of snapshots.
-  statement {
-    sid = "CreateTaggedSnapshotFromVolume"
-
-    actions = [
-      "ec2:CreateSnapshot",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  # Allows the copy of snapshot, which is necessary for re-encrypting
-  # them to make them shareable with Sysdig account.
-  statement {
-    sid = "CopySnapshots"
-
-    actions = [
-      "ec2:CopySnapshot",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  # Allows tagging snapshots only for specific tag key and value.
-  statement {
-    sid = "SnapshotTags"
-
-    actions = [
-      "ec2:CreateTags"
-    ]
-
-    resources = [
-      "*",
-    ]
-
-    # This condition limits the scope of tagging to the sole
-    # CreateSnapshot and CopySnapshot operations.
-    condition {
-      test     = "StringEquals"
-      variable = "ec2:CreateAction"
-      values = [
-        "CreateSnapshot",
-        "CopySnapshot",
-      ]
-    }
-
-    # This condition limits the value of CreatedBy tag to the exact
-    # string Sysdig.
-    condition {
-      test     = "StringEquals"
-      variable = "aws:RequestTag/CreatedBy"
-      values   = ["Sysdig"]
-    }
-  }
-
-  # This statement allows the modification of those snapshot that have
-  # a simple "CreatedBy" tag valued "Sysdig". Additionally, such
-  # snapshots can only be shared with a specific AWS account, namely
-  # Sysdig account.
-  statement {
-    sid = "ec2SnapshotShare"
-
-    actions = [
-      "ec2:ModifySnapshotAttribute",
-    ]
-
-    condition {
-      test     = "StringEqualsIgnoreCase"
-      variable = "aws:ResourceTag/CreatedBy"
-      values   = ["Sysdig"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "ec2:Add/userId"
-      values = [
-        data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id
-      ]
-    }
-
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    sid = "ec2SnapshotDelete"
-
-    actions = [
-      "ec2:DeleteSnapshot",
-    ]
-
-    condition {
-      test     = "StringEqualsIgnoreCase"
-      variable = "aws:ResourceTag/CreatedBy"
-      values   = ["Sysdig"]
-    }
-
-    resources = [
-      "*",
-    ]
-  }
-}
-
-resource "aws_iam_policy" "scanning_policy" {
-  name        = local.scanning_resource_name
-  description = "Grants Sysdig Secure access to volumes and snapshots"
-  policy      = data.aws_iam_policy_document.scanning.json
-  tags        = var.tags
-}
-
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# These resources create an Assume Role IAM Policy Document, allowing Sysdig to assume role to run scanning.
-#-----------------------------------------------------------------------------------------------------------------------------------------
-
-data "aws_iam_policy_document" "scanning_assume_role_policy" {
-  statement {
-    sid = "SysdigSecureScanning"
-
-    actions = [
-      "sts:AssumeRole"
-    ]
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity,
-      ]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "sts:ExternalId"
-      values   = [data.sysdig_secure_tenant_external_id.external_id.external_id]
-    }
-  }
-}
-
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# These resources create an Agentless Scanning IAM Role in the source account, with the Assume Role IAM Policy and
-# custom Agentless Scanning IAM Policy attached.
-#-----------------------------------------------------------------------------------------------------------------------------------------
-
-resource "aws_iam_role" "scanning_role" {
-  name               = local.scanning_resource_name
-  tags               = var.tags
-  assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy.json
-}
-
-resource "aws_iam_policy_attachment" "scanning_policy_attachment" {
-  name       = local.scanning_resource_name
-  roles      = [aws_iam_role.scanning_role.name]
-  policy_arn = aws_iam_policy.scanning_policy.arn
-}
-
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# This resource creates a stackset and stackset instance to deploy resources for agentless scanning in the source account :-
-#   - KMS Primary Key, and
-#   - KMS Primary alias
+# This resource creates a stackset and stackset instance to deploy resources for agentless scanning in the source account
+#   - IAM Role
+#   - KMS Key
+#   - KMS Alias
 #
 # Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudformation_stack_set" "primary_acc_stackset" {
-  name                    = join("-", [local.scanning_resource_name, "ScanningKmsPrimaryAcc"])
+  name                    = join("-", [local.scanning_resource_name, "account"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
-  administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.scanning_stackset_admin_role[0].arn : var.stackset_admin_role_arn
-  execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.scanning_stackset_execution_role[0].name : var.stackset_execution_role_name
+  administration_role_arn = local.administration_role_arn
+  execution_role_name     = local.execution_role_name
 
   managed_execution {
     active = true
@@ -411,49 +181,151 @@ resource "aws_cloudformation_stack_set" "primary_acc_stackset" {
 
   template_body = <<TEMPLATE
 Resources:
-  AgentlessScanningKmsPrimaryKey:
-      Type: AWS::KMS::Key
-      Properties:
-        Description: "Sysdig Agentless Scanning encryption key"
-        PendingWindowInDays: ${var.kms_key_deletion_window}
-        KeyUsage: "ENCRYPT_DECRYPT"
-        EnableKeyRotation: true   # Enables automatic yearly rotation
-        KeyPolicy:
-          Id: ${local.scanning_resource_name}
+  ScanningRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ "-", [ "${local.scanning_resource_name}", !Ref AWS::Region ] ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            AWS: ${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}
+          Action: "sts:AssumeRole"
+          Condition:
+            StringEquals:
+              sts:ExternalId: ${data.sysdig_secure_tenant_external_id.external_id.external_id}
+      Policies:
+      - PolicyName: ${local.scanning_resource_name}
+        PolicyDocument:
+          Version: "2012-10-17"
           Statement:
-            - Sid: "SysdigAllowKms"
-              Effect: "Allow"
-              Principal:
-                AWS: ["arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root", "arn:aws:iam::${local.account_id}:role/${local.scanning_resource_name}"]
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:ReEncrypt*"
-                - "kms:GenerateDataKey*"
-                - "kms:DescribeKey"
-                - "kms:CreateGrant"
-                - "kms:ListGrants"
-              Resource: "*"
-            - Sid: "AllowCustomerManagement"
-              Effect: "Allow"
-              Principal:
-                AWS: ["arn:aws:iam::${local.account_id}:root", "${local.caller_arn}"]
-              Action: "kms:*"
-              Resource: "*"
+          - Sid: "Read"
+            Effect: "Allow"
+            Action: 
+            - "ec2:Describe*"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "AllowKMSKeysListing"
+            Effect: "Allow"
+            Action:
+            - "kms:ListKeys"
+            - "kms:ListAliases"
+            - "kms:ListResourceTags"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "AllowKMSEncryptDecrypt"
+            Effect: "Allow"
+            Action:
+            - "kms:DescribeKey"
+            - "kms:Encrypt"
+            - "kms:Decrypt"
+            - "kms:ReEncrypt*"
+            - "kms:GenerateDataKey*"
+            - "kms:CreateGrant"
+            Resource: "*"
+            Condition:
+              StringLike:
+                "kms:ViaService": "ec2.*.amazonaws.com"
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "CreateTaggedSnapshotFromVolume"
+            Effect: "Allow"
+            Action:
+            - "ec2:CreateSnapshot"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "CopySnapshots"
+            Effect: "Allow"
+            Action:
+            - "ec2:CopySnapshot"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "SnapshotTags"
+            Effect: "Allow"
+            Action:
+            - "ec2:CreateTags"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "ec2:CreateAction": ["CreateSnapshot", "CopySnapshot"]
+                "aws:RequestTag/CreatedBy": "Sysdig"
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "ec2SnapshotShare"
+            Effect: "Allow"
+            Action:
+            - "ec2:ModifySnapshotAttribute"
+            Resource: "*"
+            Condition:
+              StringEqualsIgnoreCase:
+                "aws:ResourceTag/CreatedBy": "Sysdig"
+              StringEquals:
+                "ec2:Add/userId": ${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}
+                "aws:RequestedRegion": !Ref AWS::Region
+          - Sid: "ec2SnapshotDelete"
+            Effect: "Allow"
+            Action:
+            - "ec2:DeleteSnapshot"
+            Resource: "*"
+            Condition:
+              StringEqualsIgnoreCase:
+                "aws:ResourceTag/CreatedBy": "Sysdig"
+              StringEquals:
+                "aws:RequestedRegion": !Ref AWS::Region
+  AgentlessScanningKmsPrimaryKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "Sysdig Agentless Scanning encryption key"
+      PendingWindowInDays: ${var.kms_key_deletion_window}
+      KeyUsage: "ENCRYPT_DECRYPT"
+      EnableKeyRotation: true   # Enables automatic yearly rotation
+      KeyPolicy:
+        Id: ${local.scanning_resource_name}
+        Statement:
+        - Sid: "SysdigAllowKms"
+          Effect: "Allow"
+          Principal:
+            AWS: 
+            - "arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root"
+            - !GetAtt ScanningRole.Arn
+          Action:
+          - "kms:Encrypt"
+          - "kms:Decrypt"
+          - "kms:ReEncrypt*"
+          - "kms:GenerateDataKey*"
+          - "kms:DescribeKey"
+          - "kms:CreateGrant"
+          - "kms:ListGrants"
+          Resource: "*"
+        - Sid: "AllowCustomerManagement"
+          Effect: "Allow"
+          Principal:
+            AWS: 
+            - "arn:aws:iam::${local.account_id}:root"
+            - "${local.caller_arn}"
+            - "arn:aws:iam::${local.account_id}:role/${local.execution_role_name}"
+          Action: "kms:*"
+          Resource: "*"
   AgentlessScanningKmsPrimaryAlias:
-      Type: AWS::KMS::Alias
-      Properties:
-        AliasName: "alias/${local.scanning_resource_name}"
-        TargetKeyId: !Ref AgentlessScanningKmsPrimaryKey
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: "alias/${local.scanning_resource_name}"
+      TargetKeyId: !Ref AgentlessScanningKmsPrimaryKey
 
 TEMPLATE
 
   depends_on = [
-    aws_iam_role.scanning_role,
     aws_iam_role.scanning_stackset_admin_role,
     aws_iam_role_policy.scanning_stackset_admin_role_policy,
     aws_iam_role.scanning_stackset_execution_role,
-    aws_iam_role_policy.scanning_stackset_execution_role_policy
   ]
 }
 
@@ -487,7 +359,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_scanning_role" {
   account_id = var.sysdig_secure_account_id
   type       = "COMPONENT_TRUSTED_ROLE"
   instance   = "secure-scanning"
-  version    = "v0.1.0"
+  version    = "v0.2.0"
   trusted_role_metadata = jsonencode({
     aws = {
       role_name = local.scanning_resource_name
