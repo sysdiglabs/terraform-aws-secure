@@ -47,3 +47,8 @@ variable "account_alias" {
   default     = ""
 }
 
+variable "is_gov_cloud_onboarding" {
+  type        = bool
+  default     = false
+  description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
+}

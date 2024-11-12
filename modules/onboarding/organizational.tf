@@ -45,14 +45,23 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: [ ${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity} ]
+              AWS: [ ${local.trusted_identity} ]
             Action: [ 'sts:AssumeRole' ]
             Condition:
               StringEquals:
                 sts:ExternalId: ${data.sysdig_secure_tenant_external_id.external_id.external_id}
+      Policies:
+          - PolicyName: ${local.onboarding_role_name}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "account:Get*"
+                    - "account:List*"
+                  Resource: "*"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AWSAccountManagementReadOnlyAccess"
-        - "arn:aws:iam::aws:policy/AWSOrganizationsReadOnlyAccess"
+        - "${local.arn_prefix}:iam::aws:policy/AWSOrganizationsReadOnlyAccess"
 TEMPLATE
 }
 

@@ -38,7 +38,8 @@ resource "aws_cloudformation_stack_set" "eb-rule-stackset" {
     name                 = local.eb_resource_name
     event_pattern        = var.event_pattern
     rule_state           = var.rule_state
-    target_event_bus_arn = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
+    arn_prefix           = local.arn_prefix
+    target_event_bus_arn = local.target_event_bus_arn
   })
 }
 
@@ -79,7 +80,7 @@ Resources:
               Action: 'sts:AssumeRole'
             - Effect: "Allow"
               Principal:
-                AWS: "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
+                AWS: "${local.trusted_identity}"
               Action: "sts:AssumeRole"
               Condition:
                 StringEquals:
@@ -91,12 +92,12 @@ Resources:
               Statement:
                 - Effect: Allow
                   Action: 'events:PutEvents'
-                  Resource: ${data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN}
+                  Resource: "${local.target_event_bus_arn}"
                 - Effect: Allow
                   Action:
                     - "events:DescribeRule"
                     - "events:ListTargetsByRule"
-                  Resource: "arn:aws:events:*:*:rule/${local.eb_resource_name}"
+                  Resource: "${local.arn_prefix}:events:*:*:rule/${local.eb_resource_name}"
 TEMPLATE
 }
 

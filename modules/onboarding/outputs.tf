@@ -12,3 +12,8 @@ output "organizational_unit_ids" {
   value       = var.organizational_unit_ids
   description = "organizational unit ids to onboard"
 }
+
+output "is_gov_cloud_onboarding" {
+  value       = var.is_gov_cloud_onboarding
+  description = "onboard the govcloud account/organization"
+}
