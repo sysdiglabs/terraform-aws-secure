@@ -74,7 +74,7 @@ resource "random_id" "suffix" {
 resource "aws_iam_role" "scanning_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
-  name = "AWSCloudFormationStackSetAdministrationRoleForScanning"
+  name = "${local.scanning_resource_name}-AdministrationRole"
   tags = var.tags
 
   assume_role_policy = <<EOF
@@ -91,25 +91,6 @@ resource "aws_iam_role" "scanning_stackset_admin_role" {
   ]
 }
 EOF
-}
-
-resource "aws_iam_role_policy" "scanning_stackset_admin_role_policy" {
-  count = !var.auto_create_stackset_roles ? 0 : 1
-
-  name_prefix = "AssumeExecutionRole"
-  role = aws_iam_role.scanning_stackset_admin_role[0].id
-  policy = jsonencode({
-    Statement = [
-      {
-        Sid = "AssumeExecutionRole"
-        Action = [
-          "sts:AssumeRole",
-        ]
-        Effect   = "Allow"
-        Resource = "arn:aws:iam:::role/${local.scanning_resource_name}-ExecutionRole"
-      },
-    ]
-  })
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -133,10 +114,9 @@ resource "aws_iam_role" "scanning_stackset_execution_role" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "AWS": "arn:aws:iam::${local.account_id}:role/${aws_iam_role.scanning_stackset_admin_role[0].name}"
+        "AWS": "${aws_iam_role.scanning_stackset_admin_role[0].arn}"
       },
-      "Effect": "Allow",
-      "Condition": {}
+      "Effect": "Allow"
     }
   ]
 }
@@ -324,7 +304,6 @@ TEMPLATE
 
   depends_on = [
     aws_iam_role.scanning_stackset_admin_role,
-    aws_iam_role_policy.scanning_stackset_admin_role_policy,
     aws_iam_role.scanning_stackset_execution_role,
   ]
 }
