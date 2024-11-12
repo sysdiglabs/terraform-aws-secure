@@ -28,6 +28,7 @@ locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   role_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
   bucket_arn = regex("^([^/]+)", var.folder_arn)[0]
+  trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -59,7 +60,7 @@ data "aws_iam_policy_document" "assume_cloudlogs_s3_access_role" {
 
     principals {
       type        = "AWS"
-      identifiers = [data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity]
+      identifiers = [local.trusted_identity]
     }
 
     actions = ["sts:AssumeRole"]
