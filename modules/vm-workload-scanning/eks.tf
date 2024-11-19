@@ -1,5 +1,5 @@
 resource "aws_eks_access_entry" "viewer" {
-  for_each      = var.eks_scanning_enabled ? var.eks_clusters : []
+  for_each      = var.eks_scanning_enabled && !var.is_organizational ? var.eks_clusters : []
 
   cluster_name  = each.value
   principal_arn = var.cspm_role_arn
@@ -7,7 +7,7 @@ resource "aws_eks_access_entry" "viewer" {
 }
 
 resource "aws_eks_access_policy_association" "viewer" {
-  for_each      = var.eks_scanning_enabled ? var.eks_clusters : []
+  for_each      = var.eks_scanning_enabled && !var.is_organizational ? var.eks_clusters : []
 
   cluster_name  = each.value
   policy_arn    = local.policy_arn

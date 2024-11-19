@@ -1,12 +1,47 @@
-module "vm_workload_scanning" {
-  source            	  = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
+provider "aws" {
+  alias = "us-east-1"
+  region = "us-east-1"
+}
 
-  is_organizational 	  = false
+provider "aws" {
+  alias = "eu-central-1"
+  region = "eu-central-1"
+}
+
+module "vm_workload_scanning-us-east-1" {
+  source            	  = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
+  organizational_unit_ids = ["ou-ks5g-dofso0kc"]
+  is_organizational 	  = true
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   cspm_role_arn = module.config-posture.cspm_role_arn
   trusted_identity = module.config-posture.sysdig_secure_account_id
 
   eks_scanning_enabled = true
+  deploy_global_resources = true
+
+  eks_clusters = ["cluster1", "cluster2"]
+
+  providers = {
+    aws = aws.us-east-1
+  }
+}
+
+module "vm_workload_scanning-eu-central-1" {
+  source            	  = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
+  organizational_unit_ids = ["ou-ks5g-dofso0kc"]
+  is_organizational 	  = true
+  sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
+  cspm_role_arn = module.config-posture.cspm_role_arn
+  trusted_identity = module.config-posture.sysdig_secure_account_id
+
+  eks_scanning_enabled = true
+  deploy_global_resources = false
+
+  eks_clusters = ["cluster1"]
+
+  providers = {
+    aws = aws.us-east-1
+  }
 }
 
 

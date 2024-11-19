@@ -18,6 +18,13 @@ variable "is_organizational" {
   default     = false
 }
 
+// Values required to create the ECR role
+variable "deploy_global_resources" {
+  description = "(Optional) Setting this field to 'true' creates an IAM role that allows Sysdig to pull ECR images in order to scan them."
+  type        = bool
+  default     = false
+}
+
 variable "org_units" {
   description = "(Optional) List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false`"
   type        = set(string)
@@ -43,8 +50,8 @@ variable "eks_scanning_enabled" {
 }
 
 variable "eks_clusters" {
-  description = "(Optional) List the clusters that Sysdig will scan. Please note that only clusters with authentication mode set to API or API_AND_CONFIG_MAP will be onboarded."
-  type        = set(string)
+  description = "(Optional) List cluster names that Sysdig will scan in the configured region. Please note that only clusters with authentication mode set to API or API_AND_CONFIG_MAP will be onboarded."
+  type = list(string)
   default     = []
 }
 
