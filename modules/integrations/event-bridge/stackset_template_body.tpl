@@ -9,4 +9,4 @@ Resources:
       Targets:
         - Id: ${name}
           Arn: ${target_event_bus_arn}
-          RoleArn: !Sub "arn:aws:iam::$${AWS::AccountId}:role/${name}"
+          RoleArn: !Sub "${arn_prefix}:iam::$${AWS::AccountId}:role/${name}"
