@@ -157,8 +157,6 @@ resource "sysdig_secure_cloud_auth_account_component" "vm_workload_scanning_acco
     aws_iam_policy_attachment.scanning,
     aws_cloudformation_stack_set.scanning_role_stackset,
     aws_cloudformation_stack_set_instance.scanning_role_stackset_instance,
-    aws_eks_access_entry.viewer,
-    aws_eks_access_policy_association.viewer,
     aws_iam_policy.functions_scanning,
     aws_iam_policy_attachment.functions,
   ]

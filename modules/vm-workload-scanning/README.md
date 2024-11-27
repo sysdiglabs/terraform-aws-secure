@@ -36,8 +36,6 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_eks_access_entry.viewer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry) | resource |
-| [aws_eks_access_policy_association.viewer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association) | resource |
 | [sysdig_secure_tenant_external_id.external_id](https://registry.terraform.io/providers/sysdig/sysdig/latest/docs/data-sources/tenant_external_id) | data source |
 | [aws_iam_policy.ecr_scanning](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.scanning](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
@@ -60,8 +58,6 @@ No modules.
 | <a name="input_org_units"></a> [org_units](#input_org_units) | List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false` | `set(string)` | `[]` | no |
 | <a name="input_timeout"></a> [timeout](#input_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
 | <a name="input_failure_tolerance_percentage"></a> [failure_tolerance_percentage](#input_failure_tolerance_percentage) | The percentage of accounts, per Region, for which stack operations can fail before AWS CloudFormation stops the operation in that Region | `number` | `90` | no |
-| <a name="input_eks_scanning_enabled"></a> [eks_scanning_enabled](#input_eks_scanning_enabled) | Set this field to 'true' to deploy Agentless Workload Scanning for EKS clusters | `bool` | `false` | no |
-| <a name="input_eks_clusters"></a> [eks_clusters](#input_eks_clusters) | List the clusters that Sysdig will scan. Please note that only clusters with authentication mode set to API or API_AND_CONFIG_MAP will be onboarded. | `set(string)` | `[]` | no |
 | <a name="input_lambda_scanning_enabled"></a> [lambda_scanning_enabled](#input_lambda_scanning_enabled) | Set this field to 'true' to deploy Agentless Workload Scanning for Lambda functions | `bool` | `false` | no |
 | <a name="input_sysdig_secure_account_id"></a> [sysdig_secure_account_id](#input_sysdig_secure_account_id) | ID of the Sysdig Cloud Account to enable Config Posture for (in case of organization, ID of the Sysdig management account) | `string` | n/a | yes |
 

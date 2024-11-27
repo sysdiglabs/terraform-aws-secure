@@ -43,18 +43,6 @@ variable "failure_tolerance_percentage" {
   default     = 90
 }
 
-variable "eks_scanning_enabled" {
-    type        = bool
-    description = "Set this field to 'true' to deploy Agentless Workload Scanning for EKS clusters"
-    default     = false
-}
-
-variable "eks_clusters" {
-  description = "(Optional) List cluster names that Sysdig will scan in the configured region. Please note that only clusters with authentication mode set to API or API_AND_CONFIG_MAP will be onboarded."
-  type = list(string)
-  default     = []
-}
-
 variable "lambda_scanning_enabled" {
   type        = bool
   description = "Set this field to 'true' to deploy Agentless Workload Scanning for Lambda functions"

@@ -5,8 +5,5 @@ resource "random_id" "suffix" {
 }
 
 locals {
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-
-
   ecr_role_name = "sysdig-vm-workload-scanning-${random_id.suffix.hex}"
 }
