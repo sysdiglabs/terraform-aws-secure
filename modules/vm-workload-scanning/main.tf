@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "functions" {
   count = var.lambda_scanning_enabled ? 1 : 0
 
   statement {
-    sid = "Full ready-only lambda permissions"
+    sid = "SysdigWorkloadFunctionsScanning"
 
     effect = "Allow"
 
@@ -67,18 +67,18 @@ data "aws_iam_policy_document" "functions" {
 }
 
 resource "aws_iam_policy" "ecr_scanning" {
-  count = var.deploy_global_resources && !var.is_organizational ? 1 : 0
+  count = var.is_organizational ? 0 : 1
 
-  name        = local.ecr_role_name
+  name        = "${local.ecr_role_name}-ecr"
   description = "Grants Sysdig Secure access to ECR images"
   policy      = data.aws_iam_policy_document.scanning.json
   tags        = var.tags
 }
 
 resource "aws_iam_policy" "functions_scanning" {
-  count = var.lambda_scanning_enabled && var.deploy_global_resources && !var.is_organizational? 1 : 0
+  count = var.lambda_scanning_enabled && !var.is_organizational? 1 : 0
 
-  name        = local.ecr_role_name
+  name        = "${local.ecr_role_name}-functions"
   description = "Grants Sysdig Secure access to AWS Lambda"
   policy      = data.aws_iam_policy_document.functions[0].json
   tags        = var.tags
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
 }
 
 resource "aws_iam_role" "scanning" {
-  count = var.deploy_global_resources && !var.is_organizational ? 1 : 0
+  count = var.is_organizational ? 0 : 1
 
   name               = local.ecr_role_name
   tags               = var.tags
@@ -116,18 +116,18 @@ resource "aws_iam_role" "scanning" {
 }
 
 resource "aws_iam_policy_attachment" "scanning" {
-  count = var.deploy_global_resources && !var.is_organizational ? 1 : 0
+  count = var.is_organizational ? 0 : 1
 
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning.name]
-  policy_arn = aws_iam_policy.ecr_scanning.arn
+  roles      = [aws_iam_role.scanning[0].name]
+  policy_arn = aws_iam_policy.ecr_scanning[0].arn
 }
 
 resource "aws_iam_policy_attachment" "functions" {
-  count = var.lambda_scanning_enabled && var.deploy_global_resources && !var.is_organizational ? 1 : 0
+  count = var.lambda_scanning_enabled && !var.is_organizational ? 1 : 0
 
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning.name]
+  roles      = [aws_iam_role.scanning[0].name]
   policy_arn = aws_iam_policy.functions_scanning[0].arn
 }
 
@@ -138,8 +138,6 @@ resource "aws_iam_policy_attachment" "functions" {
 # explicit dependency using depends_on
 #--------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "vm_workload_scanning_account_component" {
-  count = var.deploy_global_resources || var.is_organizational ? 1 : 0
-
   account_id = var.sysdig_secure_account_id
 
   type       = "COMPONENT_TRUSTED_ROLE"

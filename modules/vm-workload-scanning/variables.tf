@@ -1,9 +1,3 @@
-// Values required to create access entries
-variable "cspm_role_arn" {
-  description = "(Required) The Full ARN of the Sysdig CSPM role which will be used to access Kubernetes clusters"
-  type        = string
-}
-
 variable "tags" {
   type        = map(string)
   description = "sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning"
@@ -18,14 +12,7 @@ variable "is_organizational" {
   default     = false
 }
 
-// Values required to create the ECR role
-variable "deploy_global_resources" {
-  description = "(Optional) Setting this field to 'true' creates an IAM role that allows Sysdig to pull ECR images in order to scan them."
-  type        = bool
-  default     = false
-}
-
-variable "org_units" {
+variable "organizational_unit_ids" {
   description = "(Optional) List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false`"
   type        = set(string)
   default     = []

@@ -52,10 +52,9 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_cspm_role_arn"></a> [cspm_role_arn](#input_cspm_role_arn) | The Full ARN of the Sysdig CSPM role which will be used to access Kubernetes clusters | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input_tags) | sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>"product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_is_organizational"></a> [is_organizational](#input_is_organizational) | Set this field to 'true' to deploy Agentless Workload Scanning to an AWS Organization (Or specific OUs) | `bool` | `false` | no |
-| <a name="input_org_units"></a> [org_units](#input_org_units) | List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false` | `set(string)` | `[]` | no |
+| <a name="input_organizational_units_ids"></a> [organizational_units_ids](#input_org_units) | List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false` | `set(string)` | `[]` | no |
 | <a name="input_timeout"></a> [timeout](#input_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
 | <a name="input_failure_tolerance_percentage"></a> [failure_tolerance_percentage](#input_failure_tolerance_percentage) | The percentage of accounts, per Region, for which stack operations can fail before AWS CloudFormation stops the operation in that Region | `number` | `90` | no |
 | <a name="input_lambda_scanning_enabled"></a> [lambda_scanning_enabled](#input_lambda_scanning_enabled) | Set this field to 'true' to deploy Agentless Workload Scanning for Lambda functions | `bool` | `false` | no |
