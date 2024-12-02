@@ -1,7 +1,7 @@
 module "vm_workload_scanning" {
   source            	  = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
-  organizational_unit_ids = ["ou-ks5g-dofso0kc"]
-  is_organizational 	  = true
+  organizational_unit_ids = module.onboarding.organizational_unit_ids
+  is_organizational        = module.onboarding.is_organizational
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
 }
 
