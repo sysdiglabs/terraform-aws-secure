@@ -1,18 +1,27 @@
-// generate a random suffix for the config-posture role name
-
-resource "random_id" "suffix" {
-  byte_length = 3
-}
-
-locals {
-  config_posture_role_name = "sysdig-secure-posture-${random_id.suffix.hex}"
-}
+#-----------------------------------------------------------------------------------------
+# Fetch the data sources
+#-----------------------------------------------------------------------------------------
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
 }
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
+
+#----------------------------------------------------------
+# Fetch & compute required data
+#----------------------------------------------------------
+
+// generate a random suffix for the config-posture role name
+resource "random_id" "suffix" {
+  byte_length = 3
+}
+
+locals {
+  config_posture_role_name = "sysdig-secure-posture-${random_id.suffix.hex}"
+  trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  arn_prefix               = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
+}
 
 #----------------------------------------------------------
 # Since this is not an Organizational deploy, create role/polices directly
@@ -28,7 +37,7 @@ resource "aws_iam_role" "cspm_role" {
             "Sid": "",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
+                "AWS": "${local.trusted_identity}"
             },
             "Action": "sts:AssumeRole",
             "Condition": {
@@ -45,7 +54,7 @@ EOF
 resource "aws_iam_role_policy_attachments_exclusive" "cspm_role_managed_policy" {
   role_name = aws_iam_role.cspm_role.id
   policy_arns = [
-    "arn:aws:iam::aws:policy/SecurityAudit"
+    "${local.arn_prefix}:iam::aws:policy/SecurityAudit"
   ]
 }
 
@@ -70,8 +79,8 @@ resource "aws_iam_role_policy" "cspm_role_policy" {
         ]
         Effect = "Allow"
         Resource = [
-          "arn:aws:waf-regional:*:*:rule/*",
-          "arn:aws:waf-regional:*:*:rulegroup/*"
+          "${local.arn_prefix}:waf-regional:*:*:rule/*",
+          "${local.arn_prefix}:waf-regional:*:*:rulegroup/*"
         ]
       },
       {

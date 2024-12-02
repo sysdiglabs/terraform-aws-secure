@@ -2,7 +2,7 @@ terraform {
   required_providers {
     sysdig = {
       source  = "sysdiglabs/sysdig"
-      version = "~> 1.38"
+      version = "~> 1.39"
     }
   }
 }
@@ -13,7 +13,7 @@ provider "sysdig" {
 }
 
 provider "aws" {
-  region              = "us-east-1"
+  region              = "us-gov-east-1"
   allowed_account_ids = ["123456789101"]
 }
 
@@ -21,6 +21,7 @@ module "onboarding" {
   source            	    = "../../../modules/onboarding"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
   is_organizational 	    = true
+  is_gov_cloud_onboarding = true
 }
 
 module "config-posture" {
@@ -28,6 +29,7 @@ module "config-posture" {
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   org_units                = ["ou-ks5g-dofso0kc"]
   is_organizational        = true
+  is_gov_cloud_onboarding  = true
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "config_posture" {

@@ -26,7 +26,10 @@ data "sysdig_secure_tenant_external_id" "external_id" {}
 # These locals indicate the region list passed.
 #-----------------------------------------------------------------------------------------
 locals {
-  region_set = toset(var.regions)
+  region_set           = toset(var.regions)
+  trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  target_event_bus_arn = var.is_gov_cloud_onboarding ? data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARNGov : data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
+  arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
 }
 
 #-----------------------------------------------------------------------------------------
@@ -79,7 +82,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_admin_r
   count     = !var.auto_create_stackset_roles ? 0 : 1
   role_name = aws_iam_role.event_bus_stackset_admin_role[0].id
   policy_arns = [
-    "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess"
+    "${local.arn_prefix}:iam::aws:policy/AWSCloudFormationFullAccess"
   ]
 }
 
@@ -104,7 +107,7 @@ resource "aws_iam_role" "event_bus_stackset_execution_role" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.event_bus_stackset_admin_role[0].name}"
+        "AWS": "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.event_bus_stackset_admin_role[0].name}"
       },
       "Effect": "Allow",
       "Condition": {}
@@ -118,8 +121,8 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_executi
   count     = !var.auto_create_stackset_roles ? 0 : 1
   role_name = aws_iam_role.event_bus_stackset_execution_role[0].id
   policy_arns = [
-    "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess",
-    "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
+    "${local.arn_prefix}:iam::aws:policy/AWSCloudFormationFullAccess",
+    "${local.arn_prefix}:iam::aws:policy/AmazonEventBridgeFullAccess"
   ]
 }
 
@@ -149,7 +152,7 @@ resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "AWS": "${data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity}"
+        "AWS": "${local.trusted_identity}"
       },
       "Effect": "Allow",
       "Condition": {
@@ -163,7 +166,6 @@ resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
 EOF
 }
 
-
 resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
   name = local.eb_resource_name
   role = aws_iam_role.event_bus_invoke_remote_event_bus.id
@@ -176,7 +178,7 @@ resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
         ]
         Effect = "Allow"
         Resource = [
-          data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN,
+          "${local.target_event_bus_arn}",
         ]
       },
       {
@@ -187,7 +189,7 @@ resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
         ]
         Effect = "Allow"
         Resource = [
-          "arn:aws:events:*:*:rule/${local.eb_resource_name}",
+          "${local.arn_prefix}:events:*:*:rule/${local.eb_resource_name}",
         ]
       },
     ]
@@ -226,7 +228,8 @@ resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
     name                 = local.eb_resource_name
     event_pattern        = var.event_pattern
     rule_state           = var.rule_state
-    target_event_bus_arn = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
+    arn_prefix           = local.arn_prefix
+    target_event_bus_arn = local.target_event_bus_arn
   })
 
   depends_on = [
