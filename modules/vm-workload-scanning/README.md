@@ -5,12 +5,11 @@ By default, it will create a role with permissions necessary to access and pull 
 Combined with the base onboarding, this allows for scanning ECS Services and Tasks pointing to ECR images.
 Also public docker images and private repos are supported, as long as private repository permissions are granted to Sysdig using the Registry Credentials UI.
 
-Optionally, if EKS scanning is enabled, the base onboarding module will have visibility on a set of EKS clusters in the account and be able to scan its resources.
 Optional, if AWS Lambda is enabled, we will have visibility on a set of Lambda functions in the account and be able to scan its resources.
 
 The following resources will be created in each instrumented account:
 - An IAM Role and associated policies that allows Sysdig to perform tasks necessary for vm agentless workload scanning, i.e.
-pull images from ECR, optionally obtain lambda function code and details, optionally allow base onboarding to have visibility on a set of EKS clusters.
+pull images from ECR, optionally obtain lambda function code and details.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
