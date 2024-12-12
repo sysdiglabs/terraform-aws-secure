@@ -145,7 +145,7 @@ resource "sysdig_secure_cloud_auth_account_component" "vm_workload_scanning_acco
   version    = "v0.1.0"
   trusted_role_metadata = jsonencode({
     aws = {
-      role_name = aws_iam_role.scanning[0].arn
+      role_name = aws_iam_role.scanning[0].name
     }
   })
 
