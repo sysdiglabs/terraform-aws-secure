@@ -21,6 +21,11 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
+data "sysdig_secure_cloud_ingestion_assets" "assets" {
+  cloud_provider = "aws"
+  cloud_provider_id = data.aws_caller_identity.current.account_id
+}
+
 #-----------------------------------------------------------------------------------------
 # Generate a unique name for resources using random suffix and account ID hash
 #-----------------------------------------------------------------------------------------
@@ -28,7 +33,13 @@ locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   role_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
   bucket_arn = regex("^([^/]+)", var.folder_arn)[0]
-  trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  topic_name = "${var.name}-cloudtrail-notifications-${random_id.suffix.hex}"
+  create_topic = var.existing_topic_arn == ""
+  topic_arn = local.create_topic ? aws_sns_topic.cloudtrail_notifications[0].arn : var.existing_topic_arn
+
+  routing_key   = data.sysdig_secure_cloud_ingestion_assets.assets.sns_routing_key
+  ingestion_url = data.sysdig_secure_cloud_ingestion_assets.assets.sns_metadata.ingestionURL
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -89,40 +100,60 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       "${local.bucket_arn}/*"
     ]
   }
+}
 
-  statement {
-    sid = "CloudlogsS3AccessList"
+#-----------------------------------------------------------------------------------------------------------------------
+# SNS Topic and Subscription for CloudTrail notifications
+#-----------------------------------------------------------------------------------------------------------------------
+resource "aws_sns_topic" "cloudtrail_notifications" {
+  count = local.create_topic ? 1 : 0
+  name = local.topic_name
+  tags = var.tags
+}
 
-    effect = "Allow"
-
-    actions = [
-      "s3:List*"
+resource "aws_sns_topic_policy" "cloudtrail_notifications" {
+  count = local.create_topic ? 1 : 0
+  arn = aws_sns_topic.cloudtrail_notifications[0].arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudTrailPublish"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action   = "SNS:Publish"
+        Resource = aws_sns_topic.cloudtrail_notifications[0].arn
+      }
     ]
+  })
+}
 
-    resources = [
-      local.bucket_arn,
-      "${local.bucket_arn}/*"
-    ]
-  }
+resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
+  topic_arn = local.topic_arn
+  protocol  = "https"
+  endpoint  = local.ingestion_url
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# Call Sysdig Backend to add the cloud logs integration to the Sysdig Cloud Account
-#
-# Note (optional): To ensure this gets called after all cloud resources are created, add
-# explicit dependency using depends_on
+# Call Sysdig Backend to add the cloud logs integration
 #-----------------------------------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
-  account_id                 = var.sysdig_secure_account_id
-  type                       = "COMPONENT_CLOUD_LOGS"
-  instance                   = "secure-runtime"
-  version                    = "v0.1.0"
+  account_id = var.sysdig_secure_account_id
+  type       = "COMPONENT_CLOUD_LOGS"
+  instance   = "secure-runtime"
+  version    = "v1.0.0"
   cloud_logs_metadata = jsonencode({
     aws = {
-      cloudtrailS3Bucket = {
-        folder_arn    = var.folder_arn
-        role_name     = local.role_name
-        regions       = var.regions
+      cloudtrailSns = {
+        role_name        = local.role_name
+        topic_arn        = local.topic_arn
+        subscription_arn = aws_sns_topic_subscription.cloudtrail_notifications.arn
+        bucket_region    = var.bucket_region
+        bucket_arn       = local.bucket_arn
+        ingested_regions = var.regions
+        routing_key      = local.routing_key
       }
     }
   })

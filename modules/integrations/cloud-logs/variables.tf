@@ -34,3 +34,14 @@ variable "is_gov_cloud_onboarding" {
   default     = false
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
+
+variable "bucket_region" {
+  type        = string
+  description = "Region where the CloudTrail S3 bucket is located"
+}
+
+variable "existing_topic_arn" {
+  type        = string
+  description = "ARN of an existing SNS topic to use. If not provided, a new topic will be created"
+  default     = ""
+}
