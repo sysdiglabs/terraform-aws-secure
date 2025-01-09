@@ -1,6 +1,6 @@
 output "role_arn" {
   description = "Role used by Sysdig Platform for Agentless Workload Scanning"
-  value       = var.is_organizational ? null : aws_iam_role.scanning[0].arn
+  value       = var.is_organizational ? null : aws_iam_role.scanning.arn
   depends_on  = [aws_iam_role.scanning]
 }
 

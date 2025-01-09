@@ -67,8 +67,6 @@ data "aws_iam_policy_document" "functions" {
 }
 
 resource "aws_iam_policy" "ecr_scanning" {
-  count = var.is_organizational ? 0 : 1
-
   name        = "${local.ecr_role_name}-ecr"
   description = "Grants Sysdig Secure access to ECR images"
   policy      = data.aws_iam_policy_document.scanning.json
@@ -76,7 +74,7 @@ resource "aws_iam_policy" "ecr_scanning" {
 }
 
 resource "aws_iam_policy" "functions_scanning" {
-  count = var.lambda_scanning_enabled && !var.is_organizational? 1 : 0
+  count = var.lambda_scanning_enabled ? 1 : 0
 
   name        = "${local.ecr_role_name}-functions"
   description = "Grants Sysdig Secure access to AWS Lambda"
@@ -108,26 +106,22 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
 }
 
 resource "aws_iam_role" "scanning" {
-  count = var.is_organizational ? 0 : 1
-
   name               = local.ecr_role_name
   tags               = var.tags
   assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy.json
 }
 
 resource "aws_iam_policy_attachment" "scanning" {
-  count = var.is_organizational ? 0 : 1
-
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning[0].name]
-  policy_arn = aws_iam_policy.ecr_scanning[0].arn
+  roles      = [aws_iam_role.scanning.name]
+  policy_arn = aws_iam_policy.ecr_scanning.arn
 }
 
 resource "aws_iam_policy_attachment" "functions" {
-  count = var.lambda_scanning_enabled && !var.is_organizational ? 1 : 0
+  count = var.lambda_scanning_enabled ? 1 : 0
 
   name       = local.ecr_role_name
-  roles      = [aws_iam_role.scanning[0].name]
+  roles      = [aws_iam_role.scanning.name]
   policy_arn = aws_iam_policy.functions_scanning[0].arn
 }
 
@@ -145,7 +139,7 @@ resource "sysdig_secure_cloud_auth_account_component" "vm_workload_scanning_acco
   version    = "v0.1.0"
   trusted_role_metadata = jsonencode({
     aws = {
-      role_name = aws_iam_role.scanning[0].name
+      role_name = aws_iam_role.scanning.name
     }
   })
 
