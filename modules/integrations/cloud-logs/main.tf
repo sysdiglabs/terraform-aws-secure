@@ -36,10 +36,8 @@ locals {
   bucket_name      = replace(local.bucket_arn, "arn:aws:s3:::", "")
   bucket_region    = data.aws_s3_bucket.cloudtrail_bucket.region
   trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  topic_name       = "${var.name}-cloudtrail-notifications-${random_id.suffix.hex}"
-  create_topic     = var.existing_topic_arn == ""
-  topic_arn        = local.create_topic ? aws_sns_topic.cloudtrail_notifications[0].arn : var.existing_topic_arn
 
+  topic_name = split(":", var.topic_arn)[5]
   routing_key      = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_key
   ingestion_url    = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_url
 }
@@ -113,13 +111,13 @@ data "aws_s3_bucket" "cloudtrail_bucket" {
 # SNS Topic and Subscription for CloudTrail notifications
 #-----------------------------------------------------------------------------------------------------------------------
 resource "aws_sns_topic" "cloudtrail_notifications" {
-  count = local.create_topic ? 1 : 0
+  count = var.create_topic ? 1 : 0
   name  = local.topic_name
   tags  = var.tags
 }
 
 resource "aws_sns_topic_policy" "cloudtrail_notifications" {
-  count = local.create_topic ? 1 : 0
+  count = var.create_topic ? 1 : 0
   arn   = aws_sns_topic.cloudtrail_notifications[0].arn
   policy = jsonencode({
     Version = "2012-10-17"
@@ -138,7 +136,7 @@ resource "aws_sns_topic_policy" "cloudtrail_notifications" {
 }
 
 resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
-  topic_arn = local.topic_arn
+  topic_arn = var.topic_arn
   protocol  = "https"
   endpoint  = local.ingestion_url
 }
@@ -155,7 +153,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
     aws = {
       cloudtrailSns = {
         role_name        = local.role_name
-        topic_arn        = local.topic_arn
+        topic_arn        = var.topic_arn
         subscription_arn = aws_sns_topic_subscription.cloudtrail_notifications.arn
         bucket_region    = local.bucket_region
         bucket_arn       = local.bucket_arn

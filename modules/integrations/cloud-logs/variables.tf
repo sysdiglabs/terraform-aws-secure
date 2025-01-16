@@ -35,8 +35,23 @@ variable "is_gov_cloud_onboarding" {
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
 
-variable "existing_topic_arn" {
+variable "topic_arn" {
   type        = string
-  description = "ARN of an existing SNS topic to use. If not provided, a new topic will be created"
+  description = "SNS Topic ARN that will forward CloudTrail notifications to Sysdig Secure"
   default     = ""
+  validation {
+    condition     = var.topic_arn != ""
+    error_message = "Topic ARN must not be empty"
+  }
+
+  validation {
+    condition     = can(regex("^arn:aws:sns:[a-z0-9-]+:[0-9]+:.+$", var.topic_arn))
+    error_message = "Topic ARN must be a valid SNS ARN format"
+  }
+}
+
+variable "create_topic" {
+  type        = bool
+  default     = false
+  description = "true/false whether terraform should create the SNS Topic"
 }
