@@ -40,6 +40,10 @@ resource "aws_cloudformation_stack_set" "ou_resources_stackset" {
     retain_stacks_on_account_removal = false
   }
 
+  lifecycle {
+    ignore_changes = [administration_role_arn] # https://github.com/hashicorp/terraform-provider-aws/issues/23464
+  }
+
   template_body = <<TEMPLATE
 Resources:
   ScanningRole:
