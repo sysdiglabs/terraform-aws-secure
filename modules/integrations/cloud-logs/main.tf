@@ -139,6 +139,8 @@ resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
   topic_arn = var.topic_arn
   protocol  = "https"
   endpoint  = local.ingestion_url
+
+    depends_on = [aws_sns_topic.cloudtrail_notifications]
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
