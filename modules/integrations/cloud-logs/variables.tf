@@ -38,7 +38,7 @@ variable "is_gov_cloud_onboarding" {
 variable "topic_arn" {
   type        = string
   description = "SNS Topic ARN that will forward CloudTrail notifications to Sysdig Secure"
-  
+
   validation {
     condition     = var.topic_arn != ""
     error_message = "Topic ARN must not be empty"

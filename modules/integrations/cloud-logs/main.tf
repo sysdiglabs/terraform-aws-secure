@@ -1,13 +1,20 @@
 #-----------------------------------------------------------------------------------------------------------------------
-# The only resource needed to make Sysdig's backend start to fetch data from the CloudTrail associated s3 bucket is a
-# properly set AWS IAM Role. Sysdig's trusted identity act as the Principal in the assume role Policy, namely the role
-# that the backend will use to assume the Client's role. At that point, given the permission set granted to the newly
-# created Role in the Client's account, Sysdig's backend will be able to perform all the required actions in order to
-# retrieve the log files that are automatically published in the target s3 bucket.
+# This Terraform module creates the necessary resources to enable Sysdig's backend to fetch data from the
+# CloudTrail-associated S3 bucket in the customer's AWS account. The setup includes:
 #
-# Note: this setup assumes that the Customer has already properly set up an AWS CloudTrail Trail and the associated bucket.
-# Sysdig's Secure UI provides the necessary information to make the Customer perform the
-# required setup operations before applying the Terraform module.
+# 1. An AWS IAM Role with the appropriate permissions to allow Sysdig's backend to access the S3 bucket where
+#    CloudTrail logs are stored. Sysdig's trusted identity is specified as the Principal in the assume role policy,
+#    enabling the backend to assume the role in the customer account and perform required actions.
+#
+# 2. An AWS SNS Topic and Subscription for CloudTrail notifications, ensuring Sysdig's backend is notified whenever
+#    new logs are published to the S3 bucket. The SNS Topic allows CloudTrail to publish notifications, while the
+#    subscription forwards these notifications to Sysdig's ingestion service via HTTPS.
+#
+# This setup assumes the customer has already configured an AWS CloudTrail Trail and its associated S3 bucket. The
+# required details (e.g., bucket ARN, topic ARN, and regions) are either passed as module variables or derived from
+# data sources.
+#
+# Note: Sysdig's Secure UI provides the necessary information to guide customers in setting up the required resources.
 #-----------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------
