@@ -109,6 +109,8 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
   stack_set_name = aws_cloudformation_stack_set.eb-rule-stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.organizational_unit_ids
+    account_filter_type     = "DIFFERENCE"
+    accounts                = var.organization_accounts_to_exclude
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -131,6 +133,8 @@ resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
   stack_set_name = aws_cloudformation_stack_set.eb-role-stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.organizational_unit_ids
+    account_filter_type     = "DIFFERENCE"
+    accounts                = var.organization_accounts_to_exclude
   }
   operation_preferences {
     max_concurrent_percentage    = 100

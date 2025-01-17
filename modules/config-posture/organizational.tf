@@ -94,6 +94,8 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.org_units_to_deploy
+    account_filter_type     = "DIFFERENCE"
+    accounts                = var.organization_accounts_to_exclude
   }
   operation_preferences {
     max_concurrent_percentage    = 100

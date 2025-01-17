@@ -41,3 +41,9 @@ variable "sysdig_secure_account_id" {
   type        = string
   description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"
 }
+
+variable "organization_accounts_to_exclude" {
+  type        = list(string)
+  default     = []
+  description = "AWS account IDs to exclude from organizational deployment"
+}

@@ -51,3 +51,9 @@ variable "is_gov_cloud_onboarding" {
   default     = false
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
+
+variable "organization_accounts_to_exclude" {
+  type        = list(string)
+  default     = []
+  description = "AWS account IDs to exclude from organizational deployment"
+}
