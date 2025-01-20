@@ -45,7 +45,7 @@ variable "topic_arn" {
   }
 
   validation {
-    condition     = can(regex("^arn:aws:sns:[a-z0-9-]+:[0-9]+:.+$", var.topic_arn))
+    condition     = can(regex("^arn:(aws|aws-us-gov):sns:[a-z0-9-]+:[0-9]+:.+$", var.topic_arn))
     error_message = "Topic ARN must be a valid SNS ARN format"
   }
 }
