@@ -12,7 +12,9 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.org_units)
+  root_org_id = [for root in data.aws_organizations_organization.org[0].roots : root.id]
+  organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? (length(var.org_accounts) == "0" ? local.root_org_id : []) : toset(var.org_units)
+  account_ids = var.is_organizational && length(var.org_accounts) == 0 ? [] : setunion(toset(var.org_accounts),[data.aws_caller_identity.current.account_id])
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -67,7 +69,7 @@ Resources:
           Statement:
           - Sid: "Read"
             Effect: "Allow"
-            Action: 
+            Action:
             - "ec2:Describe*"
             Resource: "*"
             Condition:
@@ -158,7 +160,7 @@ Resources:
         - Sid: "SysdigAllowKms"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - "arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root"
             - !GetAtt ScanningRole.Arn
           Action:
@@ -173,7 +175,7 @@ Resources:
         - Sid: "AllowCustomerManagement"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - !Sub "arn:aws:iam::$${AWS::AccountId}:root"
             - "${local.caller_arn}"
             - !Sub "arn:aws:iam::$${AWS::AccountId}:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/AWSServiceRoleForCloudFormationStackSetsOrgMember"
@@ -191,12 +193,36 @@ TEMPLATE
 
 # stackset instance to deploy resources for agentless scanning, in all regions of each account in all organization units
 resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
-  for_each   = var.is_organizational ? local.region_set : toset([])
+  for_each   = var.is_organizational ? (length(local.organizational_unit_ids) > 0 ? local.region_set : toset([])) : toset([])
   region     = each.key
 
   stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.organizational_unit_ids
+  }
+  operation_preferences {
+    max_concurrent_percentage    = 100
+    failure_tolerance_percentage = var.failure_tolerance_percentage
+    concurrency_mode             = "SOFT_FAILURE_TOLERANCE"
+    region_concurrency_type      = "PARALLEL"
+  }
+
+  timeouts {
+    create = var.timeout
+    update = var.timeout
+    delete = var.timeout
+  }
+}
+
+resource "aws_cloudformation_stack_set_instance" "accounts_stackset_instance" {
+  for_each   = var.is_organizational ? (length(local.account_ids) > 0 ? local.region_set : toset([])) : toset([])
+  region     = each.key
+
+  stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
+  deployment_targets {
+    organizational_unit_ids = local.root_org_id
+    accounts = local.account_ids
+    account_filter_type = "INTERSECTION"
   }
   operation_preferences {
     max_concurrent_percentage    = 100
