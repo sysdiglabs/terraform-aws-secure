@@ -36,6 +36,12 @@ variable "org_units" {
   default     = []
 }
 
+variable "org_accounts" {
+  description = "(Optional) List of Account IDs in which to setup Agentless Scanning. By default, Agentless Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false`. If this field is set `org_units` variable is ignored and resources are deployed only to accounts listed within this variable with addition of management account of the organization"
+  type        = set(string)
+  default     = []
+}
+
 variable "regions" {
   description = "(Optional) List of regions in which to install Agentless Scanning"
   type        = set(string)
