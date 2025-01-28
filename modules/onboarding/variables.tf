@@ -8,12 +8,6 @@ variable "is_organizational" {
   description = "true/false whether secure-for-cloud should be deployed in an organizational setup (all accounts of org) or not (only on default aws provider account)"
 }
 
-variable "organizational_unit_ids" {
-  description = "restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded. Default: onboard all organizational units"
-  type        = set(string)
-  default     = []
-}
-
 variable "region" {
   type        = string
   default     = ""
