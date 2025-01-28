@@ -52,3 +52,27 @@ variable "is_gov_cloud_onboarding" {
   default     = false
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
+
+variable "include_ouids" {
+  description = "(Optional) ouids to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_ouids" {
+  description = "(Optional) ouids to exclude for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "include_accounts" {
+  description = "(Optional) accounts to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_accounts" {
+  description = "(Optional) accounts to exclude for organization"
+  type        = set(string)
+  default     = []
+}

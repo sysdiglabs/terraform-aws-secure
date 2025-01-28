@@ -9,9 +9,10 @@ terraform {
       source  = "hashicorp/random"
       version = ">= 3.1"
     }
+    # TODO: testing only, update when TF provider is released
     sysdig = {
-      source  = "sysdiglabs/sysdig"
-      version = "~> 1.39"
+      source = "local/sysdiglabs/sysdig"
+      version = "~> 1.0.0"
     }
   }
 }

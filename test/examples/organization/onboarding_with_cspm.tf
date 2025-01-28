@@ -1,8 +1,9 @@
 terraform {
   required_providers {
+# TODO: testing only, update when TF provider is released
     sysdig = {
-      source  = "sysdiglabs/sysdig"
-      version = "~> 1.38"
+      source = "local/sysdiglabs/sysdig"
+      version = "~> 1.0.0"
     }
   }
 }
