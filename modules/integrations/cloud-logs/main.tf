@@ -40,8 +40,6 @@ locals {
   account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
   bucket_arn       = regex("^([^/]+)", var.folder_arn)[0]
-  bucket_name      = var.is_gov_cloud_onboarding ? replace(local.bucket_arn, "arn:aws-us-gov:s3:::", "") : replace(local.bucket_arn, "arn:aws:s3:::", "")
-  bucket_region    = data.aws_s3_bucket.cloudtrail_bucket.region
   trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
 
   topic_name = split(":", var.topic_arn)[5]
@@ -107,11 +105,21 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       "${local.bucket_arn}/*"
     ]
   }
-}
 
-# Fetch the S3 bucket information
-data "aws_s3_bucket" "cloudtrail_bucket" {
-  bucket = local.bucket_name
+  statement {
+    sid = "CloudlogsS3AccessList"
+
+    effect = "Allow"
+
+    actions = [
+      "s3:List*"
+    ]
+
+    resources = [
+      local.bucket_arn,
+      "${local.bucket_arn}/*"
+    ]
+  }
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -163,8 +171,6 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       cloudtrailSns = {
         role_name        = local.role_name
         topic_arn        = var.topic_arn
-        subscription_arn = aws_sns_topic_subscription.cloudtrail_notifications.arn
-        bucket_region    = local.bucket_region
         bucket_arn       = local.bucket_arn
         ingested_regions = var.regions
         routing_key      = local.routing_key
