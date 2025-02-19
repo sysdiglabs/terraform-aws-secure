@@ -3,8 +3,8 @@ variable "sysdig_secure_account_id" {
   description = "ID of the Sysdig Cloud Account to enable Cloud Logs integration for (in case of organization, ID of the Sysdig management account)"
 }
 
-variable "folder_arn" {
-  description = "(Required) The ARN of your CloudTrail Bucket Folder"
+variable "bucket_arn" {
+  description = "(Required) The ARN of your CloudTrail Bucket"
   type        = string
 }
 
