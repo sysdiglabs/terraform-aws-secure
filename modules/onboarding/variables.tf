@@ -47,6 +47,15 @@ variable "is_gov_cloud_onboarding" {
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
 
+variable "organizational_unit_ids" {
+  description = <<-EOF
+    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded."
+    EOF
+  type        = set(string)
+  default     = []
+}
+
 variable "include_ouids" {
   description = "(Optional) ouids to include for organization"
   type        = set(string)
