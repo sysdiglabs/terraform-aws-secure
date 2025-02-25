@@ -8,12 +8,6 @@ variable "is_organizational" {
   description = "true/false whether secure-for-cloud should be deployed in an organizational setup (all accounts of org) or not (only on default aws provider account)"
 }
 
-variable "organizational_unit_ids" {
-  description = "restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded. Default: onboard all organizational units"
-  type        = set(string)
-  default     = []
-}
-
 variable "region" {
   type        = string
   default     = ""
@@ -51,4 +45,37 @@ variable "is_gov_cloud_onboarding" {
   type        = bool
   default     = false
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
+}
+
+variable "organizational_unit_ids" {
+  description = <<-EOF
+    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded."
+    EOF
+  type        = set(string)
+  default     = []
+}
+
+variable "include_ouids" {
+  description = "(Optional) ouids to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_ouids" {
+  description = "(Optional) ouids to exclude for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "include_accounts" {
+  description = "(Optional) accounts to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_accounts" {
+  description = "(Optional) accounts to exclude for organization"
+  type        = set(string)
+  default     = []
 }
