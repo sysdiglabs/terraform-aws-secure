@@ -7,7 +7,8 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  org_units_to_deploy = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
+  org_units_to_deploy = var.is_organizational && length(var.organizational_unit_ids) == 0 ?
+    [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
 }
 
 #----------------------------------------------------------
@@ -90,6 +91,7 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
 resource "sysdig_secure_organization" "aws_organization" {
   count                          = var.is_organizational ? 1 : 0
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
+  organizational_unit_ids        = var.organizational_unit_ids
   included_organizational_groups = var.include_ouids
   excluded_organizational_groups = var.exclude_ouids
   included_cloud_accounts        = var.include_accounts
