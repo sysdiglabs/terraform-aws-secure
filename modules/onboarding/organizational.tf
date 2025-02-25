@@ -7,8 +7,7 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  org_units_to_deploy = var.is_organizational && length(var.organizational_unit_ids) == 0 ?
-    [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
+  org_units_to_deploy = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
 }
 
 #----------------------------------------------------------
