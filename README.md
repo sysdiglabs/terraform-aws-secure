@@ -65,6 +65,16 @@ Notice that:
 
 <br/>
 
+## Organizational Install Configurations
+
+There are four new parameters to configure organizational deployments on the cloud for Sysdig Secure for Cloud :-
+1. `include_ouids` - List of AWS Organizational Unit IDs to deploy the Sysdig Secure for Cloud stack resources in.
+2. `exclude_ouids` - List of AWS Organizational Unit IDs to exclude deploying the Sysdig Secure for Cloud stack resources in.
+3. `include_accounts` - List of AWS Accounts to deploy the Sysdig Secure for Cloud stack resources in.
+4. `exclude_accounts` - List of AWS Accounts to exclude deploying the Sysdig Secure for Cloud stack resources in.
+
+Note: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED soon going forward. You can use `include_ouids` instead to achieve the same deployment outcome.
+
 ## Best practices
 
 For contributing to existing modules or adding new modules, below are some of the best practices recommended :-

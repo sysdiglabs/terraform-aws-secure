@@ -7,7 +7,118 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  org_units_to_deploy = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.org_units
+  # fetch the AWS Root OU
+  root_org_units = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []
+}
+
+# if only excluded ouids provided, fetch children ous in org to filter exclusions
+# note: AWS fetches only first level immediate children, since it has no data source to give all OUs recursively
+data "aws_organizations_organizational_units" "ou" {
+  count     = var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) > 0 ? 1 : 0
+  parent_id = data.aws_organizations_organization.org[0].roots[0].id
+}
+
+#----------------------------------------------------------
+# Manage configurations to determine targets to deploy in
+#----------------------------------------------------------
+
+locals {
+  # OU CONFIGURATION (determine user provided org configuration)
+  org_configuration = (
+    # case1 - if no include/exclude ous provided, include entire org
+    var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) == 0 ? (
+      "entire_org"
+    ) : (
+      # case2 - if only included ouids provided, include those ous only
+      var.is_organizational && length(var.include_ouids) > 0 && length(var.exclude_ouids) == 0 ? (
+        "included_ous_only"
+      ) : (
+        # case3 - if only excluded ouids provided, exclude their accounts from rest of org
+        var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) > 0 ? (
+          "excluded_ous_only"
+        ) : (
+          # case4 - if both include and exclude ouids are provided, includes override excludes
+          var.is_organizational && length(var.include_ouids) > 0 && length(var.exclude_ouids) > 0 ? (
+            "mixed_ous"
+          ) : ""
+        )
+      )
+    )
+  )
+
+  # handling exclusions when only excluded ouids are provided
+  # fetch list of all ouids to filter exclusions (AWS data source only returns first level immediate children)
+  oulist = local.org_configuration == "excluded_ous_only" ? toset([for ou in data.aws_organizations_organizational_units.ou[0].children: ou.id]) : toset([])
+
+  # switch cases for various user provided org configuration to be onboarded
+  deployment_options = {
+    entire_org = {
+       org_units_to_deploy = local.root_org_units
+    }
+    included_ous_only = {
+      org_units_to_deploy = var.include_ouids
+    }
+    excluded_ous_only = {
+      # check if user provided excluded ouids are in oulist to determine whether or not we can make exclusions, else we ignore and onboard entire org
+      # TODO: update this if we find alternative to get all OUs in tree to filter exclusions for nested ouids as well
+      org_units_to_deploy = length(setintersection(local.oulist, var.exclude_ouids)) > 0 ? setsubtract(local.oulist, var.exclude_ouids) : local.root_org_units
+    }
+    mixed_ous = {
+      # if both include and exclude ouids are provided, includes override excludes
+      org_units_to_deploy = var.include_ouids
+    }
+    default = {
+      org_units_to_deploy = []
+    }
+  }
+
+  # final targets to deploy organizational resources in
+  deployment_targets = lookup(local.deployment_options, local.org_configuration, local.deployment_options.default)
+}
+
+locals {
+  # ACCOUNTS CONFIGURATION (determine user provided accounts configuration)
+  accounts_configuration = (
+    # case1 - if no include/exclude accounts provided
+    var.is_organizational && length(var.include_accounts) == 0 && length(var.exclude_accounts) == 0 ? (
+      "NONE"
+    ) : (
+      # case2 - if only included accounts provided, include those accts as well
+      var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) == 0 ? (
+        "UNION"
+      ) : (
+        # case3 - if only excluded accounts provided, exclude those accounts
+        var.is_organizational && length(var.include_accounts) == 0 && length(var.exclude_accounts) > 0 ? (
+          "DIFFERENCE"
+        ) : (
+          # case4 - if both include and exclude accounts are provided, includes override excludes
+          # TODO: update this mixed case if we find an alternative to pass both inclusion & exclusion of accounts
+          var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
+            "UNION"
+          ) : ""
+        )
+      )
+    )
+  )
+
+  # switch cases for various user provided accounts configuration to be onboarded
+  deployment_account_options = {
+    NONE = {
+      accounts_to_deploy = []
+    }
+    UNION = {
+      accounts_to_deploy = var.include_accounts
+    }
+    DIFFERENCE = {
+      accounts_to_deploy = var.exclude_accounts
+    }
+    default = {
+      accounts_to_deploy = []
+    }
+  }
+
+  # list of accounts to deploy organizational resources in
+  deployment_accounts = lookup(local.deployment_account_options, local.accounts_configuration, local.deployment_account_options.default)
 }
 
 #----------------------------------------------------------
@@ -93,7 +204,9 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   region         = var.region == "" ? null : var.region
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.org_units_to_deploy
+    organizational_unit_ids = local.deployment_targets.org_units_to_deploy
+    accounts                = local.accounts_configuration == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
+    account_filter_type     = local.accounts_configuration
   }
   operation_preferences {
     max_concurrent_percentage    = 100
