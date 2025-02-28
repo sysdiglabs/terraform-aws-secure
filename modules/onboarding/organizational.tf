@@ -18,6 +18,12 @@ data "aws_organizations_organizational_units" "ou" {
   parent_id = data.aws_organizations_organization.org[0].roots[0].id
 }
 
+# if both include and exclude accounts are provided, fetch all child accounts of final org_units_to_deploy to filter exclusions
+data "aws_organizations_organizational_unit_descendant_accounts" "ou_children" {
+  for_each  = local.deployment_targets.org_units_to_deploy
+  parent_id = each.key
+}
+
 #----------------------------------------------------------
 # Manage configurations to determine targets to deploy in
 #----------------------------------------------------------
@@ -48,7 +54,7 @@ locals {
 
   # handling exclusions when only excluded ouids are provided
   # fetch list of all ouids to filter exclusions (AWS data source only returns first level immediate children)
-  oulist = local.org_configuration == "excluded_ous_only" ? toset([for ou in data.aws_organizations_organizational_units.ou[0].children: ou.id]) : toset([])
+  ou_list = local.org_configuration == "excluded_ous_only" ? toset([for ou in data.aws_organizations_organizational_units.ou[0].children: ou.id]) : toset([])
 
   # switch cases for various user provided org configuration to be onboarded
   deployment_options = {
@@ -59,9 +65,9 @@ locals {
       org_units_to_deploy = var.include_ouids
     }
     excluded_ous_only = {
-      # check if user provided excluded ouids are in oulist to determine whether or not we can make exclusions, else we ignore and onboard entire org
+      # check if user provided excluded ouids are in ou_list to determine whether or not we can make exclusions, else we ignore and onboard entire org
       # TODO: update this if we find alternative to get all OUs in tree to filter exclusions for nested ouids as well
-      org_units_to_deploy = length(setintersection(local.oulist, var.exclude_ouids)) > 0 ? setsubtract(local.oulist, var.exclude_ouids) : local.root_org_units
+      org_units_to_deploy = length(setintersection(local.ou_list, var.exclude_ouids)) > 0 ? setsubtract(local.ou_list, var.exclude_ouids) : local.root_org_units
     }
     mixed_ous = {
       # if both include and exclude ouids are provided, includes override excludes
@@ -94,26 +100,37 @@ locals {
           # case4 - if both include and exclude accounts are provided, includes override excludes
           # TODO: update this mixed case if we find an alternative to pass both inclusion & exclusion of accounts
           var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
-            "UNION"
+            "MIXED"
           ) : ""
         )
       )
     )
   )
 
+  # handling exclusions when both include and exclude accounts are provided - fetch all accounts of every ou and filter exclusions
+  org_accounts_list = local.accounts_configuration == "MIXED" ? flatten([ for ou_child_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_children: [ ou_child_accounts.accounts[*].id ] ]) : []
+
   # switch cases for various user provided accounts configuration to be onboarded
   deployment_account_options = {
     NONE = {
       accounts_to_deploy = []
+      account_filter_type = "NONE"
     }
     UNION = {
       accounts_to_deploy = var.include_accounts
+      account_filter_type = "UNION"
     }
     DIFFERENCE = {
       accounts_to_deploy = var.exclude_accounts
+      account_filter_type = "DIFFERENCE"
+    }
+    MIXED = {
+      accounts_to_deploy = setunion(var.include_accounts, setsubtract(toset(local.org_accounts_list), var.exclude_accounts))
+      account_filter_type = "UNION"
     }
     default = {
       accounts_to_deploy = []
+      account_filter_type = "NONE"
     }
   }
 
@@ -183,8 +200,8 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.deployment_targets.org_units_to_deploy
-    accounts                = local.accounts_configuration == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
-    account_filter_type     = local.accounts_configuration
+    accounts                = local.deployment_accounts.account_filter_type == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_accounts.account_filter_type
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -204,7 +221,7 @@ resource "sysdig_secure_organization" "aws_organization" {
   count                          = var.is_organizational ? 1 : 0
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
   # TODO: once BE change is added
-  # root_organizational_unit       = local.root_org_units[0]
+  # organization_root_id           = local.root_org_units[0].id
   included_organizational_groups = var.include_ouids
   excluded_organizational_groups = var.exclude_ouids
   included_cloud_accounts        = var.include_accounts
