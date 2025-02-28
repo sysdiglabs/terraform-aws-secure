@@ -98,7 +98,6 @@ locals {
           "DIFFERENCE"
         ) : (
           # case4 - if both include and exclude accounts are provided, includes override excludes
-          # TODO: update this mixed case if we find an alternative to pass both inclusion & exclusion of accounts
           var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
             "MIXED"
           ) : ""
