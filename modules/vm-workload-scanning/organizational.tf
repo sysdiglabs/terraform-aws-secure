@@ -3,14 +3,6 @@
 # are created using CloudFormation StackSet. For Single Account installs see main.tf.
 #-----------------------------------------------------------------------------------------------------------------------
 
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
-locals {
-  organizational_unit_ids = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.organizational_unit_ids)
-}
-
 locals {
   policy_document_no_lambda = <<TEMPLATE
 Resources:
@@ -132,7 +124,9 @@ resource "aws_cloudformation_stack_set_instance" "scanning_role_stackset_instanc
 
   stack_set_name = aws_cloudformation_stack_set.scanning_role_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = local.deployment_targets.org_units_to_deploy
+    accounts                = local.deployment_accounts.account_filter_type == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_accounts.account_filter_type
   }
   operation_preferences {
     max_concurrent_percentage    = 100

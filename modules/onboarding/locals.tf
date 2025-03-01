@@ -1,5 +1,5 @@
 #----------------------------------------------------------
-# Fetch & compute required data
+# Fetch & compute required data for organizational install
 #----------------------------------------------------------
 
 data "aws_organizations_organization" "org" {

@@ -4,14 +4,6 @@
 # For a single account installation, see main.tf.
 #-----------------------------------------------------------------------------------------------------------------------
 
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
-locals {
-  organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.org_units)
-}
-
 # stackset to deploy eventbridge rule in organization unit
 resource "aws_cloudformation_stack_set" "eb-rule-stackset" {
   count = var.is_organizational ? 1 : 0
@@ -108,7 +100,9 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
 
   stack_set_name = aws_cloudformation_stack_set.eb-rule-stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = local.deployment_targets.org_units_to_deploy
+    accounts                = local.deployment_accounts.account_filter_type == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_accounts.account_filter_type
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -130,7 +124,9 @@ resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
 
   stack_set_name = aws_cloudformation_stack_set.eb-role-stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = local.deployment_targets.org_units_to_deploy
+    accounts                = local.deployment_accounts.account_filter_type == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_accounts.account_filter_type
   }
   operation_preferences {
     max_concurrent_percentage    = 100

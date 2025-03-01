@@ -18,7 +18,7 @@ pull images from ECR, optionally obtain lambda function code and details.
 |---------------------------------------------------------------------------|-----------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.7    |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 5.60.0 |
-| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig)          | ~> 1.37   |
+| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig)          | ~> 1.47   |
 
 ## Providers
 
@@ -58,6 +58,11 @@ No modules.
 | <a name="input_failure_tolerance_percentage"></a> [failure_tolerance_percentage](#input_failure_tolerance_percentage) | The percentage of accounts, per Region, for which stack operations can fail before AWS CloudFormation stops the operation in that Region | `number` | `90` | no |
 | <a name="input_lambda_scanning_enabled"></a> [lambda_scanning_enabled](#input_lambda_scanning_enabled) | Set this field to 'true' to deploy Agentless Workload Scanning for Lambda functions | `bool` | `false` | no |
 | <a name="input_sysdig_secure_account_id"></a> [sysdig_secure_account_id](#input_sysdig_secure_account_id) | ID of the Sysdig Cloud Account to enable Config Posture for (in case of organization, ID of the Sysdig management account) | `string` | n/a | yes |
+| <a name="input_include_ouids"></a> [include\_ouids](#input\_include\_ouids)                                                | ouids to include for organization                                                                                                                     | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_exclude_ouids"></a> [exclude\_ouids](#input\_exclude\_ouids)                                                | ouids to exclude for organization                                                                                                                     | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_include_accounts"></a> [include\_accounts](#input\_include\_accounts)                                       | accounts to include for organization                                                                                                                  | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_exclude_accounts"></a> [exclude\_accounts](#input\_exclude\_accounts)                                       | accounts to exclude for organization                                                                                                                  | `set(string)` | `[]`                                                        |    no    |
+
 
 ## Outputs
 
