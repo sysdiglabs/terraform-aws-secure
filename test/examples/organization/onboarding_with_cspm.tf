@@ -19,6 +19,7 @@ provider "aws" {
 
 module "onboarding" {
   source            	    = "../../../modules/onboarding"
+  is_organizational         = true
   # legacy org install
   # organizational_unit_ids = ["ou-ks5g-dofso0kc"]
 
@@ -26,14 +27,16 @@ module "onboarding" {
   include_ouids = ["ou-1", "ou-2"]
   exclude_accounts = ["123456789101", "123456789101", "123456789101", "123456789101"]
   include_accounts = ["123456789101", "123456789101"]
-  is_organizational 	    = true
 }
 
 module "config-posture" {
   source                   = "../../../modules/config-posture"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
-  org_units                = ["ou-ks5g-dofso0kc"]
   is_organizational        = true
+  # legacy org install
+  # org_units               = ["ou-ks5g-dofso0kc"]
+
+  # include/exclude params
   include_ouids = module.onboarding.include_ouids
   exclude_ouids = module.onboarding.exclude_ouids
   include_accounts = module.onboarding.include_accounts
