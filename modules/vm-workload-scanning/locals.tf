@@ -34,7 +34,7 @@ data "aws_organizations_organizational_units" "ou" {
 
 # if both include and exclude accounts are provided, fetch all child accounts of final org_units_to_deploy to filter exclusions
 data "aws_organizations_organizational_unit_descendant_accounts" "ou_children" {
-  for_each  = local.deployment_targets.org_units_to_deploy
+  for_each  = toset(local.deployment_targets.org_units_to_deploy)
   parent_id = each.key
 }
 
