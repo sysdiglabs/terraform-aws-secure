@@ -103,12 +103,15 @@ TEMPLATE
 
 // stackset instance to deploy rule in all organization units
 resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
-  for_each = var.is_organizational ? local.region_set : toset([])
-  region   = each.key
+  for_each = var.is_organizational ? {
+    for pair in setproduct(local.region_set, local.organizational_unit_ids) :
+    "${pair[0]}-${pair[1]}" => pair
+  } : {}
 
+  region = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.eb-rule-stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = [each.value[1]]
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -126,11 +129,11 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
 
 // stackset instance to deploy role in all organization units
 resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
-  count = var.is_organizational ? 1 : 0
+  for_each = var.is_organizational ? toset(local.organizational_unit_ids) : []
 
   stack_set_name = aws_cloudformation_stack_set.eb-role-stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = [each.value]
   }
   operation_preferences {
     max_concurrent_percentage    = 100

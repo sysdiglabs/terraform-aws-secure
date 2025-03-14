@@ -66,12 +66,12 @@ TEMPLATE
 }
 
 resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
-  count = var.is_organizational ? 1 : 0
+  for_each = var.is_organizational ? toset(local.org_units_to_deploy) : []
 
   region         = var.region == "" ? null : var.region
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.org_units_to_deploy
+    organizational_unit_ids = [each.value]
   }
   operation_preferences {
     max_concurrent_percentage    = 100
