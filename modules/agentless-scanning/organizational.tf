@@ -191,8 +191,11 @@ TEMPLATE
 
 # stackset instance to deploy resources for agentless scanning, in all regions of each account in all organization units
 resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
-  for_each = var.is_organizational ? setproduct(local.region_set, local.organizational_unit_ids) : []
-  
+  for_each = var.is_organizational ? {
+    for pair in setproduct(local.region_set, local.organizational_unit_ids) :
+    "${pair[0]}-${pair[1]}" => pair
+  } : {}
+
   region = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
   deployment_targets {

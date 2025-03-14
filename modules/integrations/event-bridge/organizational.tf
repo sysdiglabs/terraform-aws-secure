@@ -103,8 +103,11 @@ TEMPLATE
 
 // stackset instance to deploy rule in all organization units
 resource "aws_cloudformation_stack_set_instance" "eb_rule_stackset_instance" {
-  for_each = var.is_organizational ? setproduct(local.region_set, local.organizational_unit_ids) : []
-  
+  for_each = var.is_organizational ? {
+    for pair in setproduct(local.region_set, local.organizational_unit_ids) :
+    "${pair[0]}-${pair[1]}" => pair
+  } : {}
+
   region = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.eb-rule-stackset[0].name
   deployment_targets {
