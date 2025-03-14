@@ -128,11 +128,11 @@ resource "aws_cloudformation_stack_set" "scanning_role_stackset" {
 
 # stackset instance to deploy agentless scanning role, in all organization units
 resource "aws_cloudformation_stack_set_instance" "scanning_role_stackset_instance" {
-  count = var.is_organizational ? 1 : 0
+  for_each = var.is_organizational ? toset(local.organizational_unit_ids) : []
 
   stack_set_name = aws_cloudformation_stack_set.scanning_role_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.organizational_unit_ids
+    organizational_unit_ids = [each.value]
   }
   operation_preferences {
     max_concurrent_percentage    = 100
