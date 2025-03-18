@@ -30,3 +30,8 @@ Resources:
                     - "events:DescribeRule"
                     - "events:ListTargetsByRule"
                   Resource: "${arn_prefix}:events:*:*:rule/${name}"
+                - Effect: Allow
+                  Action:
+                    - "events:DescribeApiDestination"
+                    - "events:DescribeConnection"
+                  Resource: "*"
