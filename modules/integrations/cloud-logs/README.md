@@ -7,6 +7,7 @@ The following resources will be created in each instrumented account:
 
 - An IAM Role and associated policies that gives the ingestion component in Sysdig's account permission to list and
   retrieve items from it.
+- Support for KMS-encrypted S3 buckets by granting the necessary KMS decryption permissions.
 
 If instrumenting an AWS Gov account/organization, resources will be created in `aws-us-gov` region.
 
@@ -59,6 +60,7 @@ No modules.
 | <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn)                                               | (Required) The ARN of your CloudTrail Bucket                                                                                                  | `string`      | n/a                                                         |   yes    |
 | <a name="input_topic_arn"></a> [topic\_arn](#input\_topic\_arn)                                                  | SNS Topic ARN that will forward CloudTrail notifications to Sysdig Secure                                                                     | `string`      | n/a                                                         |   yes    |
 | <a name="input_create_topic"></a> [create\_topic](#input\_create\_topic)                                         | true/false whether terraform should create the SNS Topic                                                                                      | `bool`        | `false`                                                     |    no    |
+| <a name="input_kms_key_arns"></a> [kms\_key\_arns](#input\_kms\_key\_arns)                                       | (Optional) List of KMS Key ARNs used to encrypt the S3 bucket. If provided, the IAM role will be granted permissions to decrypt using these keys. | `list(string)` | `null`                                                     |    no    |
 | <a name="input_tags"></a> [tags](#input\_tags)                                                                   | (Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning                           | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> |    no    |
 | <a name="input_name"></a> [name](#input\_name)                                                                   | (Optional) Name to be assigned to all child resources. A suffix may be added internally when required.                                        | `string`      | sysdig-secure-cloudlogs                                     |    no    |
 | <a name="input_regions"></a> [regions](#input\_regions)                                                          | (Optional) The list of AWS regions we want to scrape data from                                                                                | `set(string)` | `[]`                                                        |    no    |
