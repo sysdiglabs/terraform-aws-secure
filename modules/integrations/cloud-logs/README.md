@@ -8,8 +8,53 @@ The following resources will be created in each instrumented account:
 - An IAM Role and associated policies that gives the ingestion component in Sysdig's account permission to list and
   retrieve items from it.
 - Support for KMS-encrypted S3 buckets by granting the necessary KMS decryption permissions.
+- Support for cross-account S3 bucket access, allowing CloudTrail logs to be read from buckets in different AWS accounts.
 
 If instrumenting an AWS Gov account/organization, resources will be created in `aws-us-gov` region.
+
+## Important Notes for Cross-Account Access
+
+When using this module to access CloudTrail logs from a bucket in a different AWS account, you need to configure permissions in both accounts:
+
+1. In the account where this module is applied:
+   - The module creates an IAM role with the necessary permissions
+   - The role ARN is provided in the `cloudlogs_role_arn` output
+
+2. In the account that owns the S3 bucket:
+   - Add a bucket policy statement allowing access from the IAM role
+   - If the bucket is encrypted with KMS, also modify the KMS key policy to allow decryption
+
+Example bucket policy statement (to be added to the bucket policy in the bucket owner account):
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "<cloudlogs_role_arn>"
+  },
+  "Action": [
+    "s3:GetObject",
+    "s3:ListBucket"
+  ],
+  "Resource": [
+    "arn:aws:s3:::<BUCKET_NAME>",
+    "arn:aws:s3:::<BUCKET_NAME>/*"
+  ]
+}
+```
+
+Example KMS key policy statement (to be added to the key policy in the key owner account):
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "<cloudlogs_role_arn>"
+  },
+  "Action": [
+    "kms:Decrypt"
+  ],
+  "Resource": "*"
+}
+```
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
@@ -61,6 +106,7 @@ No modules.
 | <a name="input_topic_arn"></a> [topic\_arn](#input\_topic\_arn)                                                  | SNS Topic ARN that will forward CloudTrail notifications to Sysdig Secure                                                                     | `string`      | n/a                                                         |   yes    |
 | <a name="input_create_topic"></a> [create\_topic](#input\_create\_topic)                                         | true/false whether terraform should create the SNS Topic                                                                                      | `bool`        | `false`                                                     |    no    |
 | <a name="input_kms_key_arns"></a> [kms\_key\_arns](#input\_kms\_key\_arns)                                       | (Optional) List of KMS Key ARNs used to encrypt the S3 bucket. If provided, the IAM role will be granted permissions to decrypt using these keys. | `list(string)` | `null`                                                     |    no    |
+| <a name="input_bucket_account_id"></a> [bucket\_account\_id](#input\_bucket\_account\_id)                        | (Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. If not specified, the current account is assumed to be the bucket owner. | `string`      | `null`                                                     |    no    |
 | <a name="input_tags"></a> [tags](#input\_tags)                                                                   | (Optional) Sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning                           | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> |    no    |
 | <a name="input_name"></a> [name](#input\_name)                                                                   | (Optional) Name to be assigned to all child resources. A suffix may be added internally when required.                                        | `string`      | sysdig-secure-cloudlogs                                     |    no    |
 | <a name="input_regions"></a> [regions](#input\_regions)                                                          | (Optional) The list of AWS regions we want to scrape data from                                                                                | `set(string)` | `[]`                                                        |    no    |
@@ -71,6 +117,7 @@ No modules.
 | Name                                                                                                            | Description                                                                                |
 |-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a name="output_cloud_logs_component_id"></a> [cloud\_logs\_component\_id](#output\_cloud\_logs\_component\_id) | Component identifier of Cloud Logs integration created in Sysdig Backend for Log Ingestion |
+| <a name="output_cloudlogs_role_arn"></a> [cloudlogs\_role\_arn](#output\_cloudlogs\_role\_arn)                  | ARN of the IAM role created for accessing CloudTrail logs. Use this ARN in the bucket policy when configuring cross-account access. |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
