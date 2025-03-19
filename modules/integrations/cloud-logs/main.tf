@@ -170,26 +170,6 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       resources = var.kms_key_arns
     }
   }
-  
-  # Add cross-account statement only when bucket is in a different account
-  dynamic "statement" {
-    for_each = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id ? [1] : []
-    content {
-      sid = "CloudlogsS3CrossAccountAccess"
-      
-      effect = "Allow"
-      
-      actions = [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ]
-      
-      resources = [
-        var.bucket_arn,
-        "${var.bucket_arn}/*"
-      ]
-    }
-  }
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
