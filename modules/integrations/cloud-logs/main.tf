@@ -10,6 +10,39 @@
 #    new logs are published to the S3 bucket. The SNS Topic allows CloudTrail to publish notifications, while the
 #    subscription forwards these notifications to Sysdig's ingestion service via HTTPS.
 #
+# 3. Support for cross-account S3 bucket access. When the bucket is in a different AWS account, you'll need to configure
+#    the S3 bucket policy in that account to allow access from the IAM role created by this module.
+#    Example of the required bucket policy statement (to be added to the existing bucket policy):
+#    {
+#      "Effect": "Allow",
+#      "Principal": {
+#        "AWS": "arn:aws:iam::<ACCOUNT_ID_WHERE_MODULE_IS_APPLIED>:role/<ROLE_NAME_CREATED_BY_MODULE>"
+#      },
+#      "Action": [
+#        "s3:GetObject",
+#        "s3:ListBucket"
+#      ],
+#      "Resource": [
+#        "arn:aws:s3:::<BUCKET_NAME>",
+#        "arn:aws:s3:::<BUCKET_NAME>/*"
+#      ]
+#    }
+#
+# 4. Support for KMS-encrypted S3 buckets. When the S3 bucket is encrypted with KMS keys, especially in cross-account 
+#    scenarios, you'll also need to modify the KMS key policy in the account that owns the key. The KMS key policy must
+#    grant decrypt permissions to the IAM role created by this module.
+#    Example of the required KMS key policy statement (to be added to the existing key policy):
+#    {
+#      "Effect": "Allow",
+#      "Principal": {
+#        "AWS": "arn:aws:iam::<ACCOUNT_ID_WHERE_MODULE_IS_APPLIED>:role/<ROLE_NAME_CREATED_BY_MODULE>"
+#      },
+#      "Action": [
+#        "kms:Decrypt"
+#      ],
+#      "Resource": "*"
+#    }
+#
 # This setup assumes the customer has already configured an AWS CloudTrail Trail and its associated S3 bucket. The
 # required details (e.g., bucket ARN, topic ARN, and regions) are either passed as module variables or derived from
 # data sources.
@@ -44,6 +77,9 @@ locals {
   topic_name = split(":", var.topic_arn)[5]
   routing_key      = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_key
   ingestion_url    = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_url
+  
+  # Determine bucket owner account ID - use provided value or default to current account
+  bucket_account_id = var.bucket_account_id != null ? var.bucket_account_id : data.aws_caller_identity.current.account_id
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -128,11 +164,35 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       effect = "Allow"
       
       actions = [
-        "kms:Decrypt",
-        "kms:GenerateDataKey"
+        "kms:Decrypt"
       ]
       
       resources = var.kms_key_arns
+    }
+  }
+  
+  # Add cross-account statement only when bucket is in a different account
+  dynamic "statement" {
+    for_each = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id ? [1] : []
+    content {
+      sid = "CloudlogsS3CrossAccountAccess"
+      
+      effect = "Allow"
+      
+      actions = [
+        "s3:GetBucketLocation",
+        "s3:GetBucketAcl",
+        "s3:GetBucketPolicy",
+        "s3:GetObject",
+        "s3:GetObjectAcl",
+        "s3:GetObjectVersion",
+        "s3:ListBucket"
+      ]
+      
+      resources = [
+        var.bucket_arn,
+        "${var.bucket_arn}/*"
+      ]
     }
   }
 }
@@ -187,6 +247,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
         role_name        = local.role_name
         topic_arn        = var.topic_arn
         bucket_arn       = var.bucket_arn
+        bucket_account_id = local.bucket_account_id
         ingested_regions = var.regions
         routing_key      = local.routing_key
       }

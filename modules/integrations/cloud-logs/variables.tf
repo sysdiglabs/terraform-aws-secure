@@ -61,3 +61,9 @@ variable "kms_key_arns" {
   default     = null
   description = "(Optional) List of KMS Key ARNs used to encrypt the S3 bucket. If provided, the IAM role will be granted permissions to decrypt using these keys."
 }
+
+variable "bucket_account_id" {
+  type        = string
+  default     = null
+  description = "(Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. If not specified, the current account is assumed to be the bucket owner."
+}
