@@ -180,12 +180,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       effect = "Allow"
       
       actions = [
-        "s3:GetBucketLocation",
-        "s3:GetBucketAcl",
-        "s3:GetBucketPolicy",
         "s3:GetObject",
-        "s3:GetObjectAcl",
-        "s3:GetObjectVersion",
         "s3:ListBucket"
       ]
       
