@@ -118,6 +118,7 @@ No modules.
 |-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a name="output_cloud_logs_component_id"></a> [cloud\_logs\_component\_id](#output\_cloud\_logs\_component\_id) | Component identifier of Cloud Logs integration created in Sysdig Backend for Log Ingestion |
 | <a name="output_cloudlogs_role_arn"></a> [cloudlogs\_role\_arn](#output\_cloudlogs\_role\_arn)                  | ARN of the IAM role created for accessing CloudTrail logs. Use this ARN in the bucket policy when configuring cross-account access. |
+| <a name="output_cross_account_setup_instructions"></a> [cross\_account\_setup\_instructions](#output\_cross\_account\_setup\_instructions) | Instructions for completing the cross-account setup in the bucket owner account. Includes examples of the required bucket and KMS policies. |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
