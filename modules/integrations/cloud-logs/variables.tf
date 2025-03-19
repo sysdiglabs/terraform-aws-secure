@@ -55,3 +55,9 @@ variable "create_topic" {
   default     = false
   description = "true/false whether terraform should create the SNS Topic"
 }
+
+variable "kms_key_arns" {
+  type        = list(string)
+  default     = null
+  description = "(Optional) List of KMS Key ARNs used to encrypt the S3 bucket. If provided, the IAM role will be granted permissions to decrypt using these keys."
+}

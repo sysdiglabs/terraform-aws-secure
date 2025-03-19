@@ -119,6 +119,22 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       "${var.bucket_arn}/*"
     ]
   }
+  
+  dynamic "statement" {
+    for_each = var.kms_key_arns != null ? [1] : []
+    content {
+      sid = "CloudlogsKMSDecrypt"
+      
+      effect = "Allow"
+      
+      actions = [
+        "kms:Decrypt",
+        "kms:GenerateDataKey"
+      ]
+      
+      resources = var.kms_key_arns
+    }
+  }
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
