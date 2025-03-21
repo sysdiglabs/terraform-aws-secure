@@ -121,7 +121,7 @@ locals {
     }
     MIXED = {
       accounts_to_deploy = var.include_accounts
-      account_filter_type = "UNION" # Can't do UNION, so do DIFF atleast?
+      account_filter_type = "UNION"
     }
     default = {
       # default when neither of include/exclude accounts are provided
