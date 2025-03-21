@@ -23,7 +23,7 @@ module "onboarding" {
   # legacy org install
   # organizational_unit_ids = ["ou-ks5g-dofso0kc"]
 
-  # include/exclude params
+  # include/exclude org install params
   include_ouids = ["ou-1", "ou-2"]
   exclude_accounts = ["123456789101", "123456789101", "123456789101", "123456789101"]
   include_accounts = ["123456789101", "123456789101"]
@@ -36,7 +36,7 @@ module "config-posture" {
   # legacy org install
   # org_units               = ["ou-ks5g-dofso0kc"]
 
-  # include/exclude params
+  # include/exclude org install params
   include_ouids = module.onboarding.include_ouids
   exclude_ouids = module.onboarding.exclude_ouids
   include_accounts = module.onboarding.include_accounts

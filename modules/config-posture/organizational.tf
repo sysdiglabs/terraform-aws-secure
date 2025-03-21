@@ -81,9 +81,9 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   region         = var.region == "" ? null : var.region
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.deployment_targets.org_units_to_deploy
-    accounts                = local.deployment_accounts.account_filter_type == "NONE" ? null : local.deployment_accounts.accounts_to_deploy
-    account_filter_type     = local.deployment_accounts.account_filter_type
+    organizational_unit_ids = local.deployment_targets_org_units
+    accounts                = local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_targets_accounts_filter
   }
   operation_preferences {
     max_concurrent_percentage    = 100

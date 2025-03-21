@@ -21,26 +21,26 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  # fetch the AWS Root OU
-  root_org_units = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []
+  # fetch the AWS Root OU under org
+  # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root
+  root_org_unit = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []
 }
 
-# if only excluded ouids provided, fetch children ous in org to filter exclusions
-# note: AWS fetches only first level immediate children, since it has no data source to give all OUs recursively
-data "aws_organizations_organizational_units" "ou" {
-  count     = var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) > 0 ? 1 : 0
-  parent_id = data.aws_organizations_organization.org[0].roots[0].id
-}
+# ********************************************************************************************************************************
+# NOTE: 
+# 1. Inclusions are always handled for TF cloud provisioning.
+# 2. We handle exclusions when only exclusion parameters are provided i.e out of all 4 configuration inputs,
+#      a. only exclude_ouids are provided, OR
+#      b. only exclude_accounts, OR
+#      c. only exclude_ouids AND exclude_accounts are provided
+#    Else we ignore exclusions during cloud resource provisioning through TF. This is because AWS does not allow both operations,
+#    i.e to include some accounts and to exclude some. Hence, we will always prioritize include over exclude.
+# 3. Sysdig however honors all combinations of configuration inputs.
+# ********************************************************************************************************************************
 
-# if both include and exclude accounts are provided, fetch all child accounts of final org_units_to_deploy to filter exclusions
-data "aws_organizations_organizational_unit_descendant_accounts" "ou_children" {
-  for_each  = toset(local.deployment_targets.org_units_to_deploy)
-  parent_id = each.key
-}
-
-#----------------------------------------------------------
-# Manage configurations to determine targets to deploy in
-#----------------------------------------------------------
+#------------------------------------------------------------
+# Manage configurations to determine OU targets to deploy in
+#------------------------------------------------------------
 
 locals {
   # OU CONFIGURATION (determine user provided org configuration)
@@ -66,87 +66,96 @@ locals {
     )
   )
 
-  # handling exclusions when only excluded ouids are provided
-  # fetch list of all ouids to filter exclusions (AWS data source only returns first level immediate children)
-  ou_list = local.org_configuration == "excluded_ous_only" ? toset([for ou in data.aws_organizations_organizational_units.ou[0].children: ou.id]) : toset([])
-
   # switch cases for various user provided org configuration to be onboarded
   deployment_options = {
     entire_org = {
-       org_units_to_deploy = local.root_org_units
+       org_units_to_deploy = local.root_org_unit
     }
     included_ous_only = {
       org_units_to_deploy = var.include_ouids
     }
     excluded_ous_only = {
-      # check if user provided excluded ouids are in ou_list to determine whether or not we can make exclusions, else we ignore and onboard entire org
-      # TODO: update this if we find alternative to get all OUs in tree to filter exclusions for nested ouids as well
-      org_units_to_deploy = length(setintersection(local.ou_list, var.exclude_ouids)) > 0 ? setsubtract(local.ou_list, var.exclude_ouids) : local.root_org_units
+      # onboard entire org and filter out all accounts in excluded OUs using account filter
+      org_units_to_deploy = local.root_org_unit
     }
     mixed_ous = {
       # if both include and exclude ouids are provided, includes override excludes
       org_units_to_deploy = var.include_ouids
     }
     default = {
-      org_units_to_deploy = []
+      org_units_to_deploy = local.root_org_unit
     }
   }
 
   # final targets to deploy organizational resources in
-  deployment_targets = lookup(local.deployment_options, local.org_configuration, local.deployment_options.default)
+  deployment_targets_ous = lookup(local.deployment_options, local.org_configuration, local.deployment_options.default)
+}
+
+#-----------------------------------------------------------------
+# Manage configurations to determine account targets to deploy in
+#-----------------------------------------------------------------
+
+# if only exclude_ouids are provided and as long as it isn't Root OU, fetch all their child accounts to filter exclusions
+data "aws_organizations_organizational_unit_descendant_accounts" "ou_accounts_to_exclude" {
+  for_each  = local.org_configuration == "excluded_ous_only" && !contains(var.exclude_ouids, local.root_org_unit[0]) ? var.exclude_ouids : []
+  parent_id = each.key
 }
 
 locals {
   # ACCOUNTS CONFIGURATION (determine user provided accounts configuration)
   accounts_configuration = (
-    # case1 - if no include/exclude accounts provided
-    var.is_organizational && length(var.include_accounts) == 0 && length(var.exclude_accounts) == 0 ? (
-      "NONE"
+    # case1 - if only included accounts provided, include those accts as well
+    var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) == 0 ? (
+      "UNION"
     ) : (
-      # case2 - if only included accounts provided, include those accts as well
-      var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) == 0 ? (
-        "UNION"
+      # case2 - if only excluded accounts or only excluded ouids provided, exclude those accounts
+      var.is_organizational && length(var.include_accounts) == 0 && ( length(var.exclude_accounts) > 0 || local.org_configuration == "excluded_ous_only" ) ? (
+        "DIFFERENCE"
       ) : (
-        # case3 - if only excluded accounts provided, exclude those accounts
-        var.is_organizational && length(var.include_accounts) == 0 && length(var.exclude_accounts) > 0 ? (
-          "DIFFERENCE"
-        ) : (
-          # case4 - if both include and exclude accounts are provided, includes override excludes
-          var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
-            "MIXED"
-          ) : ""
-        )
+        # case3 - if both include and exclude accounts are provided, includes override excludes
+        var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
+          "MIXED"
+        ) : ""
       )
     )
   )
 
-  # handling exclusions when both include and exclude accounts are provided - fetch all accounts of every ou and filter exclusions
-  org_accounts_list = local.accounts_configuration == "MIXED" ? flatten([ for ou_child_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_children: [ ou_child_accounts.accounts[*].id ] ]) : []
+  ou_accounts_to_exclude = flatten([ for ou_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_accounts_to_exclude: [ ou_accounts.accounts[*].id ] ])
+  accounts_to_exclude = setunion(local.ou_accounts_to_exclude, var.exclude_accounts)
 
   # switch cases for various user provided accounts configuration to be onboarded
   deployment_account_options = {
-    NONE = {
-      accounts_to_deploy = []
-      account_filter_type = "NONE"
-    }
     UNION = {
       accounts_to_deploy = var.include_accounts
       account_filter_type = "UNION"
     }
     DIFFERENCE = {
-      accounts_to_deploy = var.exclude_accounts
+      accounts_to_deploy = local.accounts_to_exclude
       account_filter_type = "DIFFERENCE"
     }
     MIXED = {
-      accounts_to_deploy = setunion(var.include_accounts, setsubtract(toset(local.org_accounts_list), var.exclude_accounts))
-      account_filter_type = "UNION"
+      accounts_to_deploy = var.include_accounts
+      account_filter_type = "UNION" # Can't do UNION, so do DIFF atleast?
     }
     default = {
+      # default when neither of include/exclude accounts are provided
       accounts_to_deploy = []
       account_filter_type = "NONE"
     }
   }
 
   # list of accounts to deploy organizational resources in
-  deployment_accounts = lookup(local.deployment_account_options, local.accounts_configuration, local.deployment_account_options.default)
+  deployment_targets_accounts = lookup(local.deployment_account_options, local.accounts_configuration, local.deployment_account_options.default)
+}
+
+# -----------------------------------------------------------------------------------------------------
+# Remove below conditional once AWS issue is fixed -
+# https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-cloudformation/issues/100
+# -----------------------------------------------------------------------------------------------------
+locals {
+  # XXX: due to AWS bug of not having UNION filter fully working, there is no way to add those extra accounts requested.
+  # to not miss out on those extra accounts, deploy the cloud resources across entire org and noop the UNION filter.
+  # i.e till we can't deploy UNION, we deploy it all
+  deployment_targets_org_units = local.deployment_targets_accounts.account_filter_type == "UNION" ? local.root_org_unit : local.deployment_targets_ous.org_units_to_deploy
+  deployment_targets_accounts_filter = local.deployment_targets_accounts.account_filter_type == "UNION" ? "NONE" : local.deployment_targets_accounts.account_filter_type
 }
