@@ -12,17 +12,23 @@ locals {
   root_org_unit = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []
 }
 
-# ********************************************************************************************************************************
-# NOTE: 
-# 1. Inclusions are always handled for TF cloud provisioning.
+# *****************************************************************************************************************************************************
+# INCLUDE/EXCLUDE CONFIGURATION SUPPORT
+#
+# 1. Inclusions will always be handled for TF cloud provisioning.
+#    NOTE:
+#    Till AWS issue with UNION filter (https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-cloudformation/issues/100)
+#    is fixed, we can't deploy using UNION filters for inclusions. As a workaround to ensure we don't skip any accounts, we deploy it to entire org.
+#
 # 2. We handle exclusions when only exclusion parameters are provided i.e out of all 4 configuration inputs,
 #      a. only exclude_ouids are provided, OR
-#      b. only exclude_accounts, OR
+#      b. only exclude_accounts are provided, OR
 #      c. only exclude_ouids AND exclude_accounts are provided
-#    Else we ignore exclusions during cloud resource provisioning through TF. This is because AWS does not allow both operations,
-#    i.e to include some accounts and to exclude some. Hence, we will always prioritize include over exclude.
-# 3. Sysdig however honors all combinations of configuration inputs.
-# ********************************************************************************************************************************
+#    Else we ignore exclusions during cloud resource provisioning through TF. This is because AWS does not allow both operations - to include some
+#    accounts and to exclude some. Hence, we will always prioritize include over exclude.
+#
+# 3. Sysdig however will honor all combinations of configuration inputs exactly as desired.
+# *****************************************************************************************************************************************************
 
 #------------------------------------------------------------
 # Manage configurations to determine OU targets to deploy in
