@@ -1,16 +1,4 @@
 #----------------------------------------------------------
-# Fetch & compute required data
-#----------------------------------------------------------
-
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
-locals {
-  org_units_to_deploy = var.is_organizational && length(var.organizational_unit_ids) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : var.organizational_unit_ids
-}
-
-#----------------------------------------------------------
 # Since this is an Organizational deploy, use a CloudFormation StackSet
 #----------------------------------------------------------
 
@@ -71,7 +59,9 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   region         = var.region == "" ? null : var.region
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.org_units_to_deploy
+    organizational_unit_ids = local.deployment_targets_org_units
+    accounts                = local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_targets_accounts_filter
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -90,6 +80,7 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
 resource "sysdig_secure_organization" "aws_organization" {
   count                          = var.is_organizational ? 1 : 0
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
+  organization_root_id           = local.root_org_unit[0]
   included_organizational_groups = var.include_ouids
   excluded_organizational_groups = var.exclude_ouids
   included_cloud_accounts        = var.include_accounts
