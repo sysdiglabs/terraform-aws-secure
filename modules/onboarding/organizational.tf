@@ -80,7 +80,7 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
 resource "sysdig_secure_organization" "aws_organization" {
   count                          = var.is_organizational ? 1 : 0
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
-  organization_root_id           = local.root_org_units[0]
+  organization_root_id           = local.root_org_unit[0]
   included_organizational_groups = var.include_ouids
   excluded_organizational_groups = var.exclude_ouids
   included_cloud_accounts        = var.include_accounts
