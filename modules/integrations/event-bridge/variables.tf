@@ -107,3 +107,9 @@ variable "is_gov_cloud_onboarding" {
   default     = false
   description = "true/false whether EventBridge should be deployed in a govcloud account/org or not"
 }
+
+variable "api_dest_rate_limit" {
+  type        = number
+  default     = 300
+  description = "Rate limit for API Destinations"
+}
