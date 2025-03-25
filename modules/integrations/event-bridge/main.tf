@@ -213,7 +213,7 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_and_api_dest_stackset_
   }
 }
 
-resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge_api_dest" {
+resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
   account_id = var.sysdig_secure_account_id
   type       = local.component_type
   instance   = "secure-runtime"
