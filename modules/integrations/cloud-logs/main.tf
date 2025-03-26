@@ -72,9 +72,6 @@ locals {
   # Flag for cross-account bucket access
   is_cross_account = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id
   
-  # Flag for cross-account KMS access
-  is_cross_account_kms = local.is_cross_account && var.kms_key_arns != null
-
   # StackSet configuration
   stackset_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
   bucket_name   = split(":", var.bucket_arn)[5]
@@ -247,6 +244,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
         bucket_arn       = var.bucket_arn
         ingested_regions = var.regions
         routing_key      = local.routing_key
+        role_account_id  = local.bucket_account_id
       }
     }
   })
