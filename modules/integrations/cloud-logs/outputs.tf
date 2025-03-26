@@ -5,6 +5,6 @@ output "cloud_logs_component_id" {
 }
 
 output "cloudlogs_role_arn" {
-  value       = local.use_direct_role ? aws_iam_role.direct_s3_access[0].arn : null
-  description = "ARN of the IAM role created for accessing CloudTrail logs (only for non-organizational deployments)"
+  value       = aws_iam_role.cloudlogs_s3_access.arn
+  description = "ARN of the IAM role created for accessing CloudTrail logs"
 }
