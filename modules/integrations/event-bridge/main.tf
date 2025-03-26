@@ -17,11 +17,8 @@ locals {
   trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
   arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
   component_type       = "COMPONENT_WEBHOOK_DATASOURCE"
-}
-
-locals {
-  account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
-  eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  account_id_hash      = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
+  eb_resource_name     = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
 }
 
 resource "random_id" "suffix" {
