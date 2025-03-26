@@ -152,7 +152,8 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
         Sid = "ValidationAccess"
         Action = [
           "events:DescribeApiDestination",
-          "events:DescribeConnection"
+          "events:DescribeConnection",
+          "cloudwatch:GetMetricStatistics"
         ]
         Effect = "Allow"
         Resource = "*"
