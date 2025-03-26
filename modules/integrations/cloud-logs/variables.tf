@@ -35,6 +35,24 @@ variable "is_gov_cloud_onboarding" {
   description = "true/false whether secure-for-cloud should be deployed in a govcloud account/org or not"
 }
 
+variable "is_s3_bucket_in_different_account" {
+  type        = bool
+  default     = false
+  description = "true/false whether cloudtrail s3 bucket is located in different account"
+}
+
+variable "is_log_file_kms_encryption_enabled" {
+  type        = bool
+  default     = false
+  description = "needed only if cloudtrail s3 bucket is located in different account. true/false whether log file encryption is enabled"
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "KMS key ARN that is used to encrypt log files in s3 bucket"
+  default     = ""
+}
+
 variable "topic_arn" {
   type        = string
   description = "SNS Topic ARN that will forward CloudTrail notifications to Sysdig Secure"

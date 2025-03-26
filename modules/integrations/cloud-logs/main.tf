@@ -119,6 +119,23 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       "${var.bucket_arn}/*"
     ]
   }
+
+  dynamic "statement" {
+    for_each = var.is_s3_bucket_in_different_account && var.is_log_file_kms_encryption_enabled ? [1] : []
+    content {
+      sid = "AllowDecryptWithCrossAccountKey"
+
+      effect = "Allow"
+
+      actions = [
+        "kms:Decrypt"
+      ]
+
+      resources = [
+        var.kms_key_arn
+      ]
+    }
+  }
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
