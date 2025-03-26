@@ -6,6 +6,16 @@ variable "sysdig_secure_account_id" {
 variable "bucket_arn" {
   description = "(Required) The ARN of your CloudTrail Bucket"
   type        = string
+
+  validation {
+    condition     = var.bucket_arn != ""
+    error_message = "Bucket ARN must not be empty"
+  }
+
+  validation {
+    condition     = can(regex("^arn:(aws|aws-us-gov):s3:::.*$", var.bucket_arn))
+    error_message = "Bucket ARN must be a valid S3 ARN format"
+  }
 }
 
 variable "tags" {
@@ -18,7 +28,7 @@ variable "tags" {
 }
 
 variable "name" {
-  description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required. Use default value unless you need to install multiple instances"
+  description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required."
   type        = string
   default     = "sysdig-secure-cloudlogs"
 }
@@ -66,4 +76,28 @@ variable "bucket_account_id" {
   type        = string
   default     = null
   description = "(Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. If not specified, the current account is assumed to be the bucket owner."
+}
+
+variable "failure_tolerance_percentage" {
+  description = "The percentage of account deployments that can fail before CloudFormation stops deployment in an organizational unit. Range: 0-100"
+  type        = number
+  default     = 0
+}
+
+variable "timeout" {
+  description = "The maximum amount of time that Terraform will wait for the StackSet operation to complete"
+  type        = string
+  default     = "30m"
+}
+
+variable "is_organizational" {
+  type        = bool
+  description = "Whether this is an organizational deployment using AWS Organizations. If true, service-managed StackSets will be used for cross-account access."
+  default     = false
+}
+
+variable "org_units" {
+  type        = list(string)
+  description = "List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required if is_organizational is true."
+  default     = []
 }

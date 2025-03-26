@@ -9,52 +9,27 @@ The following resources will be created in each instrumented account:
   retrieve items from it.
 - Support for KMS-encrypted S3 buckets by granting the necessary KMS decryption permissions.
 - Support for cross-account S3 bucket access, allowing CloudTrail logs to be read from buckets in different AWS accounts.
+- AWS CloudFormation StackSet for automating cross-account S3 bucket and KMS key permissions (when using cross-account configuration).
 
 If instrumenting an AWS Gov account/organization, resources will be created in `aws-us-gov` region.
 
 ## Important Notes for Cross-Account Access
 
-When using this module to access CloudTrail logs from a bucket in a different AWS account, you need to configure permissions in both accounts:
+When using this module to access CloudTrail logs from a bucket in a different AWS account, the module automatically deploys a StackSet to configure the necessary permissions in the bucket account. This includes:
 
-1. In the account where this module is applied:
-   - The module creates an IAM role with the necessary permissions
-   - The role ARN is provided in the `cloudlogs_role_arn` output
+- S3 bucket policy to allow access from the Sysdig IAM role
+- IAM role in the bucket account with KMS decrypt permissions that the Sysdig role can assume (for KMS-encrypted logs)
 
-2. In the account that owns the S3 bucket:
-   - Add a bucket policy statement allowing access from the IAM role
-   - If the bucket is encrypted with KMS, also modify the KMS key policy to allow decryption
+The StackSet deployment requires appropriate permissions in the bucket account. The deploying account must have permission to create and manage StackSets in the bucket account.
 
-Example bucket policy statement (to be added to the bucket policy in the bucket owner account):
-```json
-{
-  "Effect": "Allow",
-  "Principal": {
-    "AWS": "<cloudlogs_role_arn>"
-  },
-  "Action": [
-    "s3:GetObject",
-    "s3:ListBucket"
-  ],
-  "Resource": [
-    "arn:aws:s3:::<BUCKET_NAME>",
-    "arn:aws:s3:::<BUCKET_NAME>/*"
-  ]
-}
-```
+### Working with KMS-encrypted S3 buckets
 
-Example KMS key policy statement (to be added to the key policy in the key owner account):
-```json
-{
-  "Effect": "Allow",
-  "Principal": {
-    "AWS": "<cloudlogs_role_arn>"
-  },
-  "Action": [
-    "kms:Decrypt"
-  ],
-  "Resource": "*"
-}
-```
+For KMS-encrypted S3 buckets in cross-account scenarios, this module creates an IAM role in the bucket account that can be assumed by the Sysdig role. This role has the necessary permissions to decrypt objects using the KMS keys.
+
+To use this functionality:
+1. Provide the KMS key ARNs using the `kms_key_arns` variable
+2. Specify the bucket account ID using the `bucket_account_id` variable
+3. Use the `kms_access_role_arn` output to obtain the ARN of the IAM role created for KMS access
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
@@ -89,9 +64,12 @@ No modules.
 | [aws_sns_topic.cloudtrail_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic)                                                  | resource    |
 | [aws_sns_topic_policy.cloudtrail_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_policy)                                    | resource    |
 | [aws_sns_topic_subscription.cloudtrail_notifications](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription)                        | resource    |
+| [aws_cloudformation_stack_set.bucket_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set)                          | resource    |
+| [aws_cloudformation_stack_set_instance.bucket_permissions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance)        | resource    |
 | [aws_iam_policy_document.assume_cloudlogs_s3_access_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)                    | data source |
 | [aws_iam_policy_document.cloudlogs_s3_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)                                | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity)                                                    | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region)                                                                      | data source |
 | [sysdig_secure_trusted_cloud_identity.trusted_identity](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_trusted_cloud_identity)        | data source |
 | [sysdig_secure_tenant_external_id.external_id](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_tenant_external_id)                     | data source |
 | [sysdig_secure_cloud_ingestion_assets.assets](https://registry.terraform.io/providers/sysdiglabs/sysdig/latest/docs/data-sources/secure_cloud_ingestion_assets)                  | data source |
@@ -111,14 +89,16 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name)                                                                   | (Optional) Name to be assigned to all child resources. A suffix may be added internally when required.                                        | `string`      | sysdig-secure-cloudlogs                                     |    no    |
 | <a name="input_regions"></a> [regions](#input\_regions)                                                          | (Optional) The list of AWS regions we want to scrape data from                                                                                | `set(string)` | `[]`                                                        |    no    |
 | <a name="input_is_gov_cloud_onboarding"></a> [is\_gov\_cloud](#input\_is\_gov\_cloud\_onboarding)                | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not                                                       | `bool`        | `false`                                                     |    no    |
+| <a name="input_failure_tolerance_percentage"></a> [failure\_tolerance\_percentage](#input\_failure\_tolerance\_percentage) | (Optional) The percentage of failure tolerance for StackSet operations                                                                        | `number`      | `0`                                                         |    no    |
+| <a name="input_timeout"></a> [timeout](#input\_timeout)                                                         | (Optional) The timeout for StackSet operations                                                                                                | `string`      | `"30m"`                                                     |    no    |
 
 ## Outputs
 
 | Name                                                                                                            | Description                                                                                |
 |-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a name="output_cloud_logs_component_id"></a> [cloud\_logs\_component\_id](#output\_cloud\_logs\_component\_id) | Component identifier of Cloud Logs integration created in Sysdig Backend for Log Ingestion |
-| <a name="output_cloudlogs_role_arn"></a> [cloudlogs\_role\_arn](#output\_cloudlogs\_role\_arn)                  | ARN of the IAM role created for accessing CloudTrail logs. Use this ARN in the bucket policy when configuring cross-account access. |
-| <a name="output_cross_account_setup_instructions"></a> [cross\_account\_setup\_instructions](#output\_cross\_account\_setup\_instructions) | Instructions for completing the cross-account setup in the bucket owner account. Includes examples of the required bucket and KMS policies. |
+| <a name="output_cloudlogs_role_arn"></a> [cloudlogs\_role\_arn](#output\_cloudlogs\_role\_arn)                  | ARN of the IAM role created for accessing CloudTrail logs |
+| <a name="output_kms_access_role_arn"></a> [kms\_access\_role\_arn](#output\_kms\_access\_role\_arn)             | ARN of the IAM role created in the bucket account for KMS key access (only when cross-account access is configured) |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
