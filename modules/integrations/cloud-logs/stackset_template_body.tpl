@@ -2,21 +2,13 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "StackSet to configure S3 bucket and KMS permissions for Sysdig Cloud Logs integration",
   "Parameters": {
-    "TrustedIdentity": {
+    "SysdigRoleArn": {
       "Type": "String",
-      "Description": "ARN of the Sysdig service that needs to assume the role"
-    },
-    "ExternalId": {
-      "Type": "String",
-      "Description": "External ID for secure role assumption"
+      "Description": "ARN of the IAM role that needs access to the S3 bucket"
     },
     "BucketAccountId": {
       "Type": "String",
       "Description": "The account id that the bucket resides in"
-    },
-    "RoleName": {
-      "Type": "String",
-      "Description": "Name of the role to create in the bucket account"
     }
   },
   "Conditions": {
@@ -48,9 +40,7 @@
       "Type": "AWS::IAM::Role",
       "Condition": "IsBucketAccount",
       "Properties": {
-        "RoleName": {
-          "Ref": "RoleName"
-        },
+        "RoleName": "sysdig-secure-s3-access-${bucket_name}",
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -58,17 +48,10 @@
               "Effect": "Allow",
               "Principal": {
                 "AWS": {
-                  "Ref": "TrustedIdentity"
+                  "Ref": "SysdigRoleArn"
                 }
               },
-              "Action": "sts:AssumeRole",
-              "Condition": {
-                "StringEquals": {
-                  "sts:ExternalId": {
-                    "Ref": "ExternalId"
-                  }
-                }
-              }
+              "Action": "sts:AssumeRole"
             }
           ]
         },
