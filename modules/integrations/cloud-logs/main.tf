@@ -228,28 +228,6 @@ resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
   depends_on = [aws_sns_topic.cloudtrail_notifications]
 }
 
-#-----------------------------------------------------------------------------------------------------------------------------------------
-# Call Sysdig Backend to add the cloud logs integration
-#-----------------------------------------------------------------------------------------------------------------------------------------
-resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
-  account_id       = var.sysdig_secure_account_id
-  type             = "COMPONENT_CLOUD_LOGS"
-  instance         = "secure-runtime"
-  version          = "v1.0.0"
-  cloud_logs_metadata = jsonencode({
-    aws = {
-      cloudtrailSns = {
-        role_name        = local.role_name
-        topic_arn        = var.topic_arn
-        bucket_arn       = var.bucket_arn
-        ingested_regions = var.regions
-        routing_key      = local.routing_key
-        role_account_id  = local.bucket_account_id
-      }
-    }
-  })
-}
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Service-managed StackSet for cross-account S3 and KMS permissions in organizational deployments
 #-----------------------------------------------------------------------------------------------------------------------
@@ -268,6 +246,8 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
   parameters = {
     SysdigRoleArn = aws_iam_role.cloudlogs_s3_access.arn
     BucketAccountId = local.bucket_account_id
+    SysdigTrustedIdentity = local.trusted_identity
+    SysdigExternalId = data.sysdig_secure_tenant_external_id.external_id.external_id
   }
 
   permission_model       = "SERVICE_MANAGED"
@@ -310,4 +290,28 @@ resource "aws_cloudformation_stack_set_instance" "bucket_permissions" {
     update = var.timeout
     delete = var.timeout
   }
+}
+
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Call Sysdig Backend to add the cloud logs integration
+#-----------------------------------------------------------------------------------------------------------------------------------------
+resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
+  account_id       = var.sysdig_secure_account_id
+  type             = "COMPONENT_CLOUD_LOGS"
+  instance         = "secure-runtime"
+  version          = "v1.0.1"
+  cloud_logs_metadata = jsonencode({
+    aws = {
+      cloudtrailSns = {
+        role_name        = local.role_name
+        topic_arn        = var.topic_arn
+        bucket_arn       = var.bucket_arn
+        ingested_regions = var.regions
+        routing_key      = local.routing_key
+        role_account_id  = data.aws_caller_identity.current.account_id
+        bucket_role_name = local.is_cross_account && var.is_organizational ? "sysdig-secure-s3-access-${local.bucket_name}" : null
+        bucket_account_id = local.is_cross_account ? local.bucket_account_id : null
+      }
+    }
+  })
 }
