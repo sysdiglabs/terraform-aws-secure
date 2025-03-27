@@ -2,9 +2,9 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "StackSet to configure S3 bucket and KMS permissions for Sysdig Cloud Logs integration",
   "Parameters": {
-    "SysdigRoleArn": {
+    "RoleName": {
       "Type": "String",
-      "Description": "ARN of the IAM role that needs access to the S3 bucket"
+      "Description": "Name of the role to be created in the bucket account"
     },
     "BucketAccountId": {
       "Type": "String",
@@ -48,19 +48,12 @@
       "Type": "AWS::IAM::Role",
       "Condition": "IsBucketAccount",
       "Properties": {
-        "RoleName": "sysdig-secure-s3-access-${bucket_name}",
+        "RoleName": {
+          "Ref": "RoleName"
+        },
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": {
-                  "Ref": "SysdigRoleArn"
-                }
-              },
-              "Action": "sts:AssumeRole"
-            },
             {
               "Effect": "Allow",
               "Principal": {

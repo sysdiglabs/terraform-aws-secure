@@ -2,38 +2,24 @@
 # This Terraform module creates the necessary resources to enable Sysdig's backend to fetch data from the
 # CloudTrail-associated S3 bucket in the customer's AWS account. The setup includes:
 #
-# 1. An AWS IAM Role with the appropriate permissions to allow Sysdig's backend to access the S3 bucket where
-#    CloudTrail logs are stored. Sysdig's trusted identity is specified as the Principal in the assume role policy,
-#    enabling the backend to assume the role in the customer account and perform required actions.
+# 1. For single-account or same-account organizational deployments:
+#    - An AWS IAM Role in the management account with permissions to access the S3 bucket directly
 #
-# 2. An AWS SNS Topic and Subscription for CloudTrail notifications, ensuring Sysdig's backend is notified whenever
-#    new logs are published to the S3 bucket. The SNS Topic allows CloudTrail to publish notifications, while the
-#    subscription forwards these notifications to Sysdig's ingestion service via HTTPS.
+# 2. For cross-account organizational deployments:
+#    - No role in the management account
+#    - A CloudFormation StackSet deploys an IAM role directly in the bucket account
+#    - The role in the bucket account allows Sysdig to access S3 data directly
 #
-# 3. Support for cross-account S3 bucket access through a CloudFormation StackSet when using AWS Organizations.
-#    When the bucket is in a different AWS account and organizational deployment is enabled, this module automatically
-#    deploys a service-managed StackSet to configure the S3 bucket policy in the bucket account.
+# 3. For cross-account non-organizational deployments:
+#    - An AWS IAM Role in the management account that can assume role in the bucket account
+#    - A role in the bucket account (created separately) with S3 access permissions
 #
-# 4. Support for KMS-encrypted S3 buckets:
-#    - When KMS keys are in the same account as this module, the IAM role is granted decrypt permissions through its policy
-#    - When KMS keys are in the bucket account, the StackSet does NOT automatically configure KMS key policies due to 
-#      CloudFormation limitations. In this case, you must manually add the following statement to your KMS key policy:
-#      {
-#        "Effect": "Allow",
-#        "Principal": {
-#          "AWS": "arn:aws:iam::<ACCOUNT_ID_WHERE_MODULE_IS_APPLIED>:role/<ROLE_NAME_CREATED_BY_MODULE>"
-#        },
-#        "Action": [
-#          "kms:Decrypt"
-#        ],
-#        "Resource": "*"
-#      }
+# 4. An AWS SNS Topic and Subscription for CloudTrail notifications, ensuring Sysdig's backend is notified whenever
+#    new logs are published to the S3 bucket.
 #
-# This setup assumes the customer has already configured an AWS CloudTrail Trail and its associated S3 bucket. The
-# required details (e.g., bucket ARN, topic ARN, and regions) are either passed as module variables or derived from
-# data sources.
+# 5. Support for KMS-encrypted S3 buckets, with roles granted proper decrypt permissions.
 #
-# Note: Sysdig's Secure UI provides the necessary information to guide customers in setting up the required resources.
+# This setup assumes the customer has already configured an AWS CloudTrail Trail and its associated S3 bucket.
 #-----------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------
@@ -58,8 +44,6 @@ data "sysdig_secure_cloud_ingestion_assets" "assets" {
 # Generate a unique name for resources using random suffix and account ID hash
 #-----------------------------------------------------------------------------------------
 locals {
-  account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
-  role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
   trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
 
   topic_name = split(":", var.topic_arn)[5]
@@ -71,10 +55,13 @@ locals {
   
   # Flag for cross-account bucket access
   is_cross_account = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id
-  
+
+  account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
+  role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  bucket_name   = split(":", var.bucket_arn)[5]
+
   # StackSet configuration
   stackset_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
-  bucket_name   = split(":", var.bucket_arn)[5]
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -85,17 +72,20 @@ resource "random_id" "suffix" {
   byte_length = 3
 }
 
-# AWS IAM Role that will be used by CloudIngestion to access the CloudTrail-associated s3 bucket
+# AWS IAM Role in the management account
+# Created for all scenarios EXCEPT organizational cross-account deployments
 resource "aws_iam_role" "cloudlogs_s3_access" {
+  count              = local.is_cross_account ? 0 : 1
   name               = local.role_name
   tags               = var.tags
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
 }
 
-// AWS IAM Role Policy that will be used by CloudIngestion to access the CloudTrail-associated s3 bucket
+// AWS IAM Role Policy with appropriate permissions
 resource "aws_iam_role_policy" "cloudlogs_s3_access_policy" {
+  count  = local.is_cross_account ? 0 : 1
   name   = "cloudlogs_s3_access_policy"
-  role   = aws_iam_role.cloudlogs_s3_access.name
+  role   = aws_iam_role.cloudlogs_s3_access[0].name
   policy = data.aws_iam_policy_document.cloudlogs_s3_access.json
 }
 
@@ -157,25 +147,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
       ]
     }
   }
-  
-  # For cross-account bucket access
-  dynamic "statement" {
-    for_each = local.is_cross_account ? [1] : []
-    content {
-      sid = "CloudlogsS3CrossAccountRoleAccess"
-      
-      effect = "Allow"
-      
-      actions = [
-        "sts:AssumeRole"
-      ]
-      
-      resources = [
-        "arn:aws:iam::${local.bucket_account_id}:role/sysdig-secure-s3-access-${local.bucket_name}"
-      ]
-    }
-  }
-  
+
   dynamic "statement" {
     for_each = var.kms_key_arns != null && !local.is_cross_account ? [1] : []
     content {
@@ -229,10 +201,10 @@ resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
-# Service-managed StackSet for cross-account S3 and KMS permissions in organizational deployments
+# Service-managed StackSet for creating a role in the bucket account for organizational deployments
 #-----------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "bucket_permissions" {
-  count = local.is_cross_account && var.is_organizational ? 1 : 0
+  count = local.is_cross_account ? 1 : 0
 
   name             = local.stackset_name
   description      = "StackSet to configure S3 bucket and KMS permissions for Sysdig Cloud Logs integration"
@@ -244,7 +216,7 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
   })
 
   parameters = {
-    SysdigRoleArn = aws_iam_role.cloudlogs_s3_access.arn
+    RoleName = local.role_name
     BucketAccountId = local.bucket_account_id
     SysdigTrustedIdentity = local.trusted_identity
     SysdigExternalId = data.sysdig_secure_tenant_external_id.external_id.external_id
@@ -268,7 +240,7 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
 }
 
 resource "aws_cloudformation_stack_set_instance" "bucket_permissions" {
-  count = local.is_cross_account && var.is_organizational ? 1 : 0
+  count = local.is_cross_account ? 1 : 0
 
   stack_set_name = aws_cloudformation_stack_set.bucket_permissions[0].name
   
@@ -308,9 +280,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
         bucket_arn       = var.bucket_arn
         ingested_regions = var.regions
         routing_key      = local.routing_key
-        role_account_id  = data.aws_caller_identity.current.account_id
-        bucket_role_name = local.is_cross_account && var.is_organizational ? "sysdig-secure-s3-access-${local.bucket_name}" : null
-        bucket_account_id = local.is_cross_account ? local.bucket_account_id : null
+        role_account_id  = local.bucket_account_id
       }
     }
   })
