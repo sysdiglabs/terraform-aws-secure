@@ -9,6 +9,14 @@
     "BucketAccountId": {
       "Type": "String",
       "Description": "The account id that the bucket resides in"
+    },
+    "SysdigTrustedIdentity": {
+      "Type": "String",
+      "Description": "ARN of the Sysdig service that needs to assume the role"
+    },
+    "SysdigExternalId": {
+      "Type": "String",
+      "Description": "External ID for secure role assumption by Sysdig"
     }
   },
   "Conditions": {
@@ -52,6 +60,22 @@
                 }
               },
               "Action": "sts:AssumeRole"
+            },
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Ref": "SysdigTrustedIdentity"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": {
+                    "Ref": "SysdigExternalId"
+                  }
+                }
+              }
             }
           ]
         },
@@ -62,19 +86,30 @@
               "Version": "2012-10-17",
               "Statement": [
                 {
+                  "Sid": "S3BucketListAccess",
                   "Effect": "Allow",
                   "Action": [
-                    "s3:GetObject",
-                    "s3:ListBucket"
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation"
                   ],
                   "Resource": [
-                    "${bucket_arn}",
+                    "${bucket_arn}"
+                  ]
+                },
+                {
+                  "Sid": "S3ObjectAccess",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": [
                     "${bucket_arn}/*"
                   ]
                 }
                 %{ if kms_key_arns != null }
                 ,
                 {
+                  "Sid": "KMSDecryptAccess",
                   "Effect": "Allow",
                   "Action": "kms:Decrypt",
                   "Resource": ${jsonencode(kms_key_arns)}
@@ -82,6 +117,16 @@
                 %{ endif }
               ]
             }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Sysdig Secure CloudTrail Logs Access Role"
+          },
+          {
+            "Key": "Purpose",
+            "Value": "Allow Sysdig to access S3 bucket for CloudTrail logs"
           }
         ]
       }
