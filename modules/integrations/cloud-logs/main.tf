@@ -29,6 +29,8 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
+data "aws_partition" "current" {}
+
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
 }
@@ -149,7 +151,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
   }
 
   dynamic "statement" {
-    for_each = var.kms_key_arns != null && !local.is_cross_account ? [1] : []
+    for_each = var.kms_key_arn != null && !local.is_cross_account ? [1] : []
     content {
       sid = "CloudlogsKMSDecrypt"
       
@@ -159,7 +161,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
         "kms:Decrypt"
       ]
       
-      resources = var.kms_key_arns
+      resources = [var.kms_key_arn]
     }
   }
 }
@@ -209,10 +211,8 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
   name             = local.stackset_name
   description      = "StackSet to configure S3 bucket and KMS permissions for Sysdig Cloud Logs integration"
   template_body    = templatefile("${path.module}/stackset_template_body.tpl", {
-    bucket_name      = local.bucket_name
-    bucket_arn       = var.bucket_arn
-    kms_key_arns     = var.kms_key_arns
-    bucket_account_id = local.bucket_account_id
+    bucket_arn = var.bucket_arn
+    kms_key_arn = var.kms_key_arn
   })
 
   parameters = {
@@ -220,6 +220,7 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
     BucketAccountId = local.bucket_account_id
     SysdigTrustedIdentity = local.trusted_identity
     SysdigExternalId = data.sysdig_secure_tenant_external_id.external_id.external_id
+    KmsKeyArn = var.kms_key_arn
   }
 
   permission_model       = "SERVICE_MANAGED"

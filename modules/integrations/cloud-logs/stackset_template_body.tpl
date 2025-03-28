@@ -17,6 +17,10 @@
     "SysdigExternalId": {
       "Type": "String",
       "Description": "External ID for secure role assumption by Sysdig"
+    },
+    "KmsKeyArn": {
+      "Type": "String",
+      "Description": "ARN of the KMS key used for encryption"
     }
   },
   "Conditions": {
@@ -30,12 +34,12 @@
         }
       ]
     },
-    "HasKMSKeys": {
+    "HasKMSKey": {
       "Fn::Not": [
         {
           "Fn::Equals": [
             {
-              "Fn::Join": ["", ${jsonencode(kms_key_arns != null ? kms_key_arns : [""])}]
+              "Ref": "KmsKeyArn"
             },
             ""
           ]
@@ -99,13 +103,13 @@
                     "${bucket_arn}/*"
                   ]
                 }
-                %{ if kms_key_arns != null }
+                %{ if kms_key_arn != null && kms_key_arn != "" }
                 ,
                 {
                   "Sid": "KMSDecryptAccess",
                   "Effect": "Allow",
                   "Action": "kms:Decrypt",
-                  "Resource": ${jsonencode(kms_key_arns)}
+                  "Resource": "${kms_key_arn}"
                 }
                 %{ endif }
               ]
