@@ -66,16 +66,10 @@ variable "create_topic" {
   description = "true/false whether terraform should create the SNS Topic"
 }
 
-variable "kms_key_arns" {
-  type        = list(string)
-  default     = null
-  description = "(Optional) List of KMS Key ARNs used to encrypt the S3 bucket. If provided, the IAM role will be granted permissions to decrypt using these keys."
-}
-
 variable "bucket_account_id" {
   type        = string
   default     = null
-  description = "(Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. If not specified, the current account is assumed to be the bucket owner."
+  description = "(Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. Required for organizational cross-account deployments."
 }
 
 variable "failure_tolerance_percentage" {
@@ -90,20 +84,14 @@ variable "timeout" {
   default     = "30m"
 }
 
-variable "is_organizational" {
-  type        = bool
-  description = "Whether this is an organizational deployment using AWS Organizations. If true, service-managed StackSets will be used for cross-account access."
-  default     = false
-}
-
 variable "org_units" {
   type        = list(string)
-  description = "List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required if is_organizational is true."
+  description = "List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required for cross-account organizational deployments."
   default     = []
 }
 
 variable "kms_key_arn" {
-  description = "ARN of the KMS key used for encryption. If provided, the role will be granted decrypt permissions."
+  description = "ARN of the KMS key used to encrypt the S3 bucket. If provided, the IAM role will be granted decrypt permissions."
   type        = string
   default     = null
 }
