@@ -101,3 +101,9 @@ variable "org_units" {
   description = "List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required if is_organizational is true."
   default     = []
 }
+
+variable "kms_key_arn" {
+  description = "ARN of the KMS key used for encryption. If provided, the role will be granted decrypt permissions."
+  type        = string
+  default     = null
+}
