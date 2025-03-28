@@ -208,7 +208,7 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
 
   name             = local.stackset_name
   description      = "StackSet to configure S3 bucket and KMS permissions for Sysdig Cloud Logs integration"
-  template_body    = templatefile("${path.module}/stackset_template_body.tpl", {
+  template_body    = templatefile("${path.module}/templates/stackset_template_body.tpl", {
     bucket_arn = var.bucket_arn
     kms_key_arn = var.kms_key_arn
   })
