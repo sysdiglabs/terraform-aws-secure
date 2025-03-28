@@ -81,7 +81,7 @@ resource "aws_iam_role" "cloudlogs_s3_access" {
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
 }
 
-// AWS IAM Role Policy with appropriate permissions
+// AWS IAM Role Policy
 resource "aws_iam_role_policy" "cloudlogs_s3_access_policy" {
   count  = local.is_cross_account ? 0 : 1
   name   = "cloudlogs_s3_access_policy"
@@ -245,16 +245,11 @@ resource "aws_cloudformation_stack_set_instance" "bucket_permissions" {
   
   deployment_targets {
     organizational_unit_ids = var.org_units
+    account_filter_type = "INTERSECTION"
+    accounts = [local.bucket_account_id]
   }
   
-  region         = data.aws_region.current.name
-
-  operation_preferences {
-    max_concurrent_percentage    = 100
-    failure_tolerance_percentage = var.failure_tolerance_percentage
-    concurrency_mode             = "SOFT_FAILURE_TOLERANCE"
-    region_concurrency_type      = "SEQUENTIAL"
-  }
+  region = data.aws_region.current.name
 
   timeouts {
     create = var.timeout
