@@ -2,22 +2,20 @@
 # This Terraform module creates the necessary resources to enable Sysdig's backend to fetch data from the
 # CloudTrail-associated S3 bucket in the customer's AWS account. The setup includes:
 #
-# 1. For single-account or same-account organizational deployments:
+# 1. For single-account deployments:
+#    - An AWS IAM Role in the account with permissions to access the S3 bucket directly
+#
+# 2. For organizational deployments (same account):
 #    - An AWS IAM Role in the management account with permissions to access the S3 bucket directly
 #
-# 2. For cross-account organizational deployments:
-#    - No role in the management account
+# 3. For organizational cross-account deployments:
 #    - A CloudFormation StackSet deploys an IAM role directly in the bucket account
 #    - The role in the bucket account allows Sysdig to access S3 data directly
 #
-# 3. For cross-account non-organizational deployments:
-#    - An AWS IAM Role in the management account that can assume role in the bucket account
-#    - A role in the bucket account (created separately) with S3 access permissions
-#
-# 4. An AWS SNS Topic and Subscription for CloudTrail notifications, ensuring Sysdig's backend is notified whenever
-#    new logs are published to the S3 bucket.
-#
-# 5. Support for KMS-encrypted S3 buckets, with roles granted proper decrypt permissions.
+# Common resources for all scenarios:
+# - An AWS SNS Topic and Subscription for CloudTrail notifications, ensuring Sysdig's backend is notified whenever
+#   new logs are published to the S3 bucket
+# - Support for KMS-encrypted S3 buckets, with roles granted proper decrypt permissions
 #
 # This setup assumes the customer has already configured an AWS CloudTrail Trail and its associated S3 bucket.
 #-----------------------------------------------------------------------------------------------------------------------
