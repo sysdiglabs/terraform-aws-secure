@@ -134,3 +134,8 @@ variable "exclude_accounts" {
   type        = set(string)
   default     = []
 }
+variable "api_dest_rate_limit" {
+  type        = number
+  default     = 300
+  description = "Rate limit for API Destinations"
+}
