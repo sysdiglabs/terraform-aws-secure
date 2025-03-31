@@ -72,12 +72,6 @@ variable "bucket_account_id" {
   description = "(Optional) AWS Account ID that owns the S3 bucket, if different from the account where the module is being applied. Required for organizational cross-account deployments."
 }
 
-variable "failure_tolerance_percentage" {
-  description = "The percentage of account deployments that can fail before CloudFormation stops deployment in an organizational unit. Range: 0-100"
-  type        = number
-  default     = 0
-}
-
 variable "timeout" {
   description = "The maximum amount of time that Terraform will wait for the StackSet operation to complete"
   type        = string
