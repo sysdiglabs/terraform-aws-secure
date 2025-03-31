@@ -115,29 +115,12 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
   dynamic "statement" {
     for_each = !local.is_cross_account ? [1] : []
     content {
-      sid = "CloudlogsS3AccessGet"
+      sid = "CloudlogsS3Access"
 
       effect = "Allow"
 
       actions = [
         "s3:Get*",
-      ]
-
-      resources = [
-        var.bucket_arn,
-        "${var.bucket_arn}/*"
-      ]
-    }
-  }
-
-  dynamic "statement" {
-    for_each = !local.is_cross_account ? [1] : []
-    content {
-      sid = "CloudlogsS3AccessList"
-
-      effect = "Allow"
-
-      actions = [
         "s3:List*"
       ]
 
