@@ -10,8 +10,6 @@ output "kms_policy_instructions" {
     "${path.module}/templates/kms_policy_instructions.tpl",
     {
       role_arn = "arn:${data.aws_partition.current.partition}:iam::${local.bucket_account_id}:role/${local.role_name}"
-      region = data.aws_region.current.name
-      bucket_name = local.bucket_name
     }
   ) : ""
 }
