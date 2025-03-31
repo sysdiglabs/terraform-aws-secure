@@ -58,7 +58,6 @@ locals {
 
   account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
-  bucket_name   = split(":", var.bucket_arn)[5]
 
   # StackSet configuration
   stackset_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
