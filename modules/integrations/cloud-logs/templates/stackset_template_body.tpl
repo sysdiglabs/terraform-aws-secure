@@ -78,7 +78,7 @@
         },
         "Policies": [
           {
-            "PolicyName": "S3BucketAccess",
+            "PolicyName": "cloudlogs_s3_access_policy",
             "PolicyDocument": {
               "Version": "2012-10-17",
               "Statement": [

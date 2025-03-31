@@ -203,7 +203,7 @@ resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
 #-----------------------------------------------------------------------------------------------------------------------
 # Service-managed StackSet for creating a role in the bucket account for organizational deployments
 #-----------------------------------------------------------------------------------------------------------------------
-resource "aws_cloudformation_stack_set" "bucket_permissions" {
+resource "aws_cloudformation_stack_set" "cloudlogs_s3_access" {
   count = local.is_cross_account ? 1 : 0
 
   name             = local.stackset_name
@@ -238,10 +238,10 @@ resource "aws_cloudformation_stack_set" "bucket_permissions" {
   tags = var.tags
 }
 
-resource "aws_cloudformation_stack_set_instance" "bucket_permissions" {
+resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access" {
   count = local.is_cross_account ? 1 : 0
 
-  stack_set_name = aws_cloudformation_stack_set.bucket_permissions[0].name
+  stack_set_name = aws_cloudformation_stack_set.cloudlogs_s3_access[0].name
   
   deployment_targets {
     organizational_unit_ids = var.org_units
@@ -278,4 +278,9 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       }
     }
   })
+
+  depends_on = [
+    aws_iam_role.cloudlogs_s3_access,
+    aws_cloudformation_stack_set_instance.cloudlogs_s3_access
+  ]
 }
