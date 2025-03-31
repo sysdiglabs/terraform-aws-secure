@@ -24,11 +24,7 @@ Additional features include:
 
 ## Important Notes for Cross-Account Access
 
-When using this module with organizational cross-account access (where CloudTrail bucket is in a different AWS account), the module automatically deploys a StackSet to configure the necessary permissions in the bucket account. This includes:
-
-- S3 bucket policy to allow access from the Sysdig IAM role
-- IAM role in the bucket account with KMS decrypt permissions (for KMS-encrypted logs)
-
+When using this module with organizational cross-account access (where CloudTrail bucket is in a different AWS account), the module automatically deploys a StackSet to configure the role in the bucket account.
 The StackSet deployment requires appropriate permissions in the organization. The deploying account must have permission to create and manage StackSets in the organization.
 
 ### Working with KMS-encrypted S3 buckets
@@ -96,7 +92,6 @@ No modules.
 | <a name="input_name"></a> [name](#input\_name)                                                                   | (Optional) Name to be assigned to all child resources. A suffix may be added internally when required.                                        | `string`      | sysdig-secure-cloudlogs                                     |    no    |
 | <a name="input_regions"></a> [regions](#input\_regions)                                                          | (Optional) The list of AWS regions we want to scrape data from                                                                                | `set(string)` | `[]`                                                        |    no    |
 | <a name="input_is_gov_cloud_onboarding"></a> [is\_gov\_cloud](#input\_is\_gov\_cloud\_onboarding)                | true/false whether secure-for-cloud should be deployed in a govcloud account/org or not                                                       | `bool`        | `false`                                                     |    no    |
-| <a name="input_is_organizational"></a> [is\_organizational](#input\_is\_organizational)                           | (Optional) Whether this is an organizational deployment using AWS Organizations. Required for organizational deployments.                      | `bool`        | `false`                                                     |    no    |
 | <a name="input_org_units"></a> [org\_units](#input\_org\_units)                                                  | (Optional) List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required for cross-account organizational deployments. | `list(string)` | `[]`                                                        |    no    |
 | <a name="input_failure_tolerance_percentage"></a> [failure\_tolerance\_percentage](#input\_failure\_tolerance\_percentage) | (Optional) The percentage of account deployments that can fail before CloudFormation stops deployment in an organizational unit. Range: 0-100  | `number`      | `0`                                                         |    no    |
 | <a name="input_timeout"></a> [timeout](#input\_timeout)                                                         | (Optional) The timeout for StackSet operations                                                                                                | `string`      | `"30m"`                                                     |    no    |
