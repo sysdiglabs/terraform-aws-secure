@@ -19,7 +19,7 @@ If instrumenting an AWS Gov account/organization, IAM policies and resources wil
 |---------------------------------------------------------------------------|-----------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0  |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 5.60.0 |
-| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig)          | ~>1.39    |
+| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig)          | ~>1.48    |
 
 ## Providers
 
