@@ -5,7 +5,10 @@ variable "is_organizational" {
 }
 
 variable "org_units" {
-  description = "(Optional) List of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false`"
+  description = <<-EOF
+    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    When set, list of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization."
+    EOF
   type        = set(string)
   default     = []
 }
@@ -108,6 +111,29 @@ variable "is_gov_cloud_onboarding" {
   description = "true/false whether EventBridge should be deployed in a govcloud account/org or not"
 }
 
+variable "include_ouids" {
+  description = "(Optional) ouids to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_ouids" {
+  description = "(Optional) ouids to exclude for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "include_accounts" {
+  description = "(Optional) accounts to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_accounts" {
+  description = "(Optional) accounts to exclude for organization"
+  type        = set(string)
+  default     = []
+}
 variable "api_dest_rate_limit" {
   type        = number
   default     = 300

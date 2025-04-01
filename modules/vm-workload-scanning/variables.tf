@@ -13,7 +13,10 @@ variable "is_organizational" {
 }
 
 variable "organizational_unit_ids" {
-  description = "(Optional) List of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization. This field is ignored if `is_organizational = false`"
+  description = <<-EOF
+    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    When set, list of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization."
+    EOF
   type        = set(string)
   default     = []
 }
@@ -40,4 +43,28 @@ variable "lambda_scanning_enabled" {
 variable "sysdig_secure_account_id" {
   type        = string
   description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"
+}
+
+variable "include_ouids" {
+  description = "(Optional) ouids to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_ouids" {
+  description = "(Optional) ouids to exclude for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "include_accounts" {
+  description = "(Optional) accounts to include for organization"
+  type        = set(string)
+  default     = []
+}
+
+variable "exclude_accounts" {
+  description = "(Optional) accounts to exclude for organization"
+  type        = set(string)
+  default     = []
 }

@@ -21,7 +21,7 @@ If instrumenting an AWS Gov account/organization, IAM policies and EventBridge r
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.60.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1 |
-| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig) | ~> 1.0.0 |
+| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig) | ~> 1.51 |
 
 ## Providers
 
@@ -29,7 +29,7 @@ If instrumenting an AWS Gov account/organization, IAM policies and EventBridge r
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 5.91.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.7.1 |
-| <a name="provider_sysdig"></a> [sysdig](#provider\_sysdig) | 1.0.0 |
+| <a name="provider_sysdig"></a> [sysdig](#provider\_sysdig) | 1.51 |
 
 ## Modules
 
@@ -79,6 +79,11 @@ No modules.
 | <a name="input_sysdig_secure_account_id"></a> [sysdig\_secure\_account\_id](#input\_sysdig\_secure\_account\_id) | ID of the Sysdig Cloud Account to enable Event Bridge integration for (incase of organization, ID of the Sysdig management account) | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | (Optional) Tags to be attached to all Sysdig resources. | `map(string)` | <pre>{<br>  "product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_timeout"></a> [timeout](#input\_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |
+| <a name="input_include_ouids"></a> [include\_ouids](#input\_include\_ouids)                                                | ouids to include for organization                                                                                                                     | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_exclude_ouids"></a> [exclude\_ouids](#input\_exclude\_ouids)                                                | ouids to exclude for organization                                                                                                                     | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_include_accounts"></a> [include\_accounts](#input\_include\_accounts)                                       | accounts to include for organization                                                                                                                  | `set(string)` | `[]`                                                        |    no    |
+| <a name="input_exclude_accounts"></a> [exclude\_accounts](#input\_exclude\_accounts)                                       | accounts to exclude for organization                                                                                                                  | `set(string)` | `[]`                                                        |    no    |
+
 
 ## Outputs
 
