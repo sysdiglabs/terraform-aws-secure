@@ -10,7 +10,7 @@ variable "is_organizational" {
 
 variable "org_units" {
   description = <<-EOF
-    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    TO BE DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
     When set, org units to install cspm."
     EOF
   type        = set(string)

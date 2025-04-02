@@ -32,7 +32,7 @@ variable "is_organizational" {
 
 variable "org_units" {
   description = <<-EOF
-    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
+    TO BE DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
     When set, list of Organization Unit IDs to setup Agentless Scanning. By default, Agentless Scanning will be setup in all accounts within the Organization."
     EOF
   type        = set(string)
