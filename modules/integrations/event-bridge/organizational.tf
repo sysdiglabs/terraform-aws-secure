@@ -4,14 +4,6 @@
 # For a single account installation, see main.tf.
 #-----------------------------------------------------------------------------------------------------------------------
 
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
-locals {
-  organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.org_units)
-}
-
 # stackset to deploy eventbridge rule in organization unit
 resource "aws_cloudformation_stack_set" "eb-rule-stackset" {
   count = var.is_organizational ? 1 : 0
