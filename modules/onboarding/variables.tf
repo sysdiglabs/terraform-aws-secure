@@ -49,8 +49,9 @@ variable "is_gov_cloud_onboarding" {
 
 variable "organizational_unit_ids" {
   description = <<-EOF
-    TO BE DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
-    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded."
+    TO BE DEPRECATED: Please migrate to using `include_ouids` instead.
+    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded.
+    Default: onboard all organizational units.
     EOF
   type        = set(string)
   default     = []
@@ -79,15 +80,3 @@ variable "exclude_accounts" {
   type        = set(string)
   default     = []
 }
-
-/*
-variable "validate_org_configuration_params" {
-  description = "Check org configuration parameters to follow the correct definition"
-  type        = bool
-  default     = true
-  validation {
-    condition = !var.check_org_configuration_params
-    error_message = "Error: If organizational_unit_ids is populated which is going to be deprecated, variables include_ouids/exclude_ouids/include_accounts/exclude_accounts can not be populated. Please use only one of the two methods."
-  }
-}
-*/

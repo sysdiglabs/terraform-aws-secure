@@ -7,21 +7,16 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
-  # check if both old and new org parameters are used, fail early
-  check_org_configuration_params = var.is_organizational && length(var.organizational_unit_ids) > 0 && (
+  # check if both old and new org parameters are used, we fail early
+  both_org_configuration_params = var.is_organizational && length(var.organizational_unit_ids) > 0 && (
   length(var.include_ouids) > 0 ||
   length(var.exclude_ouids) > 0 ||
   length(var.include_accounts) > 0 ||
   length(var.exclude_accounts) > 0
   )
 
-  # check if old org units parameter is used
-  check_old_ouid_param = var.is_organizational && length(var.organizational_unit_ids) > 0 && (
-  length(var.include_ouids) == 0 &&
-  length(var.exclude_ouids) == 0 &&
-  length(var.include_accounts) == 0 &&
-  length(var.exclude_accounts) == 0
-  )
+  # check if old organizational_unit_ids parameter is provided, for backwards compatibility we will always give preference to it
+  check_old_ouid_param = var.is_organizational && length(var.organizational_unit_ids) > 0
 
   # fetch the AWS Root OU under org
   # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root
@@ -30,8 +25,20 @@ locals {
 
 check "validate_org_configuration_params" {
   assert {
-    condition     = !local.check_org_configuration_params
-    error_message = "Error: If organizational_unit_ids is populated which is going to be DEPRECATED, variables include_ouids/exclude_ouids/include_accounts/exclude_accounts can not be populated. Please use only one of the two methods."
+    condition     = length(var.organizational_unit_ids) == 0  # if this condition is false we throw warning
+    error_message = <<-EOT
+    WARNING: TO BE DEPRECATED 'organizational_unit_ids': Please work with Sysdig to migrate your Terraform installs to use 'include_ouids' instead.
+    EOT
+  }
+
+  assert {
+    condition     = !local.both_org_configuration_params  # if this condition is false we throw error
+    error_message = <<-EOT
+    ERROR: If both organizational_unit_ids and include_ouids/exclude_ouids/include_accounts/exclude_accounts variables are populated,
+    ONLY organizational_unit_ids will be considered. Please use only one of the two methods.
+
+    Note: organizational_unit_ids is going to be DEPRECATED soon, please work with Sysdig to migrate your Terraform installs.
+    EOT
   }
 }
 

@@ -189,8 +189,8 @@ resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
   stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
   deployment_targets {
     organizational_unit_ids = local.deployment_targets_org_units
-    accounts                = local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy
-    account_filter_type     = local.deployment_targets_accounts_filter
+    accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
+    account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
   operation_preferences {
     max_concurrent_percentage    = 100
