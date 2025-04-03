@@ -6,8 +6,9 @@ variable "is_organizational" {
 
 variable "org_units" {
   description = <<-EOF
-    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
-    When set, list of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization."
+    TO BE DEPRECATED: Please migrate to using `include_ouids` instead.
+    When set, list of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization.
+    This field is ignored if `is_organizational = false`
     EOF
   type        = set(string)
   default     = []

@@ -49,8 +49,9 @@ variable "is_gov_cloud_onboarding" {
 
 variable "organizational_unit_ids" {
   description = <<-EOF
-    DEPRECATED: Defaults to `[]`, use `include_ouids` instead.
-    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded."
+    TO BE DEPRECATED: Please migrate to using `include_ouids` instead.
+    When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded.
+    Default: onboard all organizational units.
     EOF
   type        = set(string)
   default     = []
