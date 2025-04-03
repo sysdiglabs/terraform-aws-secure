@@ -34,4 +34,5 @@ Resources:
                   Action:
                     - "events:DescribeApiDestination"
                     - "events:DescribeConnection"
+                    - "cloudwatch:GetMetricStatistics"
                   Resource: "*"
