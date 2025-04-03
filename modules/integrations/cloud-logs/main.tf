@@ -124,13 +124,20 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
 #-----------------------------------------------------------------------------------------------------------------------
 # SNS Topic and Subscription for CloudTrail notifications
 #-----------------------------------------------------------------------------------------------------------------------
+provider aws {
+  alias = "sns"
+  region = local.topic_region
+}
+
 resource "aws_sns_topic" "cloudtrail_notifications" {
+  provider = aws.sns
   count = var.create_topic ? 1 : 0
   name  = local.topic_name
   tags  = var.tags
 }
 
 resource "aws_sns_topic_policy" "cloudtrail_notifications" {
+  provider = aws.sns
   count = var.create_topic ? 1 : 0
   arn   = aws_sns_topic.cloudtrail_notifications[0].arn
   policy = jsonencode({
@@ -150,6 +157,7 @@ resource "aws_sns_topic_policy" "cloudtrail_notifications" {
 }
 
 resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
+  provider = aws.sns
   topic_arn = var.topic_arn
   protocol  = "https"
   endpoint  = local.ingestion_url
