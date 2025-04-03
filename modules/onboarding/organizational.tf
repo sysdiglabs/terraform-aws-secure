@@ -82,8 +82,8 @@ resource "sysdig_secure_organization" "aws_organization" {
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
   organizational_unit_ids        = local.check_old_ouid_param ? var.organizational_unit_ids : []
   organization_root_id           = local.root_org_unit[0]
-  included_organizational_groups = var.include_ouids
-  excluded_organizational_groups = var.exclude_ouids
-  included_cloud_accounts        = var.include_accounts
-  excluded_cloud_accounts        = var.exclude_accounts
+  included_organizational_groups = local.check_old_ouid_param ? [] : var.include_ouids
+  excluded_organizational_groups = local.check_old_ouid_param ? [] : var.exclude_ouids
+  included_cloud_accounts        = local.check_old_ouid_param ? [] : var.include_accounts
+  excluded_cloud_accounts        = local.check_old_ouid_param ? [] : var.exclude_accounts
 }
