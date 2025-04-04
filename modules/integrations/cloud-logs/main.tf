@@ -47,6 +47,7 @@ locals {
   trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
 
   topic_name = split(":", var.topic_arn)[5]
+  topic_region = split(":", var.topic_arn)[3]
   routing_key      = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_key
   ingestion_url    = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_url
   
@@ -149,14 +150,21 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
 #-----------------------------------------------------------------------------------------------------------------------
 # SNS Topic and Subscription for CloudTrail notifications
 #-----------------------------------------------------------------------------------------------------------------------
+provider aws {
+  alias = "sns"
+  region = local.topic_region
+}
+
 resource "aws_sns_topic" "cloudtrail_notifications" {
   count = var.create_topic ? 1 : 0
+  provider = aws.sns
   name  = local.topic_name
   tags  = var.tags
 }
 
 resource "aws_sns_topic_policy" "cloudtrail_notifications" {
   count = var.create_topic ? 1 : 0
+  provider = aws.sns
   arn   = aws_sns_topic.cloudtrail_notifications[0].arn
   policy = jsonencode({
     Version = "2012-10-17"
@@ -176,6 +184,7 @@ resource "aws_sns_topic_policy" "cloudtrail_notifications" {
 
 resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
   topic_arn = var.topic_arn
+  provider = aws.sns
   protocol  = "https"
   endpoint  = local.ingestion_url
 
