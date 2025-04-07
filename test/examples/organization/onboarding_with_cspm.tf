@@ -62,6 +62,6 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_basic"
   }
 
   lifecycle {
-    ignore_changes = [flags]
+    ignore_changes = [flags, components]
   }
 }
