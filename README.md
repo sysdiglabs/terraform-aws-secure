@@ -68,12 +68,12 @@ Notice that:
 ## Organizational Install Configurations
 
 There are four new parameters to configure organizational deployments on the cloud for Sysdig Secure for Cloud :-
-1. `include_ouids` - List of AWS Organizational Unit IDs to deploy the Sysdig Secure for Cloud stack resources in.
-2. `exclude_ouids` - List of AWS Organizational Unit IDs to exclude deploying the Sysdig Secure for Cloud stack resources in.
-3. `include_accounts` - List of AWS Accounts to deploy the Sysdig Secure for Cloud stack resources in.
-4. `exclude_accounts` - List of AWS Accounts to exclude deploying the Sysdig Secure for Cloud stack resources in.
+1. `include_ouids` - List of AWS Organizational Unit IDs to deploy the Sysdig Secure for Cloud resources in.
+2. `exclude_ouids` - List of AWS Organizational Unit IDs to exclude deploying the Sysdig Secure for Cloud resources in.
+3. `include_accounts` - List of AWS Accounts to deploy the Sysdig Secure for Cloud resources in.
+4. `exclude_accounts` - List of AWS Accounts to exclude deploying the Sysdig Secure for Cloud resources in.
 
-Note: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED soon going forward. You can use `include_ouids` instead to achieve the same deployment outcome.
+**WARNING**: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED soon going forward. Please work with Sysdig to migrate your Terraform installs to use `include_ouids` instead to achieve the same deployment outcome.
 
 ## Best practices
 

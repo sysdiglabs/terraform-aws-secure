@@ -14,7 +14,7 @@ variable "is_organizational" {
 
 variable "organizational_unit_ids" {
   description = <<-EOF
-    TO BE DEPRECATED: Please migrate to using `include_ouids` instead.
+    TO BE DEPRECATED: Please work with Sysdig to migrate to using `include_ouids` instead.
     When set, list of Organization Unit IDs in which to setup Agentless Workload Scanning. By default, Agentless Workload Scanning will be setup in all accounts within the Organization.
     This field is ignored if `is_organizational = false`
     EOF
