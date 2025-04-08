@@ -127,7 +127,7 @@ locals {
 
 # if only exclude_ouids are provided and as long as it isn't Root OU, fetch all their child accounts to filter exclusions
 data "aws_organizations_organizational_unit_descendant_accounts" "ou_accounts_to_exclude" {
-  for_each  = local.org_configuration == "excluded_ous_only" && !contains(var.exclude_ouids, local.root_org_unit[0]) ? var.exclude_ouids : []
+  for_each  = local.org_configuration == "excluded_ous_only" && (length(local.root_org_unit) > 0 ? !contains(var.exclude_ouids, local.root_org_unit[0]) : false) ? var.exclude_ouids : []
   parent_id = each.key
 }
 
