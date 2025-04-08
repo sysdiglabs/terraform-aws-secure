@@ -1,11 +1,3 @@
-data "aws_organizations_organization" "org" {
-  count = var.is_organizational ? 1 : 0
-}
-
-locals {
-  organizational_unit_ids = var.is_organizational && length(var.org_units) == 0 ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : toset(var.org_units)
-}
-
 resource "aws_cloudformation_stack_set" "eb_rule_api_dest_stackset" {
   count = var.is_organizational ? 1 : 0
 
@@ -73,7 +65,7 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_api_dest_instance" {
 
   stack_set_name = aws_cloudformation_stack_set.eb_rule_api_dest_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.deployment_targets_org_units
+    organizational_unit_ids = local.deployment_targets_ous.org_units_to_deploy
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
     account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
@@ -96,7 +88,7 @@ resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
 
   stack_set_name = aws_cloudformation_stack_set.eb_role_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.deployment_targets_org_units
+    organizational_unit_ids = local.deployment_targets_ous.org_units_to_deploy
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
     account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
