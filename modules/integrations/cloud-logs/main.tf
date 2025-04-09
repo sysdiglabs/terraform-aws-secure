@@ -163,14 +163,14 @@ provider aws {
 }
 
 resource "aws_sns_topic" "cloudtrail_notifications" {
-  count = var.create_topic && !local.is_cross_account_topic ? 1 : 0
+  count = var.create_topic ? 1 : 0
   provider = aws.sns
   name  = local.topic_name
   tags  = var.tags
 }
 
 resource "aws_sns_topic_policy" "cloudtrail_notifications" {
-  count = var.create_topic && !local.is_cross_account_topic ? 1 : 0
+  count = var.create_topic ? 1 : 0
   provider = aws.sns
   arn   = aws_sns_topic.cloudtrail_notifications[0].arn
   policy = jsonencode({
