@@ -6,7 +6,7 @@ output "cloud_logs_component_id" {
 
 output "kms_policy_instructions" {
   description = "Instructions for updating KMS key policy when KMS encryption is enabled"
-  value = (var.kms_key_arn != null) ? templatefile(
+  value = (local.need_kms_policy) ? templatefile(
     "${path.module}/templates/kms_policy_instructions.tpl",
     {
       role_arn = "arn:${data.aws_partition.current.partition}:iam::${local.bucket_account_id}:role/${local.role_name}"

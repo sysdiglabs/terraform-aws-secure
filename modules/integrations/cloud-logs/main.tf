@@ -46,16 +46,23 @@ data "sysdig_secure_cloud_ingestion_assets" "assets" {
 locals {
   trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
 
-  topic_name = split(":", var.topic_arn)[5]
-  topic_region = split(":", var.topic_arn)[3]
+
   routing_key      = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_key
   ingestion_url    = data.sysdig_secure_cloud_ingestion_assets.assets.aws.sns_routing_url
-  
-  # Determine bucket owner account ID - use provided value or default to current account
+
+  # Topic variables
+  topic_name = split(":", var.topic_arn)[5]
+  topic_region = split(":", var.topic_arn)[3]
+  topic_account_id = split(":", var.topic_arn)[4]
+  is_cross_account_topic = local.topic_account_id != data.aws_caller_identity.current.account_id
+
+  # Bucket variables
   bucket_account_id = var.bucket_account_id != null ? var.bucket_account_id : data.aws_caller_identity.current.account_id
-  
-  # Flag for cross-account bucket access
   is_cross_account = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id
+
+  # KMS variables
+  kms_account_id = split(":", var.kms_key_arn)[3]
+  need_kms_policy = var.bucket_account_id != null && var.bucket_account_id != local.kms_account_id
 
   account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
@@ -183,6 +190,7 @@ resource "aws_sns_topic_policy" "cloudtrail_notifications" {
 }
 
 resource "aws_sns_topic_subscription" "cloudtrail_notifications" {
+  count = !local.is_cross_account_topic ? 1 : 0
   topic_arn = var.topic_arn
   provider = aws.sns
   protocol  = "https"
@@ -207,9 +215,12 @@ resource "aws_cloudformation_stack_set" "cloudlogs_s3_access" {
   parameters = {
     RoleName = local.role_name
     BucketAccountId = local.bucket_account_id
+    TopicAccountId = local.topic_account_id
     SysdigTrustedIdentity = local.trusted_identity
     SysdigExternalId = data.sysdig_secure_tenant_external_id.external_id.external_id
     KmsKeyArn = var.kms_key_arn
+    TopicArn = var.topic_arn
+    IngestionUrl = local.ingestion_url
   }
 
   permission_model       = "SERVICE_MANAGED"
@@ -229,7 +240,8 @@ resource "aws_cloudformation_stack_set" "cloudlogs_s3_access" {
   tags = var.tags
 }
 
-resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access" {
+# StackSet instance for the bucket account
+resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_bucket" {
   count = local.is_cross_account ? 1 : 0
 
   stack_set_name = aws_cloudformation_stack_set.cloudlogs_s3_access[0].name
@@ -241,6 +253,27 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access" {
   }
   
   region = data.aws_region.current.name
+
+  timeouts {
+    create = var.timeout
+    update = var.timeout
+    delete = var.timeout
+  }
+}
+
+# StackSet instance for the topic account
+resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_topic" {
+  count = local.is_cross_account ? 1 : 0
+
+  stack_set_name = aws_cloudformation_stack_set.cloudlogs_s3_access[0].name
+  
+  deployment_targets {
+    organizational_unit_ids = var.org_units
+    account_filter_type = "INTERSECTION"
+    accounts = [local.topic_account_id]
+  }
+  
+  region = local.topic_region
 
   timeouts {
     create = var.timeout
@@ -272,6 +305,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
 
   depends_on = [
     aws_iam_role.cloudlogs_s3_access,
-    aws_cloudformation_stack_set_instance.cloudlogs_s3_access
+    aws_cloudformation_stack_set_instance.cloudlogs_s3_access_bucket,
+    aws_cloudformation_stack_set_instance.cloudlogs_s3_access_topic
   ]
 }
