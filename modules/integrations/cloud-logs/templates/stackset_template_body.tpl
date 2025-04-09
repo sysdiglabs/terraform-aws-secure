@@ -10,6 +10,10 @@
       "Type": "String",
       "Description": "The account id that the bucket resides in"
     },
+    "TopicAccountId": {
+      "Type": "String",
+      "Description": "The account id that the topic resides in"
+    },
     "SysdigTrustedIdentity": {
       "Type": "String",
       "Description": "ARN of the Sysdig service that needs to assume the role"
@@ -21,6 +25,14 @@
     "KmsKeyArn": {
       "Type": "String",
       "Description": "ARN of the KMS key used for encryption"
+    },
+    "TopicArn": {
+      "Type": "String",
+      "Description": "ARN of the SNS topic for CloudTrail notifications"
+    },
+    "IngestionUrl": {
+      "Type": "String",
+      "Description": "URL for Sysdig's ingestion endpoint"
     }
   },
   "Conditions": {
@@ -31,6 +43,16 @@
         },
         {
           "Ref": "BucketAccountId"
+        }
+      ]
+    },
+    "IsTopicAccount": {
+      "Fn::Equals": [
+        {
+          "Ref": "AWS::AccountId"
+        },
+        {
+          "Ref": "TopicAccountId"
         }
       ]
     },
@@ -126,6 +148,19 @@
             "Value": "Allow Sysdig to access S3 bucket for CloudTrail logs"
           }
         ]
+      }
+    },
+    "CloudTrailSNSSubscription": {
+      "Type": "AWS::SNS::Subscription",
+      "Condition": "IsTopicAccount",
+      "Properties": {
+        "TopicArn": {
+          "Ref": "TopicArn"
+        },
+        "Protocol": "https",
+        "Endpoint": {
+          "Ref": "IngestionUrl"
+        }
       }
     }
   },
