@@ -1,3 +1,17 @@
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# For both Single Account and Organizational installs, resources are created using CloudFormation StackSet.
+# For Organizational installs, see organizational.tf.
+#
+# For single installs, the resources in this file are used to instrument the singleton account, whether it is a management account or a
+# member account.
+#
+# For organizational installs, resources in this file get created for management account only. (because service-managed stacksets do not
+# include the management account they are created in, even if this account is within the target Organization).
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------
+# Fetch the data sources
+#-----------------------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 
 data "sysdig_secure_cloud_ingestion_assets" "assets" {
@@ -21,10 +35,21 @@ locals {
   eb_resource_name     = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
 }
 
+#-----------------------------------------------------------------------------------------------------------------------
+# A random resource is used to generate unique Event Bridge name suffix for resources.
+# This prevents conflicts when recreating an Event Bridge resources with the same name.
+#-----------------------------------------------------------------------------------------------------------------------
 resource "random_id" "suffix" {
   byte_length = 3
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions.
+#
+# If auto_create_stackset_roles is true, terraform will create this IAM Admin role in the source account with permissions to create
+# stacksets. If false, and values for stackset Admin role ARN is provided stackset will use it, else AWS will look for
+# predefined/default AWSCloudFormationStackSetAdministrationRoleForEBApiDest.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "event_bus_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
@@ -55,6 +80,13 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_admin_r
   ]
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions.
+#
+# If auto_create_stackset_roles is true, terraform will create this IAM Admin role in the source account with permissions to create
+# stacksets, Event Bridge resources and trust relationship to CloudFormation service. If false, and values for stackset Execution role
+# name is provided stackset will use it, else AWS will look for predefined/default AWSCloudFormationStackSetExecutionRoleForEBApiDest.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "event_bus_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
@@ -87,6 +119,13 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_executi
   ]
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# These resources create an IAM role in the source account with permissions to invoke API destinations.
+# This role is attached to the EventBridge rule that is created in the source account.
+#
+# This role will be used by EventBridge when sending events to Sysdig via API Destinations. The EventBridge service is
+# given permission to assume this role, and Sysdig's cloud identity is allowed to assume the role for validation purposes.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "event_bridge_api_destination_role" {
   name = local.eb_resource_name
   tags = var.tags
@@ -119,6 +158,12 @@ resource "aws_iam_role" "event_bridge_api_destination_role" {
 EOF
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This policy grants the necessary permissions for the API destination role:
+# 1. InvokeApiDestination - Allows invoking the API destination to send events to Sysdig
+# 2. EventRuleAndDestinationAccess - Allows describing rules, targets, API destinations, and connections for validation
+# 3. CloudWatchMetricsAccess - Allows retrieving metrics for monitoring and validation
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
   name = local.eb_resource_name
   role = aws_iam_role.event_bridge_api_destination_role.id
@@ -135,21 +180,23 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
         ]
       },
       {
-        Sid = "CloudTrailEventRuleAccess"
+        Sid = "EventRuleAndDestinationAccess"
         Action = [
           "events:DescribeRule",
           "events:ListTargetsByRule",
+          "events:DescribeApiDestination",
+          "events:DescribeConnection"
         ]
         Effect = "Allow"
         Resource = [
           "${local.arn_prefix}:events:*:*:rule/${local.eb_resource_name}",
+          "${local.arn_prefix}:events:*:*:api-destination/${local.eb_resource_name}-destination",
+          "${local.arn_prefix}:events:*:*:connection/${local.eb_resource_name}-connection"
         ]
       },
       {
-        Sid = "ValidationAccess"
+        Sid = "CloudWatchMetricsAccess"
         Action = [
-          "events:DescribeApiDestination",
-          "events:DescribeConnection",
           "cloudwatch:GetMetricStatistics"
         ]
         Effect = "Allow"
@@ -159,6 +206,17 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
   })
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This resource creates a stackset to set up an EventBridge Rule and API Destination to forward CloudTrail events from the
+# source account to Sysdig. CloudTrail events are sent to the default EventBridge Bus in the source account automatically.
+#
+# The stackset creates three resources in each region:
+# 1. API Connection - Authenticates with Sysdig's endpoint using an API key
+# 2. API Destination - Forwards events to Sysdig's webhook ingestion endpoint
+# 3. EventBridge Rule - Captures events matching the specified pattern and targets the API destination
+#
+# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "eb_rule_and_api_dest_stackset" {
   name                    = join("-", [local.eb_resource_name, "EBRuleAndApiDestination"])
   tags                    = var.tags
@@ -211,6 +269,12 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_and_api_dest_stackset_
   }
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Call Sysdig Backend to add the event-bridge integration to the Sysdig Cloud Account
+#
+# Note (optional): To ensure this gets called after all cloud resources are created, add
+# explicit dependency using depends_on
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
   account_id = var.sysdig_secure_account_id
   type       = local.component_type
