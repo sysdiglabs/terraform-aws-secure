@@ -139,7 +139,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
   }
 
   dynamic "statement" {
-    for_each = var.kms_key_arn != null && !local.is_cross_account ? [1] : []
+    for_each = var.kms_key_arn != null ? [1] : []
     content {
       sid = "CloudlogsKMSDecrypt"
       
