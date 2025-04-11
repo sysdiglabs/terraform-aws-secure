@@ -111,6 +111,7 @@ variable "is_gov_cloud_onboarding" {
   default     = false
   description = "true/false whether EventBridge should be deployed in a govcloud account/org or not"
 }
+
 variable "include_ouids" {
   description = "(Optional) ouids to include for organization"
   type        = set(string)
@@ -133,4 +134,10 @@ variable "exclude_accounts" {
   description = "(Optional) accounts to exclude for organization"
   type        = set(string)
   default     = []
+}
+
+variable "api_dest_rate_limit" {
+  type        = number
+  default     = 300
+  description = "Rate limit for API Destinations"
 }
