@@ -14,13 +14,16 @@ The following resources will be created based on the deployment scenario:
    - SNS Topic and Subscription for CloudTrail notifications
 
 3. For organizational cross-account deployments:
-   - A CloudFormation StackSet that deploys an IAM role directly in the bucket account
+   - A CloudFormation StackSet that deploys:
+     - An IAM role in the bucket account (in the current region)
+     - An SNS subscription in the topic account (in the topic's region)
    - The role in the bucket account allows Sysdig to access S3 data directly
-   - SNS Topic and Subscription for CloudTrail notifications
+   - The SNS subscription forwards CloudTrail notifications to Sysdig
 
 Additional features include:
 - Support for KMS-encrypted S3 buckets by granting the necessary KMS decryption permissions
 - Support for AWS GovCloud deployments
+- Support for cross-region deployments where the S3 bucket and SNS topic are in different regions
 
 ## Important Notes for Cross-Account Access
 
@@ -33,6 +36,13 @@ For KMS-encrypted S3 buckets, this module configures the necessary decrypt permi
 1. Provide the KMS key ARN using the `kms_key_arn` variable
 2. For cross-account scenarios, specify the bucket account ID using the `bucket_account_id` variable
 3. Ensure the KMS key policy allows the created role to use the decrypt operation
+
+### Cross-Region Deployments
+
+This module supports deployments where the S3 bucket and SNS topic are in different regions:
+- The IAM role will be created in the current region but can access the S3 bucket regardless of its region
+- The SNS subscription will be created in the same region as the SNS topic
+- The StackSet will deploy to both regions as needed
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 
