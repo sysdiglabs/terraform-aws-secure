@@ -1,17 +1,17 @@
 # AWS Event Bridge Module
 
-This Module creates the resources required to send CloudTrail logs to Sysdig via AWS EventBridge for Log Ingestion. These resources enable Threat Detection in the given single account, or AWS Organization.
+This Module creates the resources required to send CloudTrail logs to Sysdig via AWS EventBridge API Destinations for Log Ingestion. These resources enable Threat Detection in the given single account, or AWS Organization.
 
 The following resources will be created in each instrumented account through CloudFormation StackSet in provided regions:
-- An `EventBridge Rule` that captures all CloudTrail events from the defaul EventBridge Bus
-- An `EventBridge Target` that sends these events to an EventBridge Bus is Sysdig's AWS Account
-- An `IAM Role` and associated policies that gives the EventBridge Bus in the source account permission to call PutEvent on the EventBridge Bus in Sysdig's Account.
-
+- An `EventBridge Rule` that captures all CloudTrail events from the default EventBridge Bus
+- An `EventBridge API Destination` that forwards these events to Sysdig's secure endpoint
+- An `EventBridge Connection` that handles authentication for the API Destination
+- An `IAM Role` and associated policies that gives the EventBridge Rule permission to invoke the API Destination
 When run in Organizational mode, this module will be deployed via CloudFormation StackSets that should be created in the management account. They will create the above resources in each account in the organization, and automatically in any member accounts that are later added to the organization.
 
-This module will also deploy an Event Bridge Component in Sysdig Backend for onboarded Sysdig Cloud Account.
+This module will also deploy a Webhook Datasource Component in Sysdig Backend for the onboarded Sysdig Cloud Account, which tracks and validates the API Destination configuration.
 
-If instrumenting an AWS Gov account/organization, IAM policies and event bridge resources will be created in `aws-us-gov` region.
+If instrumenting an AWS Gov account/organization, IAM policies and EventBridge resources will be created in `aws-us-gov`region.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
@@ -21,7 +21,7 @@ If instrumenting an AWS Gov account/organization, IAM policies and event bridge 
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.60.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1 |
-| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig) | ~> 1.48 |
+| <a name="requirement_sysdig"></a> [sysdig](#requirement\_sysdig) | ~> 1.51 |
 
 ## Providers
 
@@ -29,7 +29,7 @@ If instrumenting an AWS Gov account/organization, IAM policies and event bridge 
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.60.0 |
 | <a name="provider_random"></a> [random](#provider\_random) | >= 3.1 |
-| <a name="provider_sysdig"></a> [sysdig](#provider\_sysdig) | ~> 1.48 |
+| <a name="provider_sysdig"></a> [sysdig](#provider\_sysdig) | ~> 1.51 |
 
 ## Modules
 
@@ -39,16 +39,16 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_cloudformation_stack_set.eb-role-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
-| [aws_cloudformation_stack_set.eb-rule-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
-| [aws_cloudformation_stack_set.primary-acc-stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set.eb_role_stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set.eb_rule_and_api_dest_stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
+| [aws_cloudformation_stack_set.eb_rule_api_dest_stackset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set) | resource |
 | [aws_cloudformation_stack_set_instance.eb_role_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
-| [aws_cloudformation_stack_set_instance.eb_rule_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
-| [aws_cloudformation_stack_set_instance.primary_acc_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
-| [aws_iam_role.event_bus_invoke_remote_event_bus](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_cloudformation_stack_set_instance.eb_rule_and_api_dest_stackset_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
+| [aws_cloudformation_stack_set_instance.eb_rule_api_dest_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudformation_stack_set_instance) | resource |
+| [aws_iam_role.event_bridge_api_destination_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.event_bus_stackset_admin_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.event_bus_stackset_execution_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role_policy.event_bus_invoke_remote_event_bus_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy.event_bridge_api_destination_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy_attachments_exclusive.event_bus_stackset_admin_role_managed_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
 | [aws_iam_role_policy_attachments_exclusive.event_bus_stackset_execution_role_managed_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachments_exclusive) | resource |
 | [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
@@ -64,6 +64,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_api_dest_rate_limit"></a> [api\_dest\_rate\_limit](#input\_api\_dest\_rate\_limit) | Rate limit for API Destinations | `number` | `300` | no |
 | <a name="input_auto_create_stackset_roles"></a> [auto\_create\_stackset\_roles](#input\_auto\_create\_stackset\_roles) | Whether to auto create the custom stackset roles to run SELF\_MANAGED stackset. Default is true | `bool` | `true` | no |
 | <a name="input_event_pattern"></a> [event\_pattern](#input\_event\_pattern) | Event pattern for CloudWatch Event Rule | `string` | `"{\n  \"detail-type\": [\n    \"AWS API Call via CloudTrail\",\n    \"AWS Console Sign In via CloudTrail\",\n    \"AWS Service Event via CloudTrail\",\n    \"Object Access Tier Changed\",\n    \"Object ACL Updated\",\n    \"Object Created\",\n    \"Object Deleted\",\n    \"Object Restore Completed\",\n    \"Object Restore Expired\",\n    \"Object Restore Initiated\",\n    \"Object Storage Class Changed\",\n    \"Object Tags Added\",\n    \"Object Tags Deleted\",\n    \"GuardDuty Finding\"\n  ]\n}\n"` | no |
 | <a name="input_exclude_accounts"></a> [exclude\_accounts](#input\_exclude\_accounts) | (Optional) accounts to exclude for organization | `set(string)` | `[]` | no |

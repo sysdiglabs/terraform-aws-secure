@@ -14,7 +14,11 @@
 #-----------------------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 
-data "sysdig_secure_cloud_ingestion_assets" "assets" {}
+data "sysdig_secure_cloud_ingestion_assets" "assets" {
+  cloud_provider     = "aws"
+  cloud_provider_id  = data.aws_caller_identity.current.account_id
+  component_type = local.component_type
+}
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
@@ -22,22 +26,13 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
-#-----------------------------------------------------------------------------------------
-# These locals indicate the region list passed.
-#-----------------------------------------------------------------------------------------
 locals {
   region_set           = toset(var.regions)
   trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  target_event_bus_arn = var.is_gov_cloud_onboarding ? data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARNGov : data.sysdig_secure_cloud_ingestion_assets.assets.aws.eventBusARN
   arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
-}
-
-#-----------------------------------------------------------------------------------------
-# Generate a unique name for resources using random suffix and account ID hash
-#-----------------------------------------------------------------------------------------
-locals {
-  account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
-  eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  component_type       = "COMPONENT_WEBHOOK_DATASOURCE"
+  account_id_hash      = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
+  eb_resource_name     = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -53,13 +48,12 @@ resource "random_id" "suffix" {
 #
 # If auto_create_stackset_roles is true, terraform will create this IAM Admin role in the source account with permissions to create
 # stacksets. If false, and values for stackset Admin role ARN is provided stackset will use it, else AWS will look for
-# predefined/default AWSCloudFormationStackSetAdministrationRole.
+# predefined/default AWSCloudFormationStackSetAdministrationRoleForEBApiDest.
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
 resource "aws_iam_role" "event_bus_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
-  name = "AWSCloudFormationStackSetAdministrationRoleForEB"
+  name = "AWSCloudFormationStackSetAdministrationRoleForEBApiDest"
   tags = var.tags
 
   assume_role_policy = <<EOF
@@ -91,13 +85,12 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_admin_r
 #
 # If auto_create_stackset_roles is true, terraform will create this IAM Admin role in the source account with permissions to create
 # stacksets, Event Bridge resources and trust relationship to CloudFormation service. If false, and values for stackset Execution role
-# name is provided stackset will use it, else AWS will look for predefined/default AWSCloudFormationStackSetExecutionRole.
+# name is provided stackset will use it, else AWS will look for predefined/default AWSCloudFormationStackSetExecutionRoleForEBApiDest.
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
 resource "aws_iam_role" "event_bus_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
-  name = "AWSCloudFormationStackSetExecutionRoleForEB"
+  name = "AWSCloudFormationStackSetExecutionRoleForEBApiDest"
   tags = var.tags
 
   assume_role_policy = <<EOF
@@ -127,14 +120,13 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_executi
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# These resources create an IAM role in the source account with permissions to call PutEvent on the EventBridge Bus in
-# Sysdig's AWS account. This role is attached to the EventBridge target that is created in the source account.
+# These resources create an IAM role in the source account with permissions to invoke API destinations.
+# This role is attached to the EventBridge rule that is created in the source account.
 #
-# This role will be used by EventBridge when sending events to Sysdig's EventBridge Bus. The EventBridge service is
-# given permission to assume this role.
+# This role will be used by EventBridge when sending events to Sysdig via API Destinations. The EventBridge service is
+# given permission to assume this role, and Sysdig's cloud identity is allowed to assume the role for validation purposes.
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
-resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
+resource "aws_iam_role" "event_bridge_api_destination_role" {
   name = local.eb_resource_name
   tags = var.tags
 
@@ -166,50 +158,67 @@ resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
 EOF
 }
 
-resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This policy grants the necessary permissions for the API destination role:
+# 1. InvokeApiDestination - Allows invoking the API destination to send events to Sysdig
+# 2. EventRuleAndDestinationAccess - Allows describing rules, targets, API destinations, and connections for validation
+# 3. CloudWatchMetricsAccess - Allows retrieving metrics for monitoring and validation
+#-----------------------------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
   name = local.eb_resource_name
-  role = aws_iam_role.event_bus_invoke_remote_event_bus.id
+  role = aws_iam_role.event_bridge_api_destination_role.id
   policy = jsonencode({
     Statement = [
       {
-        Sid = "CloudTrailEventsPut"
+        Sid = "InvokeApiDestination"
         Action = [
-          "events:PutEvents",
+          "events:InvokeApiDestination",
         ]
         Effect = "Allow"
         Resource = [
-          "${local.target_event_bus_arn}",
+          "${local.arn_prefix}:events:*:*:api-destination/${local.eb_resource_name}-destination/*",
         ]
       },
       {
-        Sid = "CloudTrailEventRuleAccess"
+        Sid = "EventRuleAndDestinationAccess"
         Action = [
           "events:DescribeRule",
           "events:ListTargetsByRule",
+          "events:DescribeApiDestination",
+          "events:DescribeConnection"
         ]
         Effect = "Allow"
         Resource = [
           "${local.arn_prefix}:events:*:*:rule/${local.eb_resource_name}",
+          "${local.arn_prefix}:events:*:*:api-destination/${local.eb_resource_name}-destination",
+          "${local.arn_prefix}:events:*:*:connection/${local.eb_resource_name}-connection"
         ]
       },
+      {
+        Sid = "CloudWatchMetricsAccess"
+        Action = [
+          "cloudwatch:GetMetricStatistics"
+        ]
+        Effect = "Allow"
+        Resource = "*"
+      }
     ]
   })
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-# This resource creates a stackset to set up an EventBridge Rule and Target to forward all CloudTrail events from the
+# This resource creates a stackset to set up an EventBridge Rule and API Destination to forward CloudTrail events from the
 # source account to Sysdig. CloudTrail events are sent to the default EventBridge Bus in the source account automatically.
 #
-# Rule captures all events from CloudTrail in the source account.
-# Target forwards all CloudTrail events to Sysdig's EventBridge Bus.
-# See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target#cross-account-event-bus-target
+# The stackset creates three resources in each region:
+# 1. API Connection - Authenticates with Sysdig's endpoint using an API key
+# 2. API Destination - Forwards events to Sysdig's webhook ingestion endpoint
+# 3. EventBridge Rule - Captures events matching the specified pattern and targets the API destination
 #
 # Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
-resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
-  # for single installs, primary account is the singleton account provided. for org installs, it is the mgmt account
-  name                    = join("-", [local.eb_resource_name, "EBRulePrimaryAcc"])
+resource "aws_cloudformation_stack_set" "eb_rule_and_api_dest_stackset" {
+  name                    = join("-", [local.eb_resource_name, "EBRuleAndApiDestination"])
   tags                    = var.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
@@ -224,26 +233,27 @@ resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
     ignore_changes = [administration_role_arn]
   }
 
-  template_body = templatefile("${path.module}/stackset_template_body.tpl", {
-    name                 = local.eb_resource_name
-    event_pattern        = var.event_pattern
-    rule_state           = var.rule_state
-    arn_prefix           = local.arn_prefix
-    target_event_bus_arn = local.target_event_bus_arn
+  template_body = templatefile("${path.module}/stackset_template_eb_rule_api_dest.tpl", {
+    name          = local.eb_resource_name
+    api_key       = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eb_api_key
+    endpoint_url  = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eb_routing_url
+    rate_limit    = var.api_dest_rate_limit
+    event_pattern = jsonencode(var.event_pattern)
+    rule_state    = var.rule_state
+    arn_prefix    = local.arn_prefix
   })
 
   depends_on = [
-    aws_iam_role.event_bus_invoke_remote_event_bus,
+    aws_iam_role.event_bridge_api_destination_role,
     aws_iam_role.event_bus_stackset_admin_role,
     aws_iam_role.event_bus_stackset_execution_role
   ]
 }
 
-// stackset instance to deploy rule in all regions of given account
-resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance" {
+resource "aws_cloudformation_stack_set_instance" "eb_rule_and_api_dest_stackset_instance" {
   for_each       = local.region_set
   region         = each.key
-  stack_set_name = aws_cloudformation_stack_set.primary-acc-stackset.name
+  stack_set_name = aws_cloudformation_stack_set.eb_rule_and_api_dest_stackset.name
 
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -265,17 +275,23 @@ resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance"
 # Note (optional): To ensure this gets called after all cloud resources are created, add
 # explicit dependency using depends_on
 #-----------------------------------------------------------------------------------------------------------------------------------------
-
 resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
   account_id = var.sysdig_secure_account_id
-  type       = "COMPONENT_EVENT_BRIDGE"
+  type       = local.component_type
   instance   = "secure-runtime"
   version    = "v0.1.0"
-  event_bridge_metadata = jsonencode({
+  webhook_datasource_metadata = jsonencode({
     aws = {
-      role_name = local.eb_resource_name
-      rule_name = local.eb_resource_name
-      regions   = var.regions
+      webhook_datasource = {
+        routing_key         = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eb_routing_key
+        ingestion_url       = data.sysdig_secure_cloud_ingestion_assets.assets.aws.eb_routing_url
+        ingested_regions    = var.regions
+        rule_name           = local.eb_resource_name
+        api_dest_name       = "${local.eb_resource_name}-destination"
+        api_dest_rate_limit = tostring(var.api_dest_rate_limit)
+        role_name           = local.eb_resource_name
+        connection_name     = "${local.eb_resource_name}-connection"
+      }
     }
   })
 }
