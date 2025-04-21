@@ -75,6 +75,14 @@ There are four new parameters to configure organizational deployments on the clo
 
 **WARNING**: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED soon going forward. Please work with Sysdig to migrate your Terraform installs to use `include_ouids` instead to achieve the same deployment outcome.
 
+### Stackset Instances Installation
+
+If new OUs are added in the Include OUIDs list, the existing stackset instances will not get recreated and TF will only create the stackset instances for the newly added OUs.
+
+**Note**: This applies to only OUs added/removed to/from the organizational configuration. If accounts are added/removed from the Exclude Accounts or Include Extra Accounts list, it will end up recreating the stackset instances.
+
+<br/>
+
 ## Best practices
 
 For contributing to existing modules or adding new modules, below are some of the best practices recommended :-
