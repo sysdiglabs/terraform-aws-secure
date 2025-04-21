@@ -91,5 +91,5 @@ Module is maintained by [Sysdig](https://sysdig.com).
 
 ## License
 
-Apache 2 Licensed. See LICENSE for full details.
+Apache 2 Licensed. See LICENSE for full details..
 
