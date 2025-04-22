@@ -65,12 +65,15 @@ resource "aws_cloudformation_stack_set" "eb_role_stackset" {
 }
 
 resource "aws_cloudformation_stack_set_instance" "eb_rule_api_dest_instance" {
-  for_each = var.is_organizational ? local.region_set : toset([])
-  region   = each.key
+  for_each = var.is_organizational ? {
+    for pair in setproduct(local.region_set, local.deployment_targets_org_units) :
+    "${pair[0]}-${pair[1]}" => pair
+  } : {}
 
+  region         = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.eb_rule_api_dest_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.deployment_targets_org_units
+    organizational_unit_ids = [each.value[1]]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
     account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
@@ -89,11 +92,11 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_api_dest_instance" {
 }
 
 resource "aws_cloudformation_stack_set_instance" "eb_role_stackset_instance" {
-  count = var.is_organizational ? 1 : 0
+  for_each = var.is_organizational ? toset(local.deployment_targets_org_units) : []
 
   stack_set_name = aws_cloudformation_stack_set.eb_role_stackset[0].name
   deployment_targets {
-    organizational_unit_ids = local.deployment_targets_org_units
+    organizational_unit_ids = [each.value]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
     account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
