@@ -40,6 +40,14 @@ data "sysdig_secure_cloud_ingestion_assets" "assets" {
   cloud_provider_id  = data.aws_caller_identity.current.account_id
 }
 
+#----------------------------------------------------------
+# Fetch & compute required data for organizational install
+#----------------------------------------------------------
+data "aws_organizations_organization" "org" {
+  count = var.is_organizational ? 1 : 0
+}
+
+
 #-----------------------------------------------------------------------------------------
 # Generate a unique name for resources using random suffix and account ID hash
 #-----------------------------------------------------------------------------------------
@@ -69,6 +77,10 @@ locals {
 
   # StackSet configuration
   stackset_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
+
+  # fetch the AWS Root OU under org
+  # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root
+  root_org_unit = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -247,7 +259,7 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_bucket" {
   stack_set_name = aws_cloudformation_stack_set.cloudlogs_s3_access[0].name
   
   deployment_targets {
-    organizational_unit_ids = var.org_units
+    organizational_unit_ids = local.root_org_unit
     account_filter_type = "INTERSECTION"
     accounts = [local.bucket_account_id]
   }
@@ -268,7 +280,7 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_topic" {
   stack_set_name = aws_cloudformation_stack_set.cloudlogs_s3_access[0].name
   
   deployment_targets {
-    organizational_unit_ids = var.org_units
+    organizational_unit_ids = local.root_org_unit
     account_filter_type = "INTERSECTION"
     accounts = [local.topic_account_id]
   }
