@@ -4,7 +4,7 @@ variable "sysdig_secure_account_id" {
 }
 
 variable "is_organizational" {
-  description = "(Optional) Set this field to 'true' to deploy EventBridge to an AWS Organization (Or specific OUs)"
+  description = "(Optional) Set this field to 'true' to deploy CloudLogs to an AWS Organization (Or specific OUs)"
   type        = bool
   default     = false
 }
