@@ -3,6 +3,12 @@ variable "sysdig_secure_account_id" {
   description = "ID of the Sysdig Cloud Account to enable Cloud Logs integration for (in case of organization, ID of the Sysdig management account)"
 }
 
+variable "is_organizational" {
+  description = "(Optional) Set this field to 'true' to deploy EventBridge to an AWS Organization (Or specific OUs)"
+  type        = bool
+  default     = false
+}
+
 variable "bucket_arn" {
   description = "(Required) The ARN of your CloudTrail Bucket"
   type        = string
@@ -76,12 +82,6 @@ variable "timeout" {
   description = "The maximum amount of time that Terraform will wait for the StackSet operation to complete"
   type        = string
   default     = "30m"
-}
-
-variable "org_units" {
-  type        = list(string)
-  description = "List of AWS Organizations organizational unit (OU) IDs in which to create the StackSet instances. Required for cross-account organizational deployments."
-  default     = []
 }
 
 variable "kms_key_arn" {
