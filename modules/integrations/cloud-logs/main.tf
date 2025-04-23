@@ -72,11 +72,12 @@ locals {
   kms_account_id = split(":", var.kms_key_arn)[3]
   need_kms_policy = var.bucket_account_id != null && var.bucket_account_id != local.kms_account_id
 
-  account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
-  role_name        = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  # Role variables
+  role_name = split("/", var.role_arn)[1]
 
+  account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   # StackSet configuration
-  stackset_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
+  stackset_name = "sysdig-secure-cloudlogs-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
 
   # fetch the AWS Root OU under org
   # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root

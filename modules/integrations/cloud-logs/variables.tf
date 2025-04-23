@@ -33,12 +33,6 @@ variable "tags" {
   }
 }
 
-variable "name" {
-  description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required."
-  type        = string
-  default     = "sysdig-secure-cloudlogs"
-}
-
 variable "regions" {
   description = "(Optional) The list of AWS regions we want to scrape data from"
   type        = set(string)
@@ -63,6 +57,21 @@ variable "topic_arn" {
   validation {
     condition     = can(regex("^arn:(aws|aws-us-gov):sns:[a-z0-9-]+:[0-9]+:.+$", var.topic_arn))
     error_message = "Topic ARN must be a valid SNS ARN format"
+  }
+}
+
+variable "role_arn" {
+  type        = string
+  description = "ARN of the role that terraform will create to download the CloudTrail logs from the S3 bucket."
+
+  validation {
+    condition     = var.role_arn != ""
+    error_message = "Role ARN must not be empty"
+  }
+
+  validation {
+      condition     = can(regex("^arn:(aws|aws-us-gov):iam::[0-9]+:role/.+$", var.role_arn))
+      error_message = "Role ARN must be a valid IAM ARN format"
   }
 }
 
