@@ -9,7 +9,7 @@ output "kms_policy_instructions" {
   value = (local.need_kms_policy) ? templatefile(
     "${path.module}/templates/kms_policy_instructions.tpl",
     {
-      role_arn = "arn:${data.aws_partition.current.partition}:iam::${local.bucket_account_id}:role/${local.role_name}"
+      role_arn = var.role_arn
     }
   ) : ""
 }
