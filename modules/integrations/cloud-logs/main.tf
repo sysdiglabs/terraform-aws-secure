@@ -73,7 +73,7 @@ locals {
   need_kms_policy = var.bucket_account_id != null && var.bucket_account_id != local.kms_account_id
 
   # Role variables
-  role_name = split(":", var.role_arn)[5]
+  role_name = split("/", var.role_arn)[1]
 
   account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   # StackSet configuration
