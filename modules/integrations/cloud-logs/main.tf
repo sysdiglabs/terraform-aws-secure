@@ -77,7 +77,7 @@ locals {
 
   account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   # StackSet configuration
-  stackset_name = "sysdig-cloudlogs-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
+  stackset_name = "sysdig-secure-cloudlogs-${random_id.suffix.hex}-${local.account_id_hash}-stackset"
 
   # fetch the AWS Root OU under org
   # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root
