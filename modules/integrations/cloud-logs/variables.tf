@@ -89,3 +89,8 @@ variable "kms_key_arn" {
   type        = string
   default     = null
 }
+
+variable "is_organizational" {
+  type        = bool
+  default     = false
+}
