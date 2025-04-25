@@ -73,7 +73,7 @@ There are four new parameters to configure organizational deployments on the clo
 3. `include_accounts` - List of AWS Accounts to deploy the Sysdig Secure for Cloud resources in.
 4. `exclude_accounts` - List of AWS Accounts to exclude deploying the Sysdig Secure for Cloud resources in.
 
-**WARNING**: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED soon going forward. Please work with Sysdig to migrate your Terraform installs to use `include_ouids` instead to achieve the same deployment outcome.
+**WARNING**: module variable `organizational_unit_ids` / `org_units` will be DEPRECATED on 30th November, 2025. Please work with Sysdig to migrate your Terraform installs to use `include_ouids` instead to achieve the same deployment outcome.
 
 ### Stackset Instances Installation
 
