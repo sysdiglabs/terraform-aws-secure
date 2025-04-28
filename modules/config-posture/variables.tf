@@ -10,7 +10,7 @@ variable "is_organizational" {
 
 variable "org_units" {
   description = <<-EOF
-    TO BE DEPRECATED: Please work with Sysdig to migrate to using `include_ouids` instead.
+    TO BE DEPRECATED on 30th November, 2025: Please work with Sysdig to migrate to using `include_ouids` instead.
     When set, org units to install cspm.
     EOF
   type        = set(string)

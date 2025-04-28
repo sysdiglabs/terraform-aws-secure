@@ -49,7 +49,7 @@ variable "is_gov_cloud_onboarding" {
 
 variable "organizational_unit_ids" {
   description = <<-EOF
-    TO BE DEPRECATED: Please work with Sysdig to migrate to using `include_ouids` instead.
+    TO BE DEPRECATED on 30th November, 2025: Please work with Sysdig to migrate to using `include_ouids` instead.
     When set, restrict onboarding to a set of organizational unit identifiers whose child accounts and organizational units are to be onboarded.
     Default: onboard all organizational units.
     EOF

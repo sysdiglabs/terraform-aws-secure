@@ -27,7 +27,7 @@ check "validate_org_configuration_params" {
   assert {
     condition     = length(var.org_units) == 0  # if this condition is false we throw warning
     error_message = <<-EOT
-    WARNING: TO BE DEPRECATED 'org_units': Please work with Sysdig to migrate your Terraform installs to use 'include_ouids' instead.
+    WARNING: TO BE DEPRECATED 'org_units' on 30th November, 2025. Please work with Sysdig to migrate your Terraform installs to use 'include_ouids' instead.
     EOT
   }
 
@@ -37,7 +37,7 @@ check "validate_org_configuration_params" {
     ERROR: If both org_units and include_ouids/exclude_ouids/include_accounts/exclude_accounts variables are populated,
     ONLY org_units will be considered. Please use only one of the two methods.
 
-    Note: org_units is going to be DEPRECATED soon, please work with Sysdig to migrate your Terraform installs.
+    Note: org_units is going to be DEPRECATED on 30th November, 2025. Please work with Sysdig to migrate your Terraform installs.
     EOT
   }
 }
