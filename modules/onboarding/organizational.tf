@@ -86,4 +86,5 @@ resource "sysdig_secure_organization" "aws_organization" {
   excluded_organizational_groups = local.check_old_ouid_param ? [] : var.exclude_ouids
   included_cloud_accounts        = local.check_old_ouid_param ? [] : var.include_accounts
   excluded_cloud_accounts        = local.check_old_ouid_param ? [] : var.exclude_accounts
+  automatic_onboarding           = var.enable_automatic_onboarding
 }
