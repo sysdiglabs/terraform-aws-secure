@@ -27,6 +27,9 @@ module "onboarding" {
   include_ouids = ["ou-1", "ou-2"]
   exclude_accounts = ["123456789101", "123456789101", "123456789101", "123456789101"]
   include_accounts = ["123456789101", "123456789101"]
+
+  # optionally pass automatic onboarding for orgs (defaults to false)
+  enable_automatic_onboarding = false
 }
 
 module "config-posture" {
