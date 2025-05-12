@@ -25,6 +25,16 @@ Additional features include:
 - Support for AWS GovCloud deployments
 - Support for cross-region deployments where the S3 bucket and SNS topic are in different regions
 
+## Important Note - AWS provider
+
+This module relies on a secondary AWS provider, with alias `sns`. We require this additional provider to support cross-region deployments where the SNS topic is defined or to be created in a different region. If you don't intend to use a different region you can define if before including the module in your setup as:
+```
+provider aws {
+  alias  = "sns"
+  region = data.aws_region.current.name
+}
+```
+
 ## Important Notes for Cross-Account Access
 
 When using this module with organizational cross-account access (where CloudTrail bucket is in a different AWS account), the module automatically deploys a StackSet to configure the role in the bucket account.
