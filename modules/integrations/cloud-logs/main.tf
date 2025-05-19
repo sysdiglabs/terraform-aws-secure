@@ -307,6 +307,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
         ingested_regions = var.regions
         routing_key      = local.routing_key
         role_account_id  = local.bucket_account_id
+        ingestion_url    = local.ingestion_url
       }
     }
   })
