@@ -60,25 +60,27 @@ variable "topic_arn" {
   }
 }
 
-variable "role_arn" {
-  type        = string
-  description = "ARN of the role that terraform will create to download the CloudTrail logs from the S3 bucket."
-
-  validation {
-    condition     = var.role_arn != ""
-    error_message = "Role ARN must not be empty"
-  }
-
-  validation {
-      condition     = can(regex("^arn:(aws|aws-us-gov):iam::[0-9]+:role/.+$", var.role_arn))
-      error_message = "Role ARN must be a valid IAM ARN format"
-  }
-}
-
 variable "create_topic" {
   type        = bool
   default     = false
   description = "true/false whether terraform should create the SNS Topic"
+}
+
+variable "role_arn" {
+  type        = string
+  description = "ARN of the role that terraform will create to download the CloudTrail logs from the S3 bucket."
+  default     = null
+
+  validation {
+      condition     = var.role_arn == null || can(regex("^arn:(aws|aws-us-gov):iam::[0-9]+:role/.+$", var.role_arn))
+      error_message = "Role ARN must be a valid IAM ARN format"
+  }
+}
+
+variable "role_name" {
+  type        = string
+  description = "Name for the Role that Terraform will create to download the CloudTrail logs from the S3 bucket. Alternative to the `role_arn`"
+  default     = null
 }
 
 variable "bucket_account_id" {

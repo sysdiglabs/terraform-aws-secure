@@ -9,7 +9,7 @@ output "kms_policy_instructions" {
   value = (local.need_kms_policy) ? templatefile(
     "${path.module}/templates/kms_policy_instructions.tpl",
     {
-      role_arn = var.role_arn
+      role_arn = local.role_arn
     }
   ) : ""
 }
