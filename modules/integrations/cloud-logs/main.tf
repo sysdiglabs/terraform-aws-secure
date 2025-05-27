@@ -115,6 +115,7 @@ resource "aws_iam_role" "cloudlogs_s3_access" {
   lifecycle {
     precondition {
       condition   = var.role_arn == null || split(":", var.role_arn)[4] == local.bucket_account_id  
+      error_message = "Role and Bucket must be in the same account. Check that the Role ARN is in the Bucket account ID."
     }
   }
 }
