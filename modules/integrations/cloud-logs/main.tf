@@ -114,7 +114,9 @@ resource "aws_iam_role" "cloudlogs_s3_access" {
 
   lifecycle {
     precondition {
-      condition   = var.role_arn == null || split(":", var.role_arn)[4] == local.bucket_account_id
+      condition   = var.role_arn == null || split(":", var.role_arn)[4] == local.bucket_account_id  
+    }
+  }
 }
 
 // AWS IAM Role Policy
