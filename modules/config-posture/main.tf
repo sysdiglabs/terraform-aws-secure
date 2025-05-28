@@ -104,6 +104,42 @@ resource "aws_iam_role_policy" "cspm_role_policy" {
         Effect   = "Allow"
         Resource = "*"
       },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:ListAgents"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:GetAgent"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:ListKnowledgeBases"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:GetKnowledgeBase"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:ListGuardrails"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "AccessAccountContactInfo"
+        Action   = "bedrock:GetGuardrail"
+        Effect   = "Allow"
+        Resource = "*"
+      },
     ]
   })
 }
