@@ -11,9 +11,9 @@ module "cloud-logs" {
   source                   = "../../../modules/integrations/cloud-logs"
   bucket_arn               = "arn:aws:s3:::<your-cloudtrail-bucket-name>"
   bucket_account_id        = "<your-account-id>"
-  kms_key_arn              = "arn:aws:kms:us-east-1:<your-account-id>:key/<your-kms-key-id>"
+  kms_key_arn              = "<your-cloudtrail-kms-key-arn>"
   regions                  = ["us-east-1"]
-  topic_arn                = "arn:aws:sns:us-east-1:<your-account-id>:<your-topic-name>"
+  topic_arn                = "<your-cloudtrail-topic-arn>"
   create_topic             = false
   role_arn                 = "arn:aws:iam::<your-account-id>:role/<your-role-name>"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
