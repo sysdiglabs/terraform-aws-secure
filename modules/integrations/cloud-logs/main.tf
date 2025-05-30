@@ -47,7 +47,17 @@ data "aws_organizations_organization" "org" {
   count = var.is_organizational ? 1 : 0
 }
 
-
+resource "null_resource" "validation" {
+  lifecycle {
+    precondition {
+      condition = (
+        (var.role_name != null ? 1 : 0) +
+        (var.role_arn != null ? 1 : 0)
+      ) == 1
+      error_message = "either `role_arn` or `role_name` must be defined"
+    }
+  }
+}
 #-----------------------------------------------------------------------------------------
 # Generate a unique name for resources using random suffix and account ID hash
 #-----------------------------------------------------------------------------------------
@@ -73,7 +83,8 @@ locals {
   need_kms_policy = var.bucket_account_id != null && var.bucket_account_id != local.kms_account_id
 
   # Role variables
-  role_name = split("/", var.role_arn)[1]
+  role_name = var.role_name != null ? var.role_name : split("/", var.role_arn)[1]
+  role_arn = var.role_arn != null ? var.role_arn : "arn:${data.aws_partition.current.partition}:iam::${local.bucket_account_id}:role/${local.role_name}"
 
   account_id_hash  = substr(md5(local.bucket_account_id), 0, 4)
   # StackSet configuration
@@ -99,6 +110,14 @@ resource "aws_iam_role" "cloudlogs_s3_access" {
   name               = local.role_name
   tags               = var.tags
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
+  depends_on         = [null_resource.validation]
+
+  lifecycle {
+    precondition {
+      condition   = var.role_arn == null || split(":", var.role_arn)[4] == local.bucket_account_id  
+      error_message = "Role and Bucket must be in the same account. Check that the Role ARN is in the Bucket account ID."
+    }
+  }
 }
 
 // AWS IAM Role Policy
@@ -313,6 +332,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
   })
 
   depends_on = [
+    null_resource.validation,
     aws_iam_role.cloudlogs_s3_access,
     aws_cloudformation_stack_set_instance.cloudlogs_s3_access_bucket,
     aws_cloudformation_stack_set_instance.cloudlogs_s3_access_topic
