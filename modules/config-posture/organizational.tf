@@ -96,6 +96,10 @@ Resources:
                 Effect: "Allow"
                 Action: "bedrock:GetGuardrail"
                 Resource: "*"
+              - Sid: "GetModelInvocationLoggingConfiguration"
+                Effect: "Allow"
+                Action: "bedrock:GetModelInvocationLoggingConfiguration"
+                Resource: "*"
 TEMPLATE
 }
 

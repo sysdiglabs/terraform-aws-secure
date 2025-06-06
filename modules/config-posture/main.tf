@@ -140,6 +140,12 @@ resource "aws_iam_role_policy" "cspm_role_policy" {
         Effect   = "Allow"
         Resource = "*"
       },
+      {
+        Sid      = "BedrockGetModelInvocationLoggingConfiguration"
+        Action   = "bedrock:GetModelInvocationLoggingConfiguration"
+        Effect   = "Allow"
+        Resource = "*"
+      },
     ]
   })
 }
