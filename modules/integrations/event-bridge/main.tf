@@ -252,7 +252,7 @@ resource "aws_cloudformation_stack_set" "eb_rule_and_api_dest_stackset" {
 
 resource "aws_cloudformation_stack_set_instance" "eb_rule_and_api_dest_stackset_instance" {
   for_each       = local.region_set
-  region         = each.key
+  stack_set_instance_region         = each.key
   stack_set_name = aws_cloudformation_stack_set.eb_rule_and_api_dest_stackset.name
 
   operation_preferences {
