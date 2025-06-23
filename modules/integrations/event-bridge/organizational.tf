@@ -70,7 +70,7 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_api_dest_instance" {
     "${pair[0]}-${pair[1]}" => pair
   } : {}
 
-  region         = each.value[0]
+  stack_set_instance_region         = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.eb_rule_api_dest_stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value[1]]

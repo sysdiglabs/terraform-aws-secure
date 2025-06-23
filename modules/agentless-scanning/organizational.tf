@@ -188,7 +188,7 @@ resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
     "${pair[0]}-${pair[1]}" => pair
   } : {}
 
-  region         = each.value[0]
+  stack_set_instance_region         = each.value[0]
   stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value[1]]
