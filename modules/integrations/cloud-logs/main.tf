@@ -278,8 +278,8 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_bucket" {
     account_filter_type = "INTERSECTION"
     accounts = [local.bucket_account_id]
   }
-  
-  region = data.aws_region.current.name
+
+  stack_set_instance_region = data.aws_region.current.name
 
   timeouts {
     create = var.timeout
@@ -299,8 +299,8 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_topic" {
     account_filter_type = "INTERSECTION"
     accounts = [local.topic_account_id]
   }
-  
-  region = local.topic_region
+
+  stack_set_instance_region = local.topic_region
 
   timeouts {
     create = var.timeout

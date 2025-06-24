@@ -106,7 +106,7 @@ TEMPLATE
 resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   for_each = var.is_organizational ? toset(local.deployment_targets_org_units) : []
 
-  region         = var.region == "" ? null : var.region
+  stack_set_instance_region = var.region == "" ? null : var.region
   stack_set_name = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value]
