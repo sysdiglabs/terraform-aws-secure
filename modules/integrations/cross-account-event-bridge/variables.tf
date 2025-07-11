@@ -106,11 +106,6 @@ variable "sysdig_secure_account_id" {
   description = "ID of the Sysdig Cloud Account to enable Event Bridge integration for (incase of organization, ID of the Sysdig management account)"
 }
 
-variable "is_gov_cloud_onboarding" {
-  type        = bool
-  default     = false
-  description = "true/false whether EventBridge should be deployed in a govcloud account/org or not"
-}
 variable "include_ouids" {
   description = "(Optional) ouids to include for organization"
   type        = set(string)
