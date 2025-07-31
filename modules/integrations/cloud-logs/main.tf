@@ -69,8 +69,8 @@ locals {
   is_cross_account = var.bucket_account_id != null && var.bucket_account_id != data.aws_caller_identity.current.account_id
 
   # KMS variables
-  kms_account_id = split(":", var.kms_key_arn)[3]
-  need_kms_policy = var.bucket_account_id != null && var.bucket_account_id != local.kms_account_id
+  kms_account_id = var.kms_key_arn != null && var.kms_key_arn != "" ? split(":", var.kms_key_arn)[3] : null
+  need_kms_policy = var.bucket_account_id != null && local.kms_account_id != null && var.bucket_account_id != local.kms_account_id
 
   # Role variables
   role_name = split("/", var.role_arn)[1]
@@ -152,7 +152,7 @@ data "aws_iam_policy_document" "cloudlogs_s3_access" {
   }
 
   dynamic "statement" {
-    for_each = var.kms_key_arn != null ? [1] : []
+    for_each = var.kms_key_arn != null && var.kms_key_arn != "" ? [1] : []
     content {
       sid = "CloudlogsKMSDecrypt"
       
