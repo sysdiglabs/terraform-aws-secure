@@ -8,7 +8,7 @@ resource "aws_cloudformation_stack_set" "stackset" {
   name             = local.onboarding_role_name
   tags             = var.tags
   permission_model = "SERVICE_MANAGED"
-  capabilities = ["CAPABILITY_NAMED_IAM"]
+  capabilities     = ["CAPABILITY_NAMED_IAM"]
 
   managed_execution {
     active = true

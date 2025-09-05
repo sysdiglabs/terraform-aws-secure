@@ -72,8 +72,8 @@ variable "role_arn" {
   default     = null
 
   validation {
-      condition     = var.role_arn == null || can(regex("^arn:(aws|aws-us-gov):iam::[0-9]+:role/.+$", var.role_arn))
-      error_message = "Role ARN must be a valid IAM ARN format"
+    condition     = var.role_arn == null || can(regex("^arn:(aws|aws-us-gov):iam::[0-9]+:role/.+$", var.role_arn))
+    error_message = "Role ARN must be a valid IAM ARN format"
   }
 }
 

@@ -11,6 +11,6 @@ output "cspm_role_arn" {
 }
 
 output "sysdig_secure_account_id" {
-    value       = var.sysdig_secure_account_id
-    description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"
+  value       = var.sysdig_secure_account_id
+  description = "ID of the Sysdig Cloud Account to enable Config Posture for (incase of organization, ID of the Sysdig management account)"
 }

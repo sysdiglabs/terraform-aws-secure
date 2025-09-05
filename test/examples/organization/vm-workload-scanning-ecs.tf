@@ -1,13 +1,13 @@
 module "vm_workload_scanning" {
-  source            	     = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
+  source                   = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   is_organizational        = module.onboarding.is_organizational
   # legacy org install
   # organizational_unit_ids = module.onboarding.organizational_unit_ids
 
   # include/exclude org install params
-  include_ouids = module.onboarding.include_ouids
-  exclude_ouids = module.onboarding.exclude_ouids
+  include_ouids    = module.onboarding.include_ouids
+  exclude_ouids    = module.onboarding.exclude_ouids
   include_accounts = module.onboarding.include_accounts
   exclude_accounts = module.onboarding.exclude_accounts
 }

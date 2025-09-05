@@ -9,7 +9,7 @@ terraform {
 
 provider "sysdig" {
   sysdig_secure_url       = "https://secure-staging.sysdig.com"
-  sysdig_secure_api_token =  "<API_TOKEN>"
+  sysdig_secure_api_token = "<API_TOKEN>"
 }
 
 provider "aws" {
@@ -18,9 +18,9 @@ provider "aws" {
 }
 
 module "onboarding" {
-  source            	    = "../../../modules/onboarding"
+  source                  = "../../../modules/onboarding"
   organizational_unit_ids = ["ou-ks5g-dofso0kc"]
-  is_organizational 	    = true
+  is_organizational       = true
   is_gov_cloud_onboarding = true
 }
 
@@ -47,7 +47,7 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_basic"
   components = [module.config-posture.config_posture_component_id]
   depends_on = [module.config-posture, sysdig_secure_cloud_auth_account_feature.config_posture]
   flags = {
-    "CIEM_FEATURE_MODE": "basic"
+    "CIEM_FEATURE_MODE" : "basic"
   }
 
   lifecycle {

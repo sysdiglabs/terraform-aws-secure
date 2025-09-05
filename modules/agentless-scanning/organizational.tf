@@ -59,7 +59,7 @@ Resources:
           Statement:
           - Sid: "Read"
             Effect: "Allow"
-            Action: 
+            Action:
             - "ec2:Describe*"
             Resource: "*"
             Condition:
@@ -150,7 +150,7 @@ Resources:
         - Sid: "SysdigAllowKms"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - "arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root"
             - !GetAtt ScanningRole.Arn
           Action:
@@ -165,7 +165,7 @@ Resources:
         - Sid: "AllowCustomerManagement"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - !Sub "arn:aws:iam::$${AWS::AccountId}:root"
             - "${local.caller_arn}"
             - !Sub "arn:aws:iam::$${AWS::AccountId}:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/AWSServiceRoleForCloudFormationStackSetsOrgMember"

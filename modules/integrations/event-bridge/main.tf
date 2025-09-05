@@ -15,9 +15,9 @@
 data "aws_caller_identity" "current" {}
 
 data "sysdig_secure_cloud_ingestion_assets" "assets" {
-  cloud_provider     = "aws"
-  cloud_provider_id  = data.aws_caller_identity.current.account_id
-  component_type = local.component_type
+  cloud_provider    = "aws"
+  cloud_provider_id = data.aws_caller_identity.current.account_id
+  component_type    = local.component_type
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
@@ -27,12 +27,12 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 data "sysdig_secure_tenant_external_id" "external_id" {}
 
 locals {
-  region_set           = toset(var.regions)
-  trusted_identity     = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
-  arn_prefix           = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
-  component_type       = "COMPONENT_WEBHOOK_DATASOURCE"
-  account_id_hash      = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
-  eb_resource_name     = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+  region_set       = toset(var.regions)
+  trusted_identity = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
+  arn_prefix       = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
+  component_type   = "COMPONENT_WEBHOOK_DATASOURCE"
+  account_id_hash  = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
+  eb_resource_name = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
         Action = [
           "cloudwatch:GetMetricStatistics"
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "*"
       }
     ]
@@ -215,7 +215,7 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
 # 2. API Destination - Forwards events to Sysdig's webhook ingestion endpoint
 # 3. EventBridge Rule - Captures events matching the specified pattern and targets the API destination
 #
-# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
+# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions
 #-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "eb_rule_and_api_dest_stackset" {
   name                    = join("-", [local.eb_resource_name, "EBRuleAndApiDestination"])

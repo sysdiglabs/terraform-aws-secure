@@ -57,10 +57,10 @@ resource "aws_cloudformation_stack_set" "eb_role_stackset" {
   }
 
   template_body = templatefile("${path.module}/stackset_template_org_policies.tpl", {
-    name            = local.eb_resource_name
+    name             = local.eb_resource_name
     trusted_identity = local.trusted_identity
-    external_id     = data.sysdig_secure_tenant_external_id.external_id.external_id
-    arn_prefix      = local.arn_prefix
+    external_id      = data.sysdig_secure_tenant_external_id.external_id.external_id
+    arn_prefix       = local.arn_prefix
   })
 }
 
