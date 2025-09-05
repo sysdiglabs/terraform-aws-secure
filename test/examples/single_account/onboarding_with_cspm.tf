@@ -7,6 +7,11 @@ terraform {
   }
 }
 
+
+
+
+
+
 provider "sysdig" {
   sysdig_secure_url       = "https://secure-staging.sysdig.com"
   sysdig_secure_api_token = "<API_TOKEN>"
