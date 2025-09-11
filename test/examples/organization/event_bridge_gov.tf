@@ -26,7 +26,7 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_advanc
   enabled    = true
   components = concat(sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic.components, [module.event-bridge.event_bridge_component_id])
   depends_on = [module.event-bridge, sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic]
-  flags = {"CIEM_FEATURE_MODE": "advanced"}
+  flags      = { "CIEM_FEATURE_MODE" : "advanced" }
 
   lifecycle {
     ignore_changes = [flags, components]

@@ -59,7 +59,7 @@ Resources:
           Statement:
           - Sid: "Read"
             Effect: "Allow"
-            Action: 
+            Action:
             - "ec2:Describe*"
             Resource: "*"
             Condition:
@@ -150,7 +150,7 @@ Resources:
         - Sid: "SysdigAllowKms"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - "arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root"
             - !GetAtt ScanningRole.Arn
           Action:
@@ -165,7 +165,7 @@ Resources:
         - Sid: "AllowCustomerManagement"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - !Sub "arn:aws:iam::$${AWS::AccountId}:root"
             - "${local.caller_arn}"
             - !Sub "arn:aws:iam::$${AWS::AccountId}:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/AWSServiceRoleForCloudFormationStackSetsOrgMember"
@@ -188,8 +188,8 @@ resource "aws_cloudformation_stack_set_instance" "ou_stackset_instance" {
     "${pair[0]}-${pair[1]}" => pair
   } : {}
 
-  stack_set_instance_region         = each.value[0]
-  stack_set_name = aws_cloudformation_stack_set.ou_resources_stackset[0].name
+  stack_set_instance_region = each.value[0]
+  stack_set_name            = aws_cloudformation_stack_set.ou_resources_stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value[1]]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)

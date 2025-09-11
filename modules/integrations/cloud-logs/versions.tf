@@ -8,7 +8,7 @@ terraform {
       configuration_aliases = [aws.sns]
     }
     sysdig = {
-      source = "sysdiglabs/sysdig"
+      source  = "sysdiglabs/sysdig"
       version = "~> 1.56"
     }
     random = {

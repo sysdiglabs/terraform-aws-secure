@@ -124,8 +124,8 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachments_exclusive" "scanning_stackset_execution_role_managed_policy" {
-  count       = !var.auto_create_stackset_roles ? 0 : 1
-  role_name   = aws_iam_role.scanning_stackset_execution_role[0].id
+  count     = !var.auto_create_stackset_roles ? 0 : 1
+  role_name = aws_iam_role.scanning_stackset_execution_role[0].id
   policy_arns = [
     "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
     "arn:aws:iam::aws:policy/AWSCloudFormationFullAccess",
@@ -182,7 +182,7 @@ Resources:
           Statement:
           - Sid: "Read"
             Effect: "Allow"
-            Action: 
+            Action:
             - "ec2:Describe*"
             Resource: "*"
             Condition:
@@ -273,7 +273,7 @@ Resources:
         - Sid: "SysdigAllowKms"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - "arn:aws:iam::${data.sysdig_secure_agentless_scanning_assets.assets.aws.account_id}:root"
             - !GetAtt ScanningRole.Arn
           Action:
@@ -288,7 +288,7 @@ Resources:
         - Sid: "AllowCustomerManagement"
           Effect: "Allow"
           Principal:
-            AWS: 
+            AWS:
             - "arn:aws:iam::${local.account_id}:root"
             - "${local.caller_arn}"
             - "arn:aws:iam::${local.account_id}:role/${local.execution_role_name}"
@@ -310,8 +310,8 @@ TEMPLATE
 
 # stackset instance to deploy resources for agentless scanning, in all regions of given account
 resource "aws_cloudformation_stack_set_instance" "primary_acc_stackset_instance" {
-  for_each = local.region_set
-  stack_set_instance_region   = each.key
+  for_each                  = local.region_set
+  stack_set_instance_region = each.key
 
   stack_set_name = aws_cloudformation_stack_set.primary_acc_stackset.name
   operation_preferences {
