@@ -117,7 +117,7 @@ locals {
     }
   }
 
-  # final targets to detargets to deploy organizational resources in
+  # final targets to deploy organizational resources in
   deployment_targets_ous = lookup(local.deployment_options, local.org_configuration, local.deployment_options.default)
 
   // check if root is part of the excluded_ouids
