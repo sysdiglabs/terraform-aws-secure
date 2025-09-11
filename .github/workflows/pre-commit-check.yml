@@ -1,0 +1,32 @@
+name: Pre-commit Check
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get changed files
+      uses: tj-actions/changed-files@v41
+      id: changed-files
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: latest
+
+    - name: Install pre-commit
+      run: pip install pre-commit
+
+    - name: Run pre-commit on changed files
+      run: |
+        pre-commit run --files ${{ steps.changed-files.outputs.all_changed_files }} --hook-stage push
