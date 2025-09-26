@@ -9,10 +9,10 @@ data "aws_organizations_organization" "org" {
 locals {
   # check if both old and new org parameters are provided, we fail early
   both_org_configuration_params = var.is_organizational && length(var.org_units) > 0 && (
-  length(var.include_ouids) > 0 ||
-  length(var.exclude_ouids) > 0 ||
-  length(var.include_accounts) > 0 ||
-  length(var.exclude_accounts) > 0
+    length(var.include_ouids) > 0 ||
+    length(var.exclude_ouids) > 0 ||
+    length(var.include_accounts) > 0 ||
+    length(var.exclude_accounts) > 0
   )
 
   # check if old org_units parameter is provided, for backwards compatibility we will always give preference to it
@@ -25,14 +25,14 @@ locals {
 
 check "validate_org_configuration_params" {
   assert {
-    condition     = length(var.org_units) == 0  # if this condition is false we throw warning
+    condition     = length(var.org_units) == 0 # if this condition is false we throw warning
     error_message = <<-EOT
     WARNING: TO BE DEPRECATED 'org_units' on 30th November, 2025. Please work with Sysdig to migrate your Terraform installs to use 'include_ouids' instead.
     EOT
   }
 
   assert {
-    condition     = !local.both_org_configuration_params  # if this condition is false we throw error
+    condition     = !local.both_org_configuration_params # if this condition is false we throw error
     error_message = <<-EOT
     ERROR: If both org_units and include_ouids/exclude_ouids/include_accounts/exclude_accounts variables are populated,
     ONLY org_units will be considered. Please use only one of the two methods.
@@ -70,19 +70,19 @@ locals {
     # case1 - if old method is used where ONLY org_units is provided, use those
     local.check_old_ouid_param ? (
       "old_ouid_param"
-    ) : (
+      ) : (
       # case2 - if no include/exclude ous provided, include entire org
       var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) == 0 ? (
         "entire_org"
-      ) : (
+        ) : (
         # case3 - if only included ouids provided, include those ous only
         var.is_organizational && length(var.include_ouids) > 0 && length(var.exclude_ouids) == 0 ? (
           "included_ous_only"
-        ) : (
+          ) : (
           # case4 - if only excluded ouids provided, exclude their accounts from rest of org
           var.is_organizational && length(var.include_ouids) == 0 && length(var.exclude_ouids) > 0 ? (
             "excluded_ous_only"
-          ) : (
+            ) : (
             # case5 - if both include and exclude ouids are provided, includes override excludes
             var.is_organizational && length(var.include_ouids) > 0 && length(var.exclude_ouids) > 0 ? (
               "mixed_ous"
@@ -99,7 +99,7 @@ locals {
       org_units_to_deploy = var.org_units
     }
     entire_org = {
-       org_units_to_deploy = local.root_org_unit
+      org_units_to_deploy = local.root_org_unit
     }
     included_ous_only = {
       org_units_to_deploy = var.include_ouids
@@ -119,7 +119,7 @@ locals {
 
   # final targets to deploy organizational resources in
   deployment_targets_ous = lookup(local.deployment_options, local.org_configuration, local.deployment_options.default)
-  
+
   exclude_root_ou = length(local.root_org_unit) > 0 ? contains(var.exclude_ouids, local.root_org_unit[0]) : false
 }
 
@@ -138,15 +138,15 @@ locals {
     # case1 - if old method is used where ONLY org_units is provided, this configuration is a noop
     local.check_old_ouid_param ? (
       "NONE"
-    ) : (
+      ) : (
       # case2 - if only included accounts provided, include those accts as well
       var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) == 0 ? (
         "UNION"
-      ) : (
-        # case3 - if only excluded accounts or only excluded ouids provided, exclude those accounts
-        var.is_organizational && length(var.include_accounts) == 0 && ( length(var.exclude_accounts) > 0 || local.org_configuration == "excluded_ous_only" ) ? (
-          "DIFFERENCE"
         ) : (
+        # case3 - if only excluded accounts or only excluded ouids provided, exclude those accounts
+        var.is_organizational && length(var.include_accounts) == 0 && (length(var.exclude_accounts) > 0 || local.org_configuration == "excluded_ous_only") ? (
+          "DIFFERENCE"
+          ) : (
           # case4 - if both include and exclude accounts are provided, includes override excludes
           var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
             "MIXED"
@@ -156,30 +156,30 @@ locals {
     )
   )
 
-  ou_accounts_to_exclude = flatten([ for ou_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_accounts_to_exclude: [ ou_accounts.accounts[*].id ] ])
-  accounts_to_exclude = setunion(local.ou_accounts_to_exclude, var.exclude_accounts)
+  ou_accounts_to_exclude = flatten([for ou_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_accounts_to_exclude : [ou_accounts.accounts[*].id]])
+  accounts_to_exclude    = setunion(local.ou_accounts_to_exclude, var.exclude_accounts)
 
   # switch cases for various user provided accounts configuration to be onboarded
   deployment_account_options = {
     NONE = {
-      accounts_to_deploy = []
+      accounts_to_deploy  = []
       account_filter_type = "NONE"
     }
     UNION = {
-      accounts_to_deploy = var.include_accounts
+      accounts_to_deploy  = var.include_accounts
       account_filter_type = "UNION"
     }
     DIFFERENCE = {
-      accounts_to_deploy = local.accounts_to_exclude
+      accounts_to_deploy  = local.accounts_to_exclude
       account_filter_type = "DIFFERENCE"
     }
     MIXED = {
-      accounts_to_deploy = var.include_accounts
+      accounts_to_deploy  = var.include_accounts
       account_filter_type = "UNION"
     }
     default = {
       # default when neither of include/exclude accounts are provided
-      accounts_to_deploy = []
+      accounts_to_deploy  = []
       account_filter_type = "NONE"
     }
   }
@@ -196,6 +196,6 @@ locals {
   # XXX: due to AWS bug of not having UNION filter fully working, there is no way to add those extra accounts requested.
   # to not miss out on those extra accounts, deploy the cloud resources across entire org and noop the UNION filter.
   # i.e till we can't deploy UNION, we deploy it all
-  deployment_targets_org_units = local.deployment_targets_accounts.account_filter_type == "UNION" ? local.root_org_unit : local.deployment_targets_ous.org_units_to_deploy
+  deployment_targets_org_units       = local.deployment_targets_accounts.account_filter_type == "UNION" ? local.root_org_unit : local.deployment_targets_ous.org_units_to_deploy
   deployment_targets_accounts_filter = local.deployment_targets_accounts.account_filter_type == "UNION" ? "NONE" : local.deployment_targets_accounts.account_filter_type
 }

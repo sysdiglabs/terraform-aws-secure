@@ -204,7 +204,7 @@ resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
 # Target forwards all CloudTrail events to Sysdig's EventBridge Bus.
 # See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target#cross-account-event-bus-target
 #
-# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions 
+# Note: self-managed stacksets require pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 resource "aws_cloudformation_stack_set" "primary-acc-stackset" {

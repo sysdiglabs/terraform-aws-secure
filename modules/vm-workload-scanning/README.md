@@ -1,7 +1,7 @@
 # AWS VM Workload Scanning Module
 
 This Module creates the resources required to perform agentless workload scanning operations.
-By default, it will create a role with permissions necessary to access and pull ECR images in the account where it is deployed. 
+By default, it will create a role with permissions necessary to access and pull ECR images in the account where it is deployed.
 Combined with the base onboarding, this allows for scanning ECS Services and Tasks pointing to ECR images.
 Also public docker images and private repos are supported, as long as private repository permissions are granted to Sysdig using the Registry Credentials UI.
 

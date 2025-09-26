@@ -56,8 +56,8 @@ EOF
 }
 
 resource "aws_iam_role_policy" "onboarding_role_policy" {
-  name  = local.onboarding_role_name
-  role  = aws_iam_role.onboarding_role.id
+  name = local.onboarding_role_name
+  role = aws_iam_role.onboarding_role.id
   policy = jsonencode({
     Statement = [
       {
@@ -66,7 +66,7 @@ resource "aws_iam_role_policy" "onboarding_role_policy" {
           "account:Get*",
           "account:List*",
         ]
-        Effect = "Allow"
+        Effect   = "Allow"
         Resource = "*"
       },
     ]
@@ -84,11 +84,11 @@ resource "aws_iam_role_policy_attachments_exclusive" "onboarding_role_managed_po
 data "aws_caller_identity" "current" {}
 
 resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
-  enabled              = true
-  provider_id          = data.aws_caller_identity.current.account_id
-  provider_type        = "PROVIDER_AWS"
-  provider_alias       = var.account_alias
-  provider_partition   = var.is_gov_cloud_onboarding ? "PROVIDER_PARTITION_AWS_GOVCLOUD" : ""
+  enabled            = true
+  provider_id        = data.aws_caller_identity.current.account_id
+  provider_type      = "PROVIDER_AWS"
+  provider_alias     = var.account_alias
+  provider_partition = var.is_gov_cloud_onboarding ? "PROVIDER_PARTITION_AWS_GOVCLOUD" : ""
 
   component {
     type     = "COMPONENT_TRUSTED_ROLE"

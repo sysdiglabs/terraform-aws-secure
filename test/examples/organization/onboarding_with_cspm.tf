@@ -9,7 +9,7 @@ terraform {
 
 provider "sysdig" {
   sysdig_secure_url       = "https://secure-staging.sysdig.com"
-  sysdig_secure_api_token =  "<API_TOKEN>"
+  sysdig_secure_api_token = "<API_TOKEN>"
 }
 
 provider "aws" {
@@ -18,13 +18,13 @@ provider "aws" {
 }
 
 module "onboarding" {
-  source            	    = "../../../modules/onboarding"
-  is_organizational         = true
+  source            = "../../../modules/onboarding"
+  is_organizational = true
   # legacy org install
   # organizational_unit_ids = ["ou-ks5g-dofso0kc"]
 
   # include/exclude org install params
-  include_ouids = ["ou-1", "ou-2"]
+  include_ouids    = ["ou-1", "ou-2"]
   exclude_accounts = ["123456789101", "123456789101", "123456789101", "123456789101"]
   include_accounts = ["123456789101", "123456789101"]
 
@@ -40,8 +40,8 @@ module "config-posture" {
   # org_units               = ["ou-ks5g-dofso0kc"]
 
   # include/exclude org install params
-  include_ouids = module.onboarding.include_ouids
-  exclude_ouids = module.onboarding.exclude_ouids
+  include_ouids    = module.onboarding.include_ouids
+  exclude_ouids    = module.onboarding.exclude_ouids
   include_accounts = module.onboarding.include_accounts
   exclude_accounts = module.onboarding.exclude_accounts
 }
@@ -61,7 +61,7 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_basic"
   components = [module.config-posture.config_posture_component_id]
   depends_on = [module.config-posture, sysdig_secure_cloud_auth_account_feature.config_posture]
   flags = {
-    "CIEM_FEATURE_MODE": "basic"
+    "CIEM_FEATURE_MODE" : "basic"
   }
 
   lifecycle {

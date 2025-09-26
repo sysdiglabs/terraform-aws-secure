@@ -57,10 +57,10 @@ resource "aws_cloudformation_stack_set" "eb_role_stackset" {
   }
 
   template_body = templatefile("${path.module}/stackset_template_org_policies.tpl", {
-    name            = local.eb_resource_name
+    name             = local.eb_resource_name
     trusted_identity = local.trusted_identity
-    external_id     = data.sysdig_secure_tenant_external_id.external_id.external_id
-    arn_prefix      = local.arn_prefix
+    external_id      = data.sysdig_secure_tenant_external_id.external_id.external_id
+    arn_prefix       = local.arn_prefix
   })
 }
 
@@ -70,8 +70,8 @@ resource "aws_cloudformation_stack_set_instance" "eb_rule_api_dest_instance" {
     "${pair[0]}-${pair[1]}" => pair
   } : {}
 
-  stack_set_instance_region         = each.value[0]
-  stack_set_name = aws_cloudformation_stack_set.eb_rule_api_dest_stackset[0].name
+  stack_set_instance_region = each.value[0]
+  stack_set_name            = aws_cloudformation_stack_set.eb_rule_api_dest_stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value[1]]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
