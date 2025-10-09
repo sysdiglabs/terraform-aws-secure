@@ -14,7 +14,9 @@
 #-----------------------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 
-data "sysdig_secure_cloud_ingestion_assets" "assets" {}
+data "sysdig_secure_cloud_ingestion_assets" "assets" {
+  cloud_provider     = "aws"
+}
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
