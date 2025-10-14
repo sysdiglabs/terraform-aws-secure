@@ -65,6 +65,7 @@ resource "aws_iam_role_policy" "onboarding_role_policy" {
         Action = [
           "account:Get*",
           "account:List*",
+          "iam:ListAccountAliases",
         ]
         Effect   = "Allow"
         Resource = "*"
@@ -107,4 +108,9 @@ resource "sysdig_secure_cloud_auth_account" "cloud_auth_account" {
       feature
     ]
   }
+
+  depends_on = [
+    aws_iam_role_policy.onboarding_role_policy,
+    aws_cloudformation_stack_set_instance.stackset_instance
+  ]
 }
