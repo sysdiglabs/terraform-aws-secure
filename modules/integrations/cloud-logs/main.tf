@@ -322,7 +322,6 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
       cloudtrail_sns = {
         role_name        = local.role_name
         topic_arn        = var.topic_arn
-        bucket_region    = data.aws_region.current.name
         bucket_arn       = var.bucket_arn
         ingested_regions = var.regions
         routing_key      = local.routing_key
