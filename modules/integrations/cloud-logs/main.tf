@@ -319,7 +319,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
   version    = "v1.0.1"
   cloud_logs_metadata = jsonencode({
     aws = {
-      cloudtrailSns = {
+      cloudtrail_sns = {
         role_name        = local.role_name
         topic_arn        = var.topic_arn
         bucket_arn       = var.bucket_arn
