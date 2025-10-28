@@ -1,0 +1,46 @@
+name: Sanity Test Jenkins Trigger
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: main-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sanity-tests:
+    if: (github.event_name == 'pull_request' && github.event.action == 'ready_for_review') ||
+      (github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
+    runs-on: tools-runner
+
+    steps:
+      - name: Check for skip sanity test label
+        id: check-skip-sanity-test
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -H "Accept: application/vnd.github+json" /repos/sysdiglabs/terraform-aws-secure/issues/${{ github.event.pull_request.number }}/labels | jq '[.[].name]' > /tmp/label_list
+          if grep -q 'skip-sanity-test' /tmp/label_list; then
+            echo "Skipping terraform-aws-secure-onboarding-tests job as skip-sanity-test label is present"
+            echo "SKIP_SANITY_TEST=true" >> $GITHUB_OUTPUT
+          else
+            echo "SKIP_SANITY_TEST=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Onboarding job for this repo
+        if: ${{ steps.check-skip-sanity-test.outputs.SKIP_SANITY_TEST == 'false'}}
+        id: trigger-jenkins-job
+        uses: draios/jenkins-job-trigger-action@1.1.0
+        with:
+          jenkins_url: ${{ secrets.JENKINS_INTERNAL_URL }}
+          jenkins_user: ${{ secrets.JENKINS_QA_API_USER }}
+          jenkins_token: ${{ secrets.JENKINS_QA_API_TOKEN }}
+          job_name: "qa/QA-secure/onboarding/terraform-aws-secure-onboarding-tests/"
+          job_params: |
+            {
+              "MODULE_BRANCH": "${{ github.head_ref }}"
+            }
+          job_timeout: "5400"
