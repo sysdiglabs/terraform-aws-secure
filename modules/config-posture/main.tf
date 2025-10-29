@@ -146,6 +146,48 @@ resource "aws_iam_role_policy" "cspm_role_policy" {
         Effect   = "Allow"
         Resource = "*"
       },
+      {
+        Sid      = "GetAnomalyMonitors"
+        Action   = "ce:GetAnomalyMonitors"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "GetClassificationExportConfiguration"
+        Action   = "macie2:GetClassificationExportConfiguration"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "GetRecommendationSummaries"
+        Action   = "compute-optimizer:GetRecommendationSummaries"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "GetReservationCoverage"
+        Action   = "ce:GetReservationCoverage"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "GetLifecyclePolicies"
+        Action   = "dlm:GetLifecyclePolicies"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "ListAddons"
+        Action   = "eks:ListAddons"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Sid      = "ListWorkloads"
+        Action   = "wellarchitected:ListWorkloads"
+        Effect   = "Allow"
+        Resource = "*"
+      },
     ]
   })
 }
