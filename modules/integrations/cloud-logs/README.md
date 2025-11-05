@@ -31,7 +31,7 @@ This module relies on a secondary AWS provider, with alias `sns`. We require thi
 ```
 provider aws {
   alias  = "sns"
-  region = data.aws_region.current.name
+  region = data.aws_region.current.id
 }
 ```
 
