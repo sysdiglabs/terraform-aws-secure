@@ -279,7 +279,7 @@ resource "aws_cloudformation_stack_set_instance" "cloudlogs_s3_access_bucket" {
     accounts                = [local.bucket_account_id]
   }
 
-  stack_set_instance_region = data.aws_region.current.name
+  stack_set_instance_region = data.aws_region.current.region
 
   timeouts {
     create = var.timeout
