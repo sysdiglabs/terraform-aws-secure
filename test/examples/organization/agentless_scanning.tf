@@ -8,8 +8,6 @@ module "agentless-scanning" {
   regions                  = ["us-east-1", "us-west-1", "us-west-2"]
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   is_organizational        = module.onboarding.is_organizational
-  # legacy org install
-  # org_units                = module.onboarding.organizational_unit_ids
 
   # include/exclude org install params
   include_ouids    = module.onboarding.include_ouids

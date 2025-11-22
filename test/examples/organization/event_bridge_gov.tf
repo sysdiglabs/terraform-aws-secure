@@ -8,8 +8,13 @@ module "event-bridge" {
   regions                  = ["us-gov-east-1"]
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   is_organizational        = module.onboarding.is_organizational
-  org_units                = module.onboarding.organizational_unit_ids
   is_gov_cloud_onboarding  = module.onboarding.is_gov_cloud_onboarding
+
+  # include/exclude org install params
+  include_ouids    = module.onboarding.include_ouids
+  exclude_ouids    = module.onboarding.exclude_ouids
+  include_accounts = module.onboarding.include_accounts
+  exclude_accounts = module.onboarding.exclude_accounts
 }
 
 resource "sysdig_secure_cloud_auth_account_feature" "threat_detection" {
