@@ -60,8 +60,8 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
   stack_set_name            = aws_cloudformation_stack_set.stackset[0].name
   deployment_targets {
     organizational_unit_ids = [each.value]
-    accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
-    account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
+    accounts                = local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy
+    account_filter_type     = local.deployment_targets_accounts_filter
   }
   operation_preferences {
     max_concurrent_percentage    = 100
@@ -80,12 +80,11 @@ resource "aws_cloudformation_stack_set_instance" "stackset_instance" {
 resource "sysdig_secure_organization" "aws_organization" {
   count                          = var.is_organizational ? 1 : 0
   management_account_id          = sysdig_secure_cloud_auth_account.cloud_auth_account.id
-  organizational_unit_ids        = local.check_old_ouid_param ? var.organizational_unit_ids : []
   organization_root_id           = local.root_org_unit[0]
-  included_organizational_groups = local.check_old_ouid_param ? [] : var.include_ouids
-  excluded_organizational_groups = local.check_old_ouid_param ? [] : var.exclude_ouids
-  included_cloud_accounts        = local.check_old_ouid_param ? [] : var.include_accounts
-  excluded_cloud_accounts        = local.check_old_ouid_param ? [] : var.exclude_accounts
+  included_organizational_groups = var.include_ouids
+  excluded_organizational_groups = var.exclude_ouids
+  included_cloud_accounts        = var.include_accounts
+  excluded_cloud_accounts        = var.exclude_accounts
   automatic_onboarding           = var.enable_automatic_onboarding
 
   lifecycle {

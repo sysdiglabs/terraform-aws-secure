@@ -8,15 +8,6 @@ variable "is_organizational" {
   description = "true/false whether secure-for-cloud should be deployed in an organizational setup (all accounts of org) or not (only on default aws provider account)"
 }
 
-variable "org_units" {
-  description = <<-EOF
-    TO BE DEPRECATED on 30th November, 2025: Please work with Sysdig to migrate to using `include_ouids` instead.
-    When set, org units to install cspm.
-    EOF
-  type        = set(string)
-  default     = []
-}
-
 variable "region" {
   type        = string
   default     = ""
