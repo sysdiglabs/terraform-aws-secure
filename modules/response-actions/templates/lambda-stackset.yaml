@@ -1,0 +1,352 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Sysdig Response Actions Lambda Functions - Multi-Region Deployment'
+
+Parameters:
+  ResourceName:
+    Type: String
+    Description: Base name for all resources
+  S3Bucket:
+    Type: String
+    Description: S3 bucket containing Lambda deployment packages
+  ApiBaseUrl:
+    Type: String
+    Description: API base URL for Lambda functions
+  ArnPrefix:
+    Type: String
+    Description: ARN prefix (arn:aws or arn:aws-us-gov)
+    Default: arn:aws
+  QuarantineUserPolicy:
+    Type: String
+    Description: JSON policy for quarantine user function
+  FetchCloudLogsPolicy:
+    Type: String
+    Description: JSON policy for fetch cloud logs function
+  RemovePolicyPolicy:
+    Type: String
+    Description: JSON policy for remove policy function
+  ConfigureResourceAccessPolicy:
+    Type: String
+    Description: JSON policy for configure resource access function
+  CreateVolumeSnapshotsPolicy:
+    Type: String
+    Description: JSON policy for create volume snapshots function
+  DeleteVolumeSnapshotsPolicy:
+    Type: String
+    Description: JSON policy for delete volume snapshots function
+
+Resources:
+  # Lambda Execution Role for Quarantine User
+  QuarantineUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-quarantine-user-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: QuarantineUserPolicy
+          PolicyDocument: !Sub '${QuarantineUserPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-quarantine-user-role'
+
+  # Lambda Execution Role for Fetch Cloud Logs
+  FetchCloudLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-fetch-cloud-logs-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: FetchCloudLogsPolicy
+          PolicyDocument: !Sub '${FetchCloudLogsPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-fetch-cloud-logs-role'
+
+  # Lambda Execution Role for Remove Policy
+  RemovePolicyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-remove-policy-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: RemovePolicyPolicy
+          PolicyDocument: !Sub '${RemovePolicyPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-remove-policy-role'
+
+  # Lambda Execution Role for Configure Resource Access
+  ConfigureResourceAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-configure-resource-access-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: ConfigureResourceAccessPolicy
+          PolicyDocument: !Sub '${ConfigureResourceAccessPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-configure-resource-access-role'
+
+  # Lambda Execution Role for Create Volume Snapshots
+  CreateVolumeSnapshotsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-create-volume-snapshots-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: CreateVolumeSnapshotsPolicy
+          PolicyDocument: !Sub '${CreateVolumeSnapshotsPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-create-volume-snapshots-role'
+
+  # Lambda Execution Role for Delete Volume Snapshots
+  DeleteVolumeSnapshotsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ResourceName}-delete-volume-snapshots-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+      Policies:
+        - PolicyName: DeleteVolumeSnapshotsPolicy
+          PolicyDocument: !Sub '${DeleteVolumeSnapshotsPolicy}'
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-delete-volume-snapshots-role'
+
+  # CloudWatch Log Groups
+  QuarantineUserLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-quarantine-user'
+      RetentionInDays: 7
+
+  FetchCloudLogsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-fetch-cloud-logs'
+      RetentionInDays: 7
+
+  RemovePolicyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-remove-policy'
+      RetentionInDays: 7
+
+  ConfigureResourceAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-configure-resource-access'
+      RetentionInDays: 7
+
+  CreateVolumeSnapshotsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-create-volume-snapshots'
+      RetentionInDays: 7
+
+  DeleteVolumeSnapshotsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ResourceName}-delete-volume-snapshots'
+      RetentionInDays: 7
+
+  # Lambda Functions
+  QuarantineUserFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: QuarantineUserLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-quarantine-user'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt QuarantineUserRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: quarantine_user.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref QuarantineUserRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-quarantine-user'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+  FetchCloudLogsFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: FetchCloudLogsLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-fetch-cloud-logs'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt FetchCloudLogsRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: fetch_cloud_logs.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref FetchCloudLogsRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-fetch-cloud-logs'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+  RemovePolicyFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: RemovePolicyLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-remove-policy'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt RemovePolicyRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: remove_policy.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref RemovePolicyRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-remove-policy'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+  ConfigureResourceAccessFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: ConfigureResourceAccessLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-configure-resource-access'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt ConfigureResourceAccessRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: configure_resource_access.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref ConfigureResourceAccessRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-configure-resource-access'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+  CreateVolumeSnapshotsFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: CreateVolumeSnapshotsLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-create-volume-snapshots'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt CreateVolumeSnapshotsRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: create_volume_snapshot.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref CreateVolumeSnapshotsRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-create-volume-snapshots'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+  DeleteVolumeSnapshotsFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: DeleteVolumeSnapshotsLogGroup
+    Properties:
+      FunctionName: !Sub '${ResourceName}-delete-volume-snapshots'
+      Runtime: python3.12
+      Handler: app.index.handler
+      Role: !GetAtt DeleteVolumeSnapshotsRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: delete_volume_snapshot.zip
+      Timeout: 300
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_BASE_URL: !Ref ApiBaseUrl
+          DELEGATE_ROLE_NAME: !Ref DeleteVolumeSnapshotsRole
+      Tags:
+        - Key: Name
+          Value: !Sub '${ResourceName}-delete-volume-snapshots'
+        - Key: 'sysdig.com/response-actions/cloud-actions'
+          Value: 'true'
+
+Outputs:
+  QuarantineUserFunctionArn:
+    Value: !GetAtt QuarantineUserFunction.Arn
+  FetchCloudLogsFunctionArn:
+    Value: !GetAtt FetchCloudLogsFunction.Arn
+  RemovePolicyFunctionArn:
+    Value: !GetAtt RemovePolicyFunction.Arn
+  ConfigureResourceAccessFunctionArn:
+    Value: !GetAtt ConfigureResourceAccessFunction.Arn
+  CreateVolumeSnapshotsFunctionArn:
+    Value: !GetAtt CreateVolumeSnapshotsFunction.Arn
+  DeleteVolumeSnapshotsFunctionArn:
+    Value: !GetAtt DeleteVolumeSnapshotsFunction.Arn
