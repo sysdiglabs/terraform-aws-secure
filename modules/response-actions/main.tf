@@ -200,6 +200,214 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
 }
 
 #------------------------------------------------------
+# IAM Roles for Lambda Functions (Global Resources)
+#------------------------------------------------------
+
+# Lambda Execution Role: Quarantine User
+resource "aws_iam_role" "quarantine_user_role" {
+  name = "${local.ra_resource_name}-quarantine-user-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-quarantine-user-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "quarantine_user_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.quarantine_user_role.name
+}
+
+resource "aws_iam_role_policy" "quarantine_user_policy" {
+  name   = "${local.ra_resource_name}-quarantine-user-policy"
+  role   = aws_iam_role.quarantine_user_role.id
+  policy = local.quarantine_user_policy
+}
+
+# Lambda Execution Role: Fetch Cloud Logs
+resource "aws_iam_role" "fetch_cloud_logs_role" {
+  name = "${local.ra_resource_name}-fetch-cloud-logs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-fetch-cloud-logs-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "fetch_cloud_logs_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.fetch_cloud_logs_role.name
+}
+
+resource "aws_iam_role_policy" "fetch_cloud_logs_policy" {
+  name   = "${local.ra_resource_name}-fetch-cloud-logs-policy"
+  role   = aws_iam_role.fetch_cloud_logs_role.id
+  policy = local.fetch_cloud_logs_policy
+}
+
+# Lambda Execution Role: Remove Policy
+resource "aws_iam_role" "remove_policy_role" {
+  name = "${local.ra_resource_name}-remove-policy-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-remove-policy-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "remove_policy_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.remove_policy_role.name
+}
+
+resource "aws_iam_role_policy" "remove_policy_policy" {
+  name   = "${local.ra_resource_name}-remove-policy-policy"
+  role   = aws_iam_role.remove_policy_role.id
+  policy = local.remove_policy_policy
+}
+
+# Lambda Execution Role: Configure Resource Access
+resource "aws_iam_role" "configure_resource_access_role" {
+  name = "${local.ra_resource_name}-configure-resource-access-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-configure-resource-access-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "configure_resource_access_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.configure_resource_access_role.name
+}
+
+resource "aws_iam_role_policy" "configure_resource_access_policy" {
+  name   = "${local.ra_resource_name}-configure-resource-access-policy"
+  role   = aws_iam_role.configure_resource_access_role.id
+  policy = local.configure_resource_access_policy
+}
+
+# Lambda Execution Role: Create Volume Snapshots
+resource "aws_iam_role" "create_volume_snapshots_role" {
+  name = "${local.ra_resource_name}-create-volume-snapshots-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-create-volume-snapshots-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "create_volume_snapshots_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.create_volume_snapshots_role.name
+}
+
+resource "aws_iam_role_policy" "create_volume_snapshots_policy" {
+  name   = "${local.ra_resource_name}-create-volume-snapshots-policy"
+  role   = aws_iam_role.create_volume_snapshots_role.id
+  policy = local.create_volume_snapshots_policy
+}
+
+# Lambda Execution Role: Delete Volume Snapshots
+resource "aws_iam_role" "delete_volume_snapshots_role" {
+  name = "${local.ra_resource_name}-delete-volume-snapshots-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.ra_resource_name}-delete-volume-snapshots-role"
+    "sysdig.com/response-actions/cloud-actions" = "true"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "delete_volume_snapshots_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.delete_volume_snapshots_role.name
+}
+
+resource "aws_iam_role_policy" "delete_volume_snapshots_policy" {
+  name   = "${local.ra_resource_name}-delete-volume-snapshots-policy"
+  role   = aws_iam_role.delete_volume_snapshots_role.id
+  policy = local.delete_volume_snapshots_policy
+}
+
+#------------------------------------------------------
 # S3 Bucket for Lambda deployment packages
 #------------------------------------------------------
 
@@ -308,16 +516,21 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
   }
 
   parameters = {
-    ResourceName                   = local.ra_resource_name
-    S3Bucket                       = aws_s3_bucket.lambda_deployment.id
-    ApiBaseUrl                     = var.api_base_url
-    ArnPrefix                      = local.arn_prefix
-    QuarantineUserPolicy           = local.quarantine_user_policy
-    FetchCloudLogsPolicy           = local.fetch_cloud_logs_policy
-    RemovePolicyPolicy             = local.remove_policy_policy
-    ConfigureResourceAccessPolicy  = local.configure_resource_access_policy
-    CreateVolumeSnapshotsPolicy    = local.create_volume_snapshots_policy
-    DeleteVolumeSnapshotsPolicy    = local.delete_volume_snapshots_policy
+    ResourceName                    = local.ra_resource_name
+    S3Bucket                        = aws_s3_bucket.lambda_deployment.id
+    ApiBaseUrl                      = var.api_base_url
+    QuarantineUserRoleArn           = aws_iam_role.quarantine_user_role.arn
+    FetchCloudLogsRoleArn           = aws_iam_role.fetch_cloud_logs_role.arn
+    RemovePolicyRoleArn             = aws_iam_role.remove_policy_role.arn
+    ConfigureResourceAccessRoleArn  = aws_iam_role.configure_resource_access_role.arn
+    CreateVolumeSnapshotsRoleArn    = aws_iam_role.create_volume_snapshots_role.arn
+    DeleteVolumeSnapshotsRoleArn    = aws_iam_role.delete_volume_snapshots_role.arn
+    QuarantineUserRoleName          = aws_iam_role.quarantine_user_role.name
+    FetchCloudLogsRoleName          = aws_iam_role.fetch_cloud_logs_role.name
+    RemovePolicyRoleName            = aws_iam_role.remove_policy_role.name
+    ConfigureResourceAccessRoleName = aws_iam_role.configure_resource_access_role.name
+    CreateVolumeSnapshotsRoleName   = aws_iam_role.create_volume_snapshots_role.name
+    DeleteVolumeSnapshotsRoleName   = aws_iam_role.delete_volume_snapshots_role.name
   }
 
   template_body = file("${path.module}/templates/lambda-stackset.yaml")

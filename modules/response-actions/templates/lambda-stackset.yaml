@@ -11,157 +11,45 @@ Parameters:
   ApiBaseUrl:
     Type: String
     Description: API base URL for Lambda functions
-  ArnPrefix:
+  QuarantineUserRoleArn:
     Type: String
-    Description: ARN prefix (arn:aws or arn:aws-us-gov)
-    Default: arn:aws
-  QuarantineUserPolicy:
+    Description: ARN of the IAM role for quarantine user function
+  FetchCloudLogsRoleArn:
     Type: String
-    Description: JSON policy for quarantine user function
-  FetchCloudLogsPolicy:
+    Description: ARN of the IAM role for fetch cloud logs function
+  RemovePolicyRoleArn:
     Type: String
-    Description: JSON policy for fetch cloud logs function
-  RemovePolicyPolicy:
+    Description: ARN of the IAM role for remove policy function
+  ConfigureResourceAccessRoleArn:
     Type: String
-    Description: JSON policy for remove policy function
-  ConfigureResourceAccessPolicy:
+    Description: ARN of the IAM role for configure resource access function
+  CreateVolumeSnapshotsRoleArn:
     Type: String
-    Description: JSON policy for configure resource access function
-  CreateVolumeSnapshotsPolicy:
+    Description: ARN of the IAM role for create volume snapshots function
+  DeleteVolumeSnapshotsRoleArn:
     Type: String
-    Description: JSON policy for create volume snapshots function
-  DeleteVolumeSnapshotsPolicy:
+    Description: ARN of the IAM role for delete volume snapshots function
+  QuarantineUserRoleName:
     Type: String
-    Description: JSON policy for delete volume snapshots function
+    Description: Name of the IAM role for quarantine user function
+  FetchCloudLogsRoleName:
+    Type: String
+    Description: Name of the IAM role for fetch cloud logs function
+  RemovePolicyRoleName:
+    Type: String
+    Description: Name of the IAM role for remove policy function
+  ConfigureResourceAccessRoleName:
+    Type: String
+    Description: Name of the IAM role for configure resource access function
+  CreateVolumeSnapshotsRoleName:
+    Type: String
+    Description: Name of the IAM role for create volume snapshots function
+  DeleteVolumeSnapshotsRoleName:
+    Type: String
+    Description: Name of the IAM role for delete volume snapshots function
 
 Resources:
-  # Lambda Execution Role for Quarantine User
-  QuarantineUserRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-quarantine-user-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: QuarantineUserPolicy
-          PolicyDocument: !Sub '${QuarantineUserPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-quarantine-user-role'
-
-  # Lambda Execution Role for Fetch Cloud Logs
-  FetchCloudLogsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-fetch-cloud-logs-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: FetchCloudLogsPolicy
-          PolicyDocument: !Sub '${FetchCloudLogsPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-fetch-cloud-logs-role'
-
-  # Lambda Execution Role for Remove Policy
-  RemovePolicyRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-remove-policy-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: RemovePolicyPolicy
-          PolicyDocument: !Sub '${RemovePolicyPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-remove-policy-role'
-
-  # Lambda Execution Role for Configure Resource Access
-  ConfigureResourceAccessRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-configure-resource-access-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: ConfigureResourceAccessPolicy
-          PolicyDocument: !Sub '${ConfigureResourceAccessPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-configure-resource-access-role'
-
-  # Lambda Execution Role for Create Volume Snapshots
-  CreateVolumeSnapshotsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-create-volume-snapshots-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: CreateVolumeSnapshotsPolicy
-          PolicyDocument: !Sub '${CreateVolumeSnapshotsPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-create-volume-snapshots-role'
-
-  # Lambda Execution Role for Delete Volume Snapshots
-  DeleteVolumeSnapshotsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${ResourceName}-delete-volume-snapshots-role'
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - !Sub '${ArnPrefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-      Policies:
-        - PolicyName: DeleteVolumeSnapshotsPolicy
-          PolicyDocument: !Sub '${DeleteVolumeSnapshotsPolicy}'
-      Tags:
-        - Key: Name
-          Value: !Sub '${ResourceName}-delete-volume-snapshots-role'
-
-  # CloudWatch Log Groups
+  # CloudWatch Log Groups (Regional Resources)
   QuarantineUserLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -198,7 +86,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-delete-volume-snapshots'
       RetentionInDays: 7
 
-  # Lambda Functions
+  # Lambda Functions (Regional Resources)
   QuarantineUserFunction:
     Type: AWS::Lambda::Function
     DependsOn: QuarantineUserLogGroup
@@ -206,7 +94,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-quarantine-user'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt QuarantineUserRole.Arn
+      Role: !Ref QuarantineUserRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: quarantine_user.zip
@@ -215,7 +103,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref QuarantineUserRole
+          DELEGATE_ROLE_NAME: !Ref QuarantineUserRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-quarantine-user'
@@ -229,7 +117,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-fetch-cloud-logs'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt FetchCloudLogsRole.Arn
+      Role: !Ref FetchCloudLogsRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: fetch_cloud_logs.zip
@@ -238,7 +126,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref FetchCloudLogsRole
+          DELEGATE_ROLE_NAME: !Ref FetchCloudLogsRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-fetch-cloud-logs'
@@ -252,7 +140,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-remove-policy'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt RemovePolicyRole.Arn
+      Role: !Ref RemovePolicyRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: remove_policy.zip
@@ -261,7 +149,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref RemovePolicyRole
+          DELEGATE_ROLE_NAME: !Ref RemovePolicyRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-remove-policy'
@@ -275,7 +163,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-configure-resource-access'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt ConfigureResourceAccessRole.Arn
+      Role: !Ref ConfigureResourceAccessRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: configure_resource_access.zip
@@ -284,7 +172,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref ConfigureResourceAccessRole
+          DELEGATE_ROLE_NAME: !Ref ConfigureResourceAccessRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-configure-resource-access'
@@ -298,7 +186,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-create-volume-snapshots'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt CreateVolumeSnapshotsRole.Arn
+      Role: !Ref CreateVolumeSnapshotsRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: create_volume_snapshot.zip
@@ -307,7 +195,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref CreateVolumeSnapshotsRole
+          DELEGATE_ROLE_NAME: !Ref CreateVolumeSnapshotsRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-create-volume-snapshots'
@@ -321,7 +209,7 @@ Resources:
       FunctionName: !Sub '${ResourceName}-delete-volume-snapshots'
       Runtime: python3.12
       Handler: app.index.handler
-      Role: !GetAtt DeleteVolumeSnapshotsRole.Arn
+      Role: !Ref DeleteVolumeSnapshotsRoleArn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: delete_volume_snapshot.zip
@@ -330,7 +218,7 @@ Resources:
       Environment:
         Variables:
           API_BASE_URL: !Ref ApiBaseUrl
-          DELEGATE_ROLE_NAME: !Ref DeleteVolumeSnapshotsRole
+          DELEGATE_ROLE_NAME: !Ref DeleteVolumeSnapshotsRoleName
       Tags:
         - Key: Name
           Value: !Sub '${ResourceName}-delete-volume-snapshots'
