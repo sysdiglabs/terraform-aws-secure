@@ -10,7 +10,7 @@ locals {
   delete_volume_snapshots_policy   = templatefile("${path.module}/policies/delete-volume-snapshots-policy.json", {})
 
   # Use provided regions or default to current region
-  region_set               = length(var.regions) > 0 ? toset(var.regions) : toset([data.aws_region.current.name])
+  region_set               = length(var.regions) > 0 ? toset(var.regions) : toset([data.aws_region.current.id])
   trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
   arn_prefix               = var.is_gov_cloud_onboarding ? "arn:aws-us-gov" : "arn:aws"
   responder_component_type = "COMPONENT_CLOUD_RESPONDER"
@@ -134,7 +134,7 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
 
 
 resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
-  name = "${ra_resource_name}-cross-account-invoker"
+  name = "${local.ra_resource_name}-cross-account-invoker"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -155,7 +155,7 @@ resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
   })
 
   tags = {
-    Name = "${ra_resource_name}-cross-account-invoker"
+    Name = "${local.ra_resource_name}-cross-account-invoker"
   }
 }
 
@@ -173,20 +173,20 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
           "lambda:InvokeFunction",
           "lambda:GetFunction"
         ]
-        Resource = concat(
+        Resource = [
           # Quarantine User functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user"],
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user",
           # Fetch Cloud Logs functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs"],
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs",
           # Remove Policy functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy"],
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy",
           # Configure Resource Access functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access"],
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access",
           # Create Volume Snapshots functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots"],
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots",
           # Delete Volume Snapshots functions in all regions
-          [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"]
-        )
+          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"
+        ]
       },
       {
         Effect = "Allow"
@@ -454,45 +454,45 @@ data "http" "delete_volume_snapshot_zip" {
 
 # Upload Lambda ZIP files to S3
 resource "aws_s3_object" "quarantine_user_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "quarantine_user.zip"
-  content = data.http.quarantine_user_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "quarantine_user.zip"
+  content_base64 = data.http.quarantine_user_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 resource "aws_s3_object" "fetch_cloud_logs_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "fetch_cloud_logs.zip"
-  content = data.http.fetch_cloud_logs_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "fetch_cloud_logs.zip"
+  content_base64 = data.http.fetch_cloud_logs_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 resource "aws_s3_object" "remove_policy_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "remove_policy.zip"
-  content = data.http.remove_policy_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "remove_policy.zip"
+  content_base64 = data.http.remove_policy_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 resource "aws_s3_object" "configure_resource_access_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "configure_resource_access.zip"
-  content = data.http.configure_resource_access_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "configure_resource_access.zip"
+  content_base64 = data.http.configure_resource_access_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 resource "aws_s3_object" "create_volume_snapshot_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "create_volume_snapshot.zip"
-  content = data.http.create_volume_snapshot_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "create_volume_snapshot.zip"
+  content_base64 = data.http.create_volume_snapshot_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 resource "aws_s3_object" "delete_volume_snapshot_zip" {
-  bucket  = aws_s3_bucket.lambda_deployment.id
-  key     = "delete_volume_snapshot.zip"
-  content = data.http.delete_volume_snapshot_zip.response_body
-  content_type = "application/zip"
+  bucket         = aws_s3_bucket.lambda_deployment.id
+  key            = "delete_volume_snapshot.zip"
+  content_base64 = data.http.delete_volume_snapshot_zip.response_body_base64
+  content_type   = "application/zip"
 }
 
 #------------------------------------------------------

@@ -23,7 +23,7 @@ variable "regions" {
 variable "name" {
   description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required. Use default value unless you need to install multiple instances"
   type        = string
-  default     = "sysdig-secure-events"
+  default     = "sysdig-secure-cloud-responder"
 }
 
 variable "tags" {
@@ -66,7 +66,7 @@ variable "stackset_execution_role_name" {
 
 variable "sysdig_secure_account_id" {
   type        = string
-  description = "ID of the Sysdig Cloud Account to enable Event Bridge integration for (incase of organization, ID of the Sysdig management account)"
+  description = "ID of the Sysdig Cloud Account to enable Response Actions integration for (incase of organization, ID of the Sysdig management account)"
 }
 
 variable "is_gov_cloud_onboarding" {
