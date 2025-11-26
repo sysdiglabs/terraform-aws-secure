@@ -115,3 +115,8 @@ variable "response_actions_version" {
   type        = string
   default     = "0.0.15"
 }
+
+variable "s3_bucket_prefix" {
+  description = "Prefix for regional S3 buckets containing Lambda deployment packages. The bucket name will be constructed as {prefix}-{region}. These buckets should exist in each target region and contain the Lambda zip files."
+  type        = string
+}

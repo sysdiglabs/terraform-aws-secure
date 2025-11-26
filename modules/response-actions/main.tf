@@ -410,90 +410,17 @@ resource "aws_iam_role_policy" "delete_volume_snapshots_policy" {
 #------------------------------------------------------
 # S3 Bucket for Lambda deployment packages
 #------------------------------------------------------
-
-resource "aws_s3_bucket" "lambda_deployment" {
-  bucket = "${local.ra_resource_name}-lambda-deployment"
-
-  tags = {
-    Name = "${local.ra_resource_name}-lambda-deployment"
-    "sysdig.com/response-actions/cloud-actions" = "true"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "lambda_deployment" {
-  bucket = aws_s3_bucket.lambda_deployment.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-# Download Lambda ZIP files
-data "http" "quarantine_user_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/quarantine_user.zip"
-}
-
-data "http" "fetch_cloud_logs_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/fetch_cloud_logs.zip"
-}
-
-data "http" "remove_policy_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/remove_policy.zip"
-}
-
-data "http" "configure_resource_access_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/configure_resource_access.zip"
-}
-
-data "http" "create_volume_snapshot_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/create_volume_snapshot.zip"
-}
-
-data "http" "delete_volume_snapshot_zip" {
-  url = "https://download.sysdig.com/cloud-response-actions/v${var.response_actions_version}/delete_volume_snapshot.zip"
-}
-
-# Upload Lambda ZIP files to S3
-resource "aws_s3_object" "quarantine_user_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "quarantine_user.zip"
-  content_base64 = data.http.quarantine_user_zip.response_body_base64
-  content_type   = "application/zip"
-}
-
-resource "aws_s3_object" "fetch_cloud_logs_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "fetch_cloud_logs.zip"
-  content_base64 = data.http.fetch_cloud_logs_zip.response_body_base64
-  content_type   = "application/zip"
-}
-
-resource "aws_s3_object" "remove_policy_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "remove_policy.zip"
-  content_base64 = data.http.remove_policy_zip.response_body_base64
-  content_type   = "application/zip"
-}
-
-resource "aws_s3_object" "configure_resource_access_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "configure_resource_access.zip"
-  content_base64 = data.http.configure_resource_access_zip.response_body_base64
-  content_type   = "application/zip"
-}
-
-resource "aws_s3_object" "create_volume_snapshot_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "create_volume_snapshot.zip"
-  content_base64 = data.http.create_volume_snapshot_zip.response_body_base64
-  content_type   = "application/zip"
-}
-
-resource "aws_s3_object" "delete_volume_snapshot_zip" {
-  bucket         = aws_s3_bucket.lambda_deployment.id
-  key            = "delete_volume_snapshot.zip"
-  content_base64 = data.http.delete_volume_snapshot_zip.response_body_base64
-  content_type   = "application/zip"
-}
+# NOTE: Removed local S3 bucket creation as Lambda functions now fetch from
+# regional S3 buckets in a separate account. The bucket naming follows the
+# pattern: {s3_bucket_prefix}-{region}
+#
+# Each regional bucket should contain the following Lambda zip files:
+# - quarantine_user.zip
+# - fetch_cloud_logs.zip
+# - remove_policy.zip
+# - configure_resource_access.zip
+# - create_volume_snapshot.zip
+# - delete_volume_snapshot.zip
 
 #------------------------------------------------------
 # CloudFormation StackSet for Multi-Region Lambda Deployment
@@ -517,7 +444,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
 
   parameters = {
     ResourceName                    = local.ra_resource_name
-    S3Bucket                        = aws_s3_bucket.lambda_deployment.id
+    S3BucketPrefix                  = var.s3_bucket_prefix
     ApiBaseUrl                      = var.api_base_url
     QuarantineUserRoleArn           = aws_iam_role.quarantine_user_role.arn
     FetchCloudLogsRoleArn           = aws_iam_role.fetch_cloud_logs_role.arn
@@ -537,13 +464,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
 
   depends_on = [
     aws_iam_role.lambda_stackset_admin_role,
-    aws_iam_role.lambda_stackset_execution_role,
-    aws_s3_object.quarantine_user_zip,
-    aws_s3_object.fetch_cloud_logs_zip,
-    aws_s3_object.remove_policy_zip,
-    aws_s3_object.configure_resource_access_zip,
-    aws_s3_object.create_volume_snapshot_zip,
-    aws_s3_object.delete_volume_snapshot_zip
+    aws_iam_role.lambda_stackset_execution_role
   ]
 }
 
