@@ -23,6 +23,30 @@ locals {
   execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_execution_role[0].name : var.stackset_execution_role_name
 
   cloud_lambdas_path = "${var.cloud_lambdas_path}/${var.response_actions_version}"
+
+  # Response action enablement flags
+  enable_make_private           = contains(var.enabled_response_actions, "make_private")
+  enable_fetch_cloud_logs       = contains(var.enabled_response_actions, "fetch_cloud_logs")
+  enable_create_volume_snapshot = contains(var.enabled_response_actions, "create_volume_snapshot")
+  enable_quarantine_user        = contains(var.enabled_response_actions, "quarantine_user")
+
+  # Build list of Lambda ARNs for invoke policy based on enabled actions
+  enabled_lambda_arns = concat(
+    local.enable_quarantine_user ? [
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user",
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy"
+    ] : [],
+    local.enable_fetch_cloud_logs ? [
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs"
+    ] : [],
+    local.enable_make_private ? [
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access"
+    ] : [],
+    local.enable_create_volume_snapshot ? [
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots",
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"
+    ] : []
+  )
 }
 
 #------------------------------------------------------
@@ -170,28 +194,7 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "lambda:InvokeFunction",
-          "lambda:GetFunction"
-        ]
-        Resource = [
-          # Quarantine User functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user",
-          # Fetch Cloud Logs functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs",
-          # Remove Policy functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy",
-          # Configure Resource Access functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access",
-          # Create Volume Snapshots functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots",
-          # Delete Volume Snapshots functions in all regions
-          "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"
-        ]
-      },
+    Statement = concat([
       {
         Effect = "Allow"
         Action = [
@@ -199,7 +202,16 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
         ]
         Resource = "*"
       }
-    ]
+      ],
+      length(local.enabled_lambda_arns) > 0 ? [{
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction",
+          "lambda:GetFunction"
+        ]
+        Resource = local.enabled_lambda_arns
+      }] : []
+    )
   })
 }
 
@@ -209,7 +221,8 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
 
 # Lambda Execution Role: Quarantine User
 resource "aws_iam_role" "quarantine_user_role" {
-  name = "${local.ra_resource_name}-quarantine-user-role"
+  count = local.enable_quarantine_user ? 1 : 0
+  name  = "${local.ra_resource_name}-quarantine-user-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -231,19 +244,22 @@ resource "aws_iam_role" "quarantine_user_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "quarantine_user_basic" {
+  count      = local.enable_quarantine_user ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.quarantine_user_role.name
+  role       = aws_iam_role.quarantine_user_role[0].name
 }
 
 resource "aws_iam_role_policy" "quarantine_user_policy" {
+  count  = local.enable_quarantine_user ? 1 : 0
   name   = "${local.ra_resource_name}-quarantine-user-policy"
-  role   = aws_iam_role.quarantine_user_role.id
+  role   = aws_iam_role.quarantine_user_role[0].id
   policy = local.quarantine_user_policy
 }
 
 # Lambda Execution Role: Fetch Cloud Logs
 resource "aws_iam_role" "fetch_cloud_logs_role" {
-  name = "${local.ra_resource_name}-fetch-cloud-logs-role"
+  count = local.enable_fetch_cloud_logs ? 1 : 0
+  name  = "${local.ra_resource_name}-fetch-cloud-logs-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -265,19 +281,22 @@ resource "aws_iam_role" "fetch_cloud_logs_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "fetch_cloud_logs_basic" {
+  count      = local.enable_fetch_cloud_logs ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.fetch_cloud_logs_role.name
+  role       = aws_iam_role.fetch_cloud_logs_role[0].name
 }
 
 resource "aws_iam_role_policy" "fetch_cloud_logs_policy" {
+  count  = local.enable_fetch_cloud_logs ? 1 : 0
   name   = "${local.ra_resource_name}-fetch-cloud-logs-policy"
-  role   = aws_iam_role.fetch_cloud_logs_role.id
+  role   = aws_iam_role.fetch_cloud_logs_role[0].id
   policy = local.fetch_cloud_logs_policy
 }
 
 # Lambda Execution Role: Remove Policy
 resource "aws_iam_role" "remove_policy_role" {
-  name = "${local.ra_resource_name}-remove-policy-role"
+  count = local.enable_quarantine_user ? 1 : 0
+  name  = "${local.ra_resource_name}-remove-policy-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -299,19 +318,22 @@ resource "aws_iam_role" "remove_policy_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "remove_policy_basic" {
+  count      = local.enable_quarantine_user ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.remove_policy_role.name
+  role       = aws_iam_role.remove_policy_role[0].name
 }
 
 resource "aws_iam_role_policy" "remove_policy_policy" {
+  count  = local.enable_quarantine_user ? 1 : 0
   name   = "${local.ra_resource_name}-remove-policy-policy"
-  role   = aws_iam_role.remove_policy_role.id
+  role   = aws_iam_role.remove_policy_role[0].id
   policy = local.remove_policy_policy
 }
 
 # Lambda Execution Role: Configure Resource Access
 resource "aws_iam_role" "configure_resource_access_role" {
-  name = "${local.ra_resource_name}-confi-res-access-role"
+  count = local.enable_make_private ? 1 : 0
+  name  = "${local.ra_resource_name}-confi-res-access-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -333,19 +355,22 @@ resource "aws_iam_role" "configure_resource_access_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "configure_resource_access_basic" {
+  count      = local.enable_make_private ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.configure_resource_access_role.name
+  role       = aws_iam_role.configure_resource_access_role[0].name
 }
 
 resource "aws_iam_role_policy" "configure_resource_access_policy" {
+  count  = local.enable_make_private ? 1 : 0
   name   = "${local.ra_resource_name}-configure-resource-access-policy"
-  role   = aws_iam_role.configure_resource_access_role.id
+  role   = aws_iam_role.configure_resource_access_role[0].id
   policy = local.configure_resource_access_policy
 }
 
 # Lambda Execution Role: Create Volume Snapshots
 resource "aws_iam_role" "create_volume_snapshots_role" {
-  name = "${local.ra_resource_name}-create-vol-snap-role"
+  count = local.enable_create_volume_snapshot ? 1 : 0
+  name  = "${local.ra_resource_name}-create-vol-snap-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -367,19 +392,22 @@ resource "aws_iam_role" "create_volume_snapshots_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "create_volume_snapshots_basic" {
+  count      = local.enable_create_volume_snapshot ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.create_volume_snapshots_role.name
+  role       = aws_iam_role.create_volume_snapshots_role[0].name
 }
 
 resource "aws_iam_role_policy" "create_volume_snapshots_policy" {
+  count  = local.enable_create_volume_snapshot ? 1 : 0
   name   = "${local.ra_resource_name}-create-volume-snapshots-policy"
-  role   = aws_iam_role.create_volume_snapshots_role.id
+  role   = aws_iam_role.create_volume_snapshots_role[0].id
   policy = local.create_volume_snapshots_policy
 }
 
 # Lambda Execution Role: Delete Volume Snapshots
 resource "aws_iam_role" "delete_volume_snapshots_role" {
-  name = "${local.ra_resource_name}-delete-vol-snap-role"
+  count = local.enable_create_volume_snapshot ? 1 : 0
+  name  = "${local.ra_resource_name}-delete-vol-snap-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -401,13 +429,15 @@ resource "aws_iam_role" "delete_volume_snapshots_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "delete_volume_snapshots_basic" {
+  count      = local.enable_create_volume_snapshot ? 1 : 0
   policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.delete_volume_snapshots_role.name
+  role       = aws_iam_role.delete_volume_snapshots_role[0].name
 }
 
 resource "aws_iam_role_policy" "delete_volume_snapshots_policy" {
+  count  = local.enable_create_volume_snapshot ? 1 : 0
   name   = "${local.ra_resource_name}-delete-volume-snapshots-policy"
-  role   = aws_iam_role.delete_volume_snapshots_role.id
+  role   = aws_iam_role.delete_volume_snapshots_role[0].id
   policy = local.delete_volume_snapshots_policy
 }
 
@@ -450,19 +480,23 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
     ResourceName                    = local.ra_resource_name
     S3BucketPrefix                  = var.s3_bucket_prefix
     ApiBaseUrl                      = var.api_base_url
-    QuarantineUserRoleArn           = aws_iam_role.quarantine_user_role.arn
-    FetchCloudLogsRoleArn           = aws_iam_role.fetch_cloud_logs_role.arn
-    RemovePolicyRoleArn             = aws_iam_role.remove_policy_role.arn
-    ConfigureResourceAccessRoleArn  = aws_iam_role.configure_resource_access_role.arn
-    CreateVolumeSnapshotsRoleArn    = aws_iam_role.create_volume_snapshots_role.arn
-    DeleteVolumeSnapshotsRoleArn    = aws_iam_role.delete_volume_snapshots_role.arn
-    QuarantineUserRoleName          = aws_iam_role.quarantine_user_role.name
-    FetchCloudLogsRoleName          = aws_iam_role.fetch_cloud_logs_role.name
-    RemovePolicyRoleName            = aws_iam_role.remove_policy_role.name
-    ConfigureResourceAccessRoleName = aws_iam_role.configure_resource_access_role.name
-    CreateVolumeSnapshotsRoleName   = aws_iam_role.create_volume_snapshots_role.name
-    DeleteVolumeSnapshotsRoleName   = aws_iam_role.delete_volume_snapshots_role.name
+    QuarantineUserRoleArn           = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].arn : ""
+    FetchCloudLogsRoleArn           = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].arn : ""
+    RemovePolicyRoleArn             = local.enable_quarantine_user ? aws_iam_role.remove_policy_role[0].arn : ""
+    ConfigureResourceAccessRoleArn  = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].arn : ""
+    CreateVolumeSnapshotsRoleArn    = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].arn : ""
+    DeleteVolumeSnapshotsRoleArn    = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].arn : ""
+    QuarantineUserRoleName          = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].name : ""
+    FetchCloudLogsRoleName          = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].name : ""
+    RemovePolicyRoleName            = local.enable_quarantine_user ? aws_iam_role.remove_policy_role[0].name : ""
+    ConfigureResourceAccessRoleName = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].name : ""
+    CreateVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].name : ""
+    DeleteVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].name : ""
     CloudLambdasPath                = local.cloud_lambdas_path
+    EnableQuarantineUser            = local.enable_quarantine_user ? "true" : "false"
+    EnableFetchCloudLogs            = local.enable_fetch_cloud_logs ? "true" : "false"
+    EnableMakePrivate               = local.enable_make_private ? "true" : "false"
+    EnableCreateVolumeSnapshot      = local.enable_create_volume_snapshot ? "true" : "false"
   }
 
   template_body = file("${path.module}/templates/lambda-stackset.yaml")

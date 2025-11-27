@@ -20,30 +20,38 @@ output "deployment_regions" {
 
 output "lambda_functions" {
   description = "Information about deployed Lambda functions across all regions"
-  value = {
-    quarantine_user = {
-      name = "${local.ra_resource_name}-quarantine-user"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user"]
-    }
-    fetch_cloud_logs = {
-      name = "${local.ra_resource_name}-fetch-cloud-logs"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs"]
-    }
-    remove_policy = {
-      name = "${local.ra_resource_name}-remove-policy"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy"]
-    }
-    configure_resource_access = {
-      name = "${local.ra_resource_name}-configure-resource-access"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access"]
-    }
-    create_volume_snapshots = {
-      name = "${local.ra_resource_name}-create-volume-snapshots"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots"]
-    }
-    delete_volume_snapshots = {
-      name = "${local.ra_resource_name}-delete-volume-snapshots"
-      arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"]
-    }
-  }
+  value = merge(
+    local.enable_quarantine_user ? {
+      quarantine_user = {
+        name = "${local.ra_resource_name}-quarantine-user"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user"]
+      }
+      remove_policy = {
+        name = "${local.ra_resource_name}-remove-policy"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy"]
+      }
+    } : {},
+    local.enable_fetch_cloud_logs ? {
+      fetch_cloud_logs = {
+        name = "${local.ra_resource_name}-fetch-cloud-logs"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs"]
+      }
+    } : {},
+    local.enable_make_private ? {
+      configure_resource_access = {
+        name = "${local.ra_resource_name}-configure-resource-access"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access"]
+      }
+    } : {},
+    local.enable_create_volume_snapshot ? {
+      create_volume_snapshots = {
+        name = "${local.ra_resource_name}-create-volume-snapshots"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots"]
+      }
+      delete_volume_snapshots = {
+        name = "${local.ra_resource_name}-delete-volume-snapshots"
+        arns = [for region in local.region_set : "${local.arn_prefix}:lambda:${region}:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"]
+      }
+    } : {}
+  )
 }

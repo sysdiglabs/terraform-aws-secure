@@ -126,3 +126,23 @@ variable "cloud_lambdas_path" {
   type        = string
   default     = "response-actions/cloud-lambdas"
 }
+
+variable "enabled_response_actions" {
+  description = <<-EOF
+    (Optional) List of response actions to enable. Valid values are:
+    - "make_private": Creates the configure resource access lambda
+    - "fetch_cloud_logs": Creates the fetch cloud logs lambda
+    - "create_volume_snapshot": Creates the create and delete volume snapshot lambdas
+    - "quarantine_user": Creates the quarantine user and remove policy lambdas
+    By default, all response actions are enabled.
+  EOF
+  type        = list(string)
+  default     = ["make_private", "fetch_cloud_logs", "create_volume_snapshot", "quarantine_user"]
+  validation {
+    condition = alltrue([
+      for action in var.enabled_response_actions :
+      contains(["make_private", "fetch_cloud_logs", "create_volume_snapshot", "quarantine_user"], action)
+    ])
+    error_message = "Valid values for enabled_response_actions are: make_private, fetch_cloud_logs, create_volume_snapshot, quarantine_user"
+  }
+}

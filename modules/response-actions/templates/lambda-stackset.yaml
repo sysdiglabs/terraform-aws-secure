@@ -50,40 +50,73 @@ Parameters:
   CloudLambdasPath:
     Type: String
     Description: The path where lambda code resides inside of regional S3 buckets
+  EnableQuarantineUser:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Enable quarantine user and remove policy lambdas
+  EnableFetchCloudLogs:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Enable fetch cloud logs lambda
+  EnableMakePrivate:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Enable configure resource access lambda
+  EnableCreateVolumeSnapshot:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Enable create and delete volume snapshot lambdas
+
+Conditions:
+  CreateQuarantineUserResources: !Equals [!Ref EnableQuarantineUser, "true"]
+  CreateFetchCloudLogsResources: !Equals [!Ref EnableFetchCloudLogs, "true"]
+  CreateMakePrivateResources: !Equals [!Ref EnableMakePrivate, "true"]
+  CreateVolumeSnapshotResources: !Equals [!Ref EnableCreateVolumeSnapshot, "true"]
+
 Resources:
   # CloudWatch Log Groups (Regional Resources)
   QuarantineUserLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateQuarantineUserResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-quarantine-user'
       RetentionInDays: 7
 
   FetchCloudLogsLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateFetchCloudLogsResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-fetch-cloud-logs'
       RetentionInDays: 7
 
   RemovePolicyLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateQuarantineUserResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-remove-policy'
       RetentionInDays: 7
 
   ConfigureResourceAccessLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateMakePrivateResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-configure-resource-access'
       RetentionInDays: 7
 
   CreateVolumeSnapshotsLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateVolumeSnapshotResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-create-volume-snapshots'
       RetentionInDays: 7
 
   DeleteVolumeSnapshotsLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: CreateVolumeSnapshotResources
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-delete-volume-snapshots'
       RetentionInDays: 7
@@ -91,6 +124,7 @@ Resources:
   # Lambda Functions (Regional Resources)
   QuarantineUserFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateQuarantineUserResources
     DependsOn: QuarantineUserLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-quarantine-user'
@@ -114,6 +148,7 @@ Resources:
 
   FetchCloudLogsFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateFetchCloudLogsResources
     DependsOn: FetchCloudLogsLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-fetch-cloud-logs'
@@ -137,6 +172,7 @@ Resources:
 
   RemovePolicyFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateQuarantineUserResources
     DependsOn: RemovePolicyLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-remove-policy'
@@ -160,6 +196,7 @@ Resources:
 
   ConfigureResourceAccessFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateMakePrivateResources
     DependsOn: ConfigureResourceAccessLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-configure-resource-access'
@@ -183,6 +220,7 @@ Resources:
 
   CreateVolumeSnapshotsFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateVolumeSnapshotResources
     DependsOn: CreateVolumeSnapshotsLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-create-volume-snapshots'
@@ -206,6 +244,7 @@ Resources:
 
   DeleteVolumeSnapshotsFunction:
     Type: AWS::Lambda::Function
+    Condition: CreateVolumeSnapshotResources
     DependsOn: DeleteVolumeSnapshotsLogGroup
     Properties:
       FunctionName: !Sub '${ResourceName}-delete-volume-snapshots'
@@ -229,14 +268,20 @@ Resources:
 
 Outputs:
   QuarantineUserFunctionArn:
+    Condition: CreateQuarantineUserResources
     Value: !GetAtt QuarantineUserFunction.Arn
   FetchCloudLogsFunctionArn:
+    Condition: CreateFetchCloudLogsResources
     Value: !GetAtt FetchCloudLogsFunction.Arn
   RemovePolicyFunctionArn:
+    Condition: CreateQuarantineUserResources
     Value: !GetAtt RemovePolicyFunction.Arn
   ConfigureResourceAccessFunctionArn:
+    Condition: CreateMakePrivateResources
     Value: !GetAtt ConfigureResourceAccessFunction.Arn
   CreateVolumeSnapshotsFunctionArn:
+    Condition: CreateVolumeSnapshotResources
     Value: !GetAtt CreateVolumeSnapshotsFunction.Arn
   DeleteVolumeSnapshotsFunctionArn:
+    Condition: CreateVolumeSnapshotResources
     Value: !GetAtt DeleteVolumeSnapshotsFunction.Arn
