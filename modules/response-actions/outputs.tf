@@ -18,11 +18,6 @@ output "deployment_regions" {
   value       = local.region_set
 }
 
-output "s3_deployment_bucket" {
-  description = "S3 bucket containing Lambda deployment packages"
-  value       = aws_s3_bucket.lambda_deployment.id
-}
-
 output "lambda_functions" {
   description = "Information about deployed Lambda functions across all regions"
   value = {

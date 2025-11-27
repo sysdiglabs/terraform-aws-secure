@@ -23,7 +23,7 @@ variable "regions" {
 variable "name" {
   description = "(Optional) Name to be assigned to all child resources. A suffix may be added internally when required. Use default value unless you need to install multiple instances"
   type        = string
-  default     = "sysdig-secure-cloud-responder"
+  default     = "sysdig-secure-ra"
 }
 
 variable "tags" {
@@ -119,4 +119,10 @@ variable "response_actions_version" {
 variable "s3_bucket_prefix" {
   description = "Prefix for regional S3 buckets containing Lambda deployment packages. The bucket name will be constructed as {prefix}-{region}. These buckets should exist in each target region and contain the Lambda zip files."
   type        = string
+}
+
+variable "cloud_lambdas_path" {
+  description = "The path where lambda code resides inside of regional S3 buckets"
+  type        = string
+  default     = "response-actions/cloud-lambdas"
 }

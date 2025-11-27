@@ -47,7 +47,9 @@ Parameters:
   DeleteVolumeSnapshotsRoleName:
     Type: String
     Description: Name of the IAM role for delete volume snapshots function
-
+  CloudLambdasPath:
+    Type: String
+    Description: The path where lambda code resides inside of regional S3 buckets
 Resources:
   # CloudWatch Log Groups (Regional Resources)
   QuarantineUserLogGroup:
@@ -97,7 +99,7 @@ Resources:
       Role: !Ref QuarantineUserRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: quarantine_user.zip
+        S3Key: !Sub '${CloudLambdasPath}/quarantine_user.zip'
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -120,7 +122,7 @@ Resources:
       Role: !Ref FetchCloudLogsRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: fetch_cloud_logs.zip
+        S3Key: !Sub '${CloudLambdasPath}/fetch_cloud_logs.zip'
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -143,7 +145,7 @@ Resources:
       Role: !Ref RemovePolicyRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: remove_policy.zip
+        S3Key: !Sub '${CloudLambdasPath}/remove_policy.zip'
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -166,7 +168,7 @@ Resources:
       Role: !Ref ConfigureResourceAccessRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: configure_resource_access.zip
+        S3Key: !Sub '${CloudLambdasPath}/configure_resource_access.zip'
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -189,7 +191,7 @@ Resources:
       Role: !Ref CreateVolumeSnapshotsRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: create_volume_snapshot.zip
+        S3Key: !Sub '${CloudLambdasPath}/create_volume_snapshots.zip'
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -212,7 +214,7 @@ Resources:
       Role: !Ref DeleteVolumeSnapshotsRoleArn
       Code:
         S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
-        S3Key: delete_volume_snapshot.zip
+        S3Key: !Sub '${CloudLambdasPath}/delete_volume_snapshots.zip'
       Timeout: 300
       MemorySize: 128
       Environment:

@@ -21,6 +21,8 @@ locals {
   # StackSet role configuration
   administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_admin_role[0].arn : var.stackset_admin_role_arn
   execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_execution_role[0].name : var.stackset_execution_role_name
+
+  cloud_lambdas_path = "${var.cloud_lambdas_path}/${var.response_actions_version}"
 }
 
 #------------------------------------------------------
@@ -116,7 +118,9 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
           "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
           "logs:TagResource",
-          "logs:UntagResource"
+          "logs:UntagResource",
+          "s3:GetObject",
+          "s3:ListBucket"
         ]
         Resource = "*"
       }
@@ -307,7 +311,7 @@ resource "aws_iam_role_policy" "remove_policy_policy" {
 
 # Lambda Execution Role: Configure Resource Access
 resource "aws_iam_role" "configure_resource_access_role" {
-  name = "${local.ra_resource_name}-configure-resource-access-role"
+  name = "${local.ra_resource_name}-confi-res-access-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -341,7 +345,7 @@ resource "aws_iam_role_policy" "configure_resource_access_policy" {
 
 # Lambda Execution Role: Create Volume Snapshots
 resource "aws_iam_role" "create_volume_snapshots_role" {
-  name = "${local.ra_resource_name}-create-volume-snapshots-role"
+  name = "${local.ra_resource_name}-create-vol-snap-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -375,7 +379,7 @@ resource "aws_iam_role_policy" "create_volume_snapshots_policy" {
 
 # Lambda Execution Role: Delete Volume Snapshots
 resource "aws_iam_role" "delete_volume_snapshots_role" {
-  name = "${local.ra_resource_name}-delete-volume-snapshots-role"
+  name = "${local.ra_resource_name}-delete-vol-snap-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -458,6 +462,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
     ConfigureResourceAccessRoleName = aws_iam_role.configure_resource_access_role.name
     CreateVolumeSnapshotsRoleName   = aws_iam_role.create_volume_snapshots_role.name
     DeleteVolumeSnapshotsRoleName   = aws_iam_role.delete_volume_snapshots_role.name
+    CloudLambdasPath                = local.cloud_lambdas_path
   }
 
   template_body = file("${path.module}/templates/lambda-stackset.yaml")
