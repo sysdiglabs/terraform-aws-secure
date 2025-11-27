@@ -1,0 +1,79 @@
+resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
+  count = var.is_organizational ? 1 : 0
+
+  name             = join("-", [local.ra_resource_name, "delegate-roles"])
+  tags             = var.tags
+  permission_model = "SERVICE_MANAGED"
+  capabilities     = ["CAPABILITY_NAMED_IAM"]
+
+  managed_execution {
+    active = true
+  }
+
+  auto_deployment {
+    enabled                          = true
+    retain_stacks_on_account_removal = false
+  }
+
+  lifecycle {
+    ignore_changes = [administration_role_arn]
+  }
+
+  parameters = {
+    QuarantineUserLambdaRoleArn           = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].arn : ""
+    QuarantineUserRoleName                = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].name : ""
+    FetchCloudLogsLambdaRoleArn           = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].arn : ""
+    FetchCloudLogsRoleName                = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].name : ""
+    RemovePolicyLambdaRoleArn             = local.enable_quarantine_user ? aws_iam_role.remove_policy_role[0].arn : ""
+    RemovePolicyRoleName                  = local.enable_quarantine_user ? aws_iam_role.remove_policy_role[0].name : ""
+    ConfigureResourceAccessLambdaRoleArn  = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].arn : ""
+    ConfigureResourceAccessRoleName       = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].name : ""
+    CreateVolumeSnapshotsLambdaRoleArn    = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].arn : ""
+    CreateVolumeSnapshotsRoleName         = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].name : ""
+    DeleteVolumeSnapshotsLambdaRoleArn    = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].arn : ""
+    DeleteVolumeSnapshotsRoleName         = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].name : ""
+    EnableQuarantineUser                  = local.enable_quarantine_user ? "true" : "false"
+    EnableFetchCloudLogs                  = local.enable_fetch_cloud_logs ? "true" : "false"
+    EnableMakePrivate                     = local.enable_make_private ? "true" : "false"
+    EnableCreateVolumeSnapshot            = local.enable_create_volume_snapshot ? "true" : "false"
+  }
+
+  template_body = file("${path.module}/templates/delegate_roles_stackset.tpl")
+
+  depends_on = [
+    aws_iam_role.quarantine_user_role,
+    aws_iam_role.fetch_cloud_logs_role,
+    aws_iam_role.remove_policy_role,
+    aws_iam_role.configure_resource_access_role,
+    aws_iam_role.create_volume_snapshots_role,
+    aws_iam_role.delete_volume_snapshots_role
+  ]
+}
+
+resource "aws_cloudformation_stack_set_instance" "ra_delegate_roles" {
+  for_each = var.is_organizational ? {
+    for pair in setproduct(local.region_set, local.deployment_targets_org_units) :
+    "${pair[0]}-${pair[1]}" => pair
+  } : {}
+
+  stack_set_instance_region = each.value[0]
+  stack_set_name            = aws_cloudformation_stack_set.ra_delegate_roles[0].name
+  deployment_targets {
+    organizational_unit_ids = [each.value[1]]
+    accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
+    account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
+  }
+  operation_preferences {
+    max_concurrent_percentage    = 100
+    failure_tolerance_percentage = var.failure_tolerance_percentage
+    concurrency_mode             = "SOFT_FAILURE_TOLERANCE"
+    region_concurrency_type      = "PARALLEL"
+  }
+
+  timeouts {
+    create = var.timeout
+    update = var.timeout
+    delete = var.timeout
+  }
+}
+
