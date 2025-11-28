@@ -151,14 +151,19 @@ locals {
           # case4 - if both include and exclude accounts are provided, includes override excludes
           var.is_organizational && length(var.include_accounts) > 0 && length(var.exclude_accounts) > 0 ? (
             "MIXED"
-          ) : ""
+            # case5 - if no explicit include/exclude, we still need to exclude current account
+            ) : var.is_organizational ? (
+              "DIFFERENCE"
+            ) : ""
         )
       )
     )
   )
 
   ou_accounts_to_exclude = flatten([for ou_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_accounts_to_exclude : [ou_accounts.accounts[*].id]])
-  accounts_to_exclude    = setunion(local.ou_accounts_to_exclude, var.exclude_accounts)
+  # Always exclude the current account (management account) from StackSet deployment
+  # since the Lambda roles already exist there
+  accounts_to_exclude    = setunion(local.ou_accounts_to_exclude, var.exclude_accounts, [data.aws_caller_identity.current.account_id])
 
   # switch cases for various user provided accounts configuration to be onboarded
   deployment_account_options = {

@@ -52,14 +52,14 @@ resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
 
 resource "aws_cloudformation_stack_set_instance" "ra_delegate_roles" {
   for_each = var.is_organizational ? {
-    for pair in setproduct(local.region_set, local.deployment_targets_org_units) :
-    "${pair[0]}-${pair[1]}" => pair
+    for ou in local.deployment_targets_org_units :
+    ou => ou
   } : {}
 
-  stack_set_instance_region = each.value[0]
+  stack_set_instance_region = tolist(local.region_set)[0]
   stack_set_name            = aws_cloudformation_stack_set.ra_delegate_roles[0].name
   deployment_targets {
-    organizational_unit_ids = [each.value[1]]
+    organizational_unit_ids = [each.value]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)
     account_filter_type     = local.check_old_ouid_param ? null : local.deployment_targets_accounts_filter
   }
