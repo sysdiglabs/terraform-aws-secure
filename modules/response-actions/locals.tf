@@ -1,3 +1,22 @@
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Organizational Deployment Configuration
+#
+# This file contains the logic for determining which organizational units (OUs) and accounts to deploy Response Actions to
+# in an AWS Organization deployment.
+#
+# The module supports flexible inclusion/exclusion patterns:
+# - include_ouids/exclude_ouids: Include or exclude entire organizational units
+# - include_accounts/exclude_accounts: Include or exclude specific accounts
+# - Legacy org_units parameter: Deprecated, will be removed November 30, 2025
+#
+# Key behavior:
+# 1. Inclusions are always prioritized over exclusions
+# 2. The management account is automatically excluded from delegate role deployment (roles exist there already)
+# 3. Due to AWS CloudFormation limitations with UNION filters, when including specific accounts, the stackset
+#    deploys to the entire org (with account filtering handled by Sysdig backend)
+#
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
 #----------------------------------------------------------
 # Fetch & compute required data for organizational install
 #----------------------------------------------------------
@@ -161,8 +180,8 @@ locals {
   )
 
   ou_accounts_to_exclude = flatten([for ou_accounts in data.aws_organizations_organizational_unit_descendant_accounts.ou_accounts_to_exclude : [ou_accounts.accounts[*].id]])
-  # Always exclude the current account (management account) from StackSet deployment
-  # since the Lambda roles already exist there
+  # Always exclude the current account (management account) from StackSet deployment since the Lambda execution roles
+  # already exist in the management account. Delegate roles are only needed in member accounts.
   accounts_to_exclude    = setunion(local.ou_accounts_to_exclude, var.exclude_accounts, [data.aws_caller_identity.current.account_id])
 
   # switch cases for various user provided accounts configuration to be onboarded

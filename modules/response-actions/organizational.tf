@@ -1,3 +1,18 @@
+#-----------------------------------------------------------------------------------------------------------------------
+# These resources set up delegate IAM roles in member accounts of an AWS Organization for Response Actions via
+# service-managed CloudFormation StackSets. For a single account installation, see main.tf.
+#
+# In an organizational deployment:
+# 1. Lambda functions are created in the management account (main.tf) across all specified regions
+# 2. Delegate roles are created in member accounts (this file) that allow Lambda functions to assume cross-account
+#    access to perform response actions in those accounts
+# 3. The delegate roles grant the Lambda execution roles permission to perform actions like quarantine users,
+#    fetch logs, modify S3 buckets, and create snapshots in member accounts
+#
+# The delegate roles are deployed to all member accounts within the specified OUs, excluding the management account
+# itself (since the Lambda execution roles already exist there).
+#-----------------------------------------------------------------------------------------------------------------------
+
 resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
   count = var.is_organizational ? 1 : 0
 
@@ -50,6 +65,15 @@ resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
   ]
 }
 
+#-----------------------------------------------------------------------------------------------------------------------
+# This resource deploys the delegate roles stackset to member accounts in the organization.
+#
+# Key deployment characteristics:
+# - Deployed to organizational units specified in deployment_targets_org_units (from locals.tf)
+# - Uses account_filter_type to exclude the management account (always excluded automatically in locals.tf)
+# - Deployed to a single region per OU (delegate roles are global IAM resources)
+# - Can optionally include/exclude specific accounts based on include_accounts/exclude_accounts variables
+#-----------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set_instance" "ra_delegate_roles" {
   for_each = var.is_organizational ? {
     for ou in local.deployment_targets_org_units :

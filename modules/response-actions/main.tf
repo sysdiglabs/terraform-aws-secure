@@ -1,3 +1,23 @@
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This module deploys Sysdig Secure Response Actions for AWS, enabling automated security responses to detected threats.
+#
+# For both Single Account and Organizational installs, Lambda functions are deployed using CloudFormation StackSets.
+# For Organizational installs, see organizational.tf.
+#
+# Response Actions include:
+# - Quarantine User: Attaches a deny-all policy to IAM users to prevent further actions
+# - Fetch Cloud Logs: Retrieves CloudTrail and CloudWatch logs
+# - Make Private: Removes public access from S3 buckets and RDS instances
+# - Create Volume Snapshot: Creates EBS volume snapshots for forensic investigation
+#
+# For single installs, the resources in this file instrument the singleton account (management or member account).
+# For organizational installs, resources in this file are created in the management account, with delegate roles
+# deployed to member accounts via service-managed stacksets.
+#-----------------------------------------------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------
+# Fetch the data sources
+#-----------------------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
@@ -58,10 +78,21 @@ locals {
   )
 }
 
-#------------------------------------------------------
-# StackSet IAM Roles for multi-region deployment
-#------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
+# A random resource is used to generate unique resource name suffix for Response Actions.
+# This prevents conflicts when recreating Response Actions resources with the same name.
+#-----------------------------------------------------------------------------------------------------------------------
+resource "random_id" "suffix" {
+  byte_length = 3
+}
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Self-managed stacksets require a pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions.
+#
+# If auto_create_stackset_roles is true, terraform will create this IAM Admin role in the source account with permissions to create
+# stacksets. If false, and values for stackset Admin role ARN is provided, stackset will use it, else AWS will look for
+# predefined/default role.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 # StackSet Administration Role
 resource "aws_iam_role" "lambda_stackset_admin_role" {
   count = var.auto_create_stackset_roles ? 1 : 0
@@ -96,12 +127,19 @@ resource "aws_iam_role_policy" "lambda_stackset_admin_policy" {
       {
         Effect   = "Allow"
         Action   = "sts:AssumeRole"
-        Resource = "arn:aws:iam::*:role/${local.ra_resource_name}-stackset-execution"
+        Resource = "${local.arn_prefix}:iam::*:role/${local.ra_resource_name}-stackset-execution"
       }
     ]
   })
 }
 
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# Self-managed stacksets require a pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles with self-managed permissions.
+#
+# If auto_create_stackset_roles is true, terraform will create this IAM Execution role in the source account with permissions to
+# deploy Lambda functions, create IAM roles, and manage logs. This role is assumed by the StackSet Administration role.
+# If false, and values for stackset Execution role name is provided, stackset will use it.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 # StackSet Execution Role
 resource "aws_iam_role" "lambda_stackset_execution_role" {
   count = var.auto_create_stackset_roles ? 1 : 0
@@ -161,15 +199,19 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
   })
 }
 
-resource "random_id" "suffix" {
-  byte_length = 3
-}
-
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
 }
 
-
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This resource creates an IAM role in the source account with permissions to invoke Response Action Lambda functions.
+# This role is assumed by Sysdig's cloud identity to trigger automated response actions.
+#
+# The role allows:
+# 1. Sysdig's trusted identity to assume the role using an external ID for security
+# 2. Invoking Lambda functions across all deployed regions based on enabled response actions
+# 3. Using AWS Resource Groups Tagging API to discover resources
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
   name = "${local.ra_resource_name}-cross-account-invoker"
 
@@ -196,7 +238,15 @@ resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
   }
 }
 
-# Inline policy for invoking all Lambda functions across all deployed regions
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This policy grants the necessary permissions for the cross-account Lambda invoker role:
+# 1. tag:GetResources - Allows discovering AWS resources by tags for response actions
+# 2. lambda:InvokeFunction - Allows invoking enabled Response Action Lambda functions
+# 3. lambda:GetFunction - Allows retrieving Lambda function details for validation
+#
+# The policy dynamically includes only the Lambda ARNs for enabled response actions, based on the
+# enabled_response_actions variable configuration.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
   name = "${local.ra_resource_name}-invoke-policy"
   role = aws_iam_role.shared_cross_account_lambda_invoker.id
@@ -224,9 +274,19 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
   })
 }
 
-#------------------------------------------------------
-# IAM Roles for Lambda Functions (Global Resources)
-#------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# IAM Roles for Lambda Functions (Created Once in Management Account)
+#
+# These roles are created globally in the management account and are used by Lambda functions
+# across all regions. Each role is tagged with 'sysdig.com/response-actions/cloud-actions = true' for identification.
+#
+# The roles grant specific permissions needed for each response action type:
+# - Quarantine User: IAM policy and user management permissions
+# - Fetch Cloud Logs: CloudTrail and CloudWatch Logs read access
+# - Remove Policy: IAM policy detachment permissions
+# - Configure Resource Access: S3 and EC2 security group modification permissions
+# - Create/Delete Volume Snapshots: EBS snapshot management permissions
+#-----------------------------------------------------------------------------------------------------------------------------------------
 
 # Lambda Execution Role: Quarantine User
 resource "aws_iam_role" "quarantine_user_role" {
@@ -450,25 +510,35 @@ resource "aws_iam_role_policy" "delete_volume_snapshots_policy" {
   policy = local.delete_volume_snapshots_policy
 }
 
-#------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------
 # S3 Bucket for Lambda deployment packages
-#------------------------------------------------------
-# NOTE: Removed local S3 bucket creation as Lambda functions now fetch from
-# regional S3 buckets in a separate account. The bucket naming follows the
-# pattern: {s3_bucket_prefix}-{region}
 #
-# Each regional bucket should contain the following Lambda zip files:
+# NOTE: Lambda functions fetch deployment packages from regional S3 buckets in a separate account.
+# The bucket naming follows the pattern: {s3_bucket_prefix}-{region}
+#
+# Each regional bucket should contain the following Lambda zip files under the ${var.cloud_lambdas_path}/${var.response_actions_version} path:
 # - quarantine_user.zip
 # - fetch_cloud_logs.zip
 # - remove_policy.zip
 # - configure_resource_access.zip
 # - create_volume_snapshot.zip
 # - delete_volume_snapshot.zip
+#-----------------------------------------------------------------------------------------------------------------------------------------
 
-#------------------------------------------------------
-# CloudFormation StackSet for Multi-Region Lambda Deployment
-#------------------------------------------------------
-
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This resource creates a stackset to deploy Response Action Lambda functions across multiple regions.
+#
+# The stackset creates Lambda functions in each specified region with the following configuration:
+# 1. Lambda Functions - One per enabled response action, deployed from regional S3 buckets
+# 2. CloudWatch Log Groups - For Lambda execution logs with retention policies
+# 3. Function Configuration - Environment variables including API base URL and resource names
+#
+# The Lambda functions are deployed using deployment packages stored in regional S3 buckets. Each function
+# assumes the corresponding IAM execution role created in the management account.
+#
+# Note: Self-managed stacksets require a pair of StackSetAdministrationRole & StackSetExecutionRole IAM roles
+# with self-managed permissions.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "lambda_functions" {
   name                    = "${local.ra_resource_name}-lambda"
   tags                    = var.tags
@@ -516,7 +586,12 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
   ]
 }
 
-# StackSet instances to deploy Lambda functions in all specified regions
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# StackSet instances to deploy Lambda functions in all specified regions.
+#
+# For each region in the region_set, this creates a stack instance that deploys the Lambda functions and their
+# supporting resources. The deployment uses parallel execution across regions for faster rollout.
+#-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set_instance" "lambda_functions" {
   for_each                  = local.region_set
   stack_set_instance_region = each.key

@@ -1,5 +1,5 @@
 variable "is_organizational" {
-  description = "(Optional) Set this field to 'true' to deploy EventBridge to an AWS Organization (Or specific OUs)"
+  description = "(Optional) Set this field to 'true' to deploy Response Actions to an AWS Organization (Or specific OUs)"
   type        = bool
   default     = false
 }
@@ -15,7 +15,7 @@ variable "org_units" {
 }
 
 variable "regions" {
-  description = "(Optional) List of regions in which to setup EventBridge. By default, current region is selected"
+  description = "(Optional) List of regions in which to setup Response Actions lambdas. By default, current region is selected"
   type        = set(string)
   default     = []
 }
@@ -72,7 +72,7 @@ variable "sysdig_secure_account_id" {
 variable "is_gov_cloud_onboarding" {
   type        = bool
   default     = false
-  description = "true/false whether EventBridge should be deployed in a govcloud account/org or not"
+  description = "true/false whether Response Actions should be deployed in a govcloud account/org or not"
 }
 
 variable "include_ouids" {
