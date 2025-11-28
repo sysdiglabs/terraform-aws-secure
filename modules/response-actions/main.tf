@@ -30,7 +30,6 @@ locals {
   roles_component_type     = "COMPONENT_CLOUD_RESPONDER_ROLES"
   account_id_hash          = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   ra_resource_name         = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
-  clean_resource_name      = var.name
 
   # Centralized role names
   quarantine_user_role_name           = "${local.ra_resource_name}-quarantine-user-role"
@@ -39,6 +38,14 @@ locals {
   configure_resource_access_role_name = "${local.ra_resource_name}-confi-res-access-role"
   create_volume_snapshots_role_name   = "${local.ra_resource_name}-create-vol-snap-role"
   delete_volume_snapshots_role_name   = "${local.ra_resource_name}-delete-vol-snap-role"
+
+  # Centralized Lambda function names
+  quarantine_user_lambda_name           = "${local.ra_resource_name}-quarantine-user"
+  fetch_cloud_logs_lambda_name          = "${local.ra_resource_name}-fetch-cloud-logs"
+  remove_policy_lambda_name             = "${local.ra_resource_name}-remove-policy"
+  configure_resource_access_lambda_name = "${local.ra_resource_name}-configure-resource-access"
+  create_volume_snapshots_lambda_name   = "${local.ra_resource_name}-create-volume-snapshots"
+  delete_volume_snapshots_lambda_name   = "${local.ra_resource_name}-delete-volume-snapshots"
 
   # Policy templates with role names
   quarantine_user_policy           = templatefile("${path.module}/policies/quarantine-user-policy.json", { role_name = local.quarantine_user_role_name })
@@ -63,18 +70,36 @@ locals {
   # Build list of Lambda ARNs for invoke policy based on enabled actions
   enabled_lambda_arns = concat(
     local.enable_quarantine_user ? [
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-quarantine-user",
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-remove-policy"
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.quarantine_user_lambda_name}",
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.remove_policy_lambda_name}"
     ] : [],
     local.enable_fetch_cloud_logs ? [
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-fetch-cloud-logs"
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.fetch_cloud_logs_lambda_name}"
     ] : [],
     local.enable_make_private ? [
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-configure-resource-access"
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.configure_resource_access_lambda_name}"
     ] : [],
     local.enable_create_volume_snapshot ? [
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-create-volume-snapshots",
-      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-delete-volume-snapshots"
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.create_volume_snapshots_lambda_name}",
+      "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.delete_volume_snapshots_lambda_name}"
+    ] : []
+  )
+
+  # Build list of Lambda function names based on enabled actions
+  enabled_lambda_names = concat(
+    local.enable_quarantine_user ? [
+      local.quarantine_user_lambda_name,
+      local.remove_policy_lambda_name
+    ] : [],
+    local.enable_fetch_cloud_logs ? [
+      local.fetch_cloud_logs_lambda_name
+    ] : [],
+    local.enable_make_private ? [
+      local.configure_resource_access_lambda_name
+    ] : [],
+    local.enable_create_volume_snapshot ? [
+      local.create_volume_snapshots_lambda_name,
+      local.delete_volume_snapshots_lambda_name
     ] : []
   )
 }
