@@ -29,7 +29,7 @@
     {
       "Effect": "Allow",
       "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::*:role/ResponseActionsQuarantineUserRoleDelegateRole"
+      "Resource": "arn:aws:iam::*:role/${role_name}"
     }
 
   ]

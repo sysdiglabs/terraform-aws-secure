@@ -22,7 +22,7 @@
     {
       "Effect": "Allow",
       "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::*:role/ResponseActionsDeleteVolumeSnapshotDelegateRole"
+      "Resource": "arn:aws:iam::*:role/${role_name}"
     }
 
   ]

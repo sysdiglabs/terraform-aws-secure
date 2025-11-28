@@ -2,13 +2,6 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  quarantine_user_policy           = templatefile("${path.module}/policies/quarantine-user-policy.json", {})
-  fetch_cloud_logs_policy          = templatefile("${path.module}/policies/fetch-cloud-logs-policy.json", {})
-  remove_policy_policy             = templatefile("${path.module}/policies/remove-policy-policy.json", {})
-  configure_resource_access_policy = templatefile("${path.module}/policies/configure-resource-access-policy.json", {})
-  create_volume_snapshots_policy   = templatefile("${path.module}/policies/create-volume-snapshots-policy.json", {})
-  delete_volume_snapshots_policy   = templatefile("${path.module}/policies/delete-volume-snapshots-policy.json", {})
-
   # Use provided regions or default to current region
   region_set               = length(var.regions) > 0 ? toset(var.regions) : toset([data.aws_region.current.id])
   trusted_identity         = var.is_gov_cloud_onboarding ? data.sysdig_secure_trusted_cloud_identity.trusted_identity.gov_identity : data.sysdig_secure_trusted_cloud_identity.trusted_identity.identity
@@ -17,6 +10,22 @@ locals {
   roles_component_type     = "COMPONENT_CLOUD_RESPONDER_ROLES"
   account_id_hash          = substr(md5(data.aws_caller_identity.current.account_id), 0, 4)
   ra_resource_name         = "${var.name}-${random_id.suffix.hex}-${local.account_id_hash}"
+
+  # Centralized role names
+  quarantine_user_role_name           = "${local.ra_resource_name}-quarantine-user-role"
+  fetch_cloud_logs_role_name          = "${local.ra_resource_name}-fetch-cloud-logs-role"
+  remove_policy_role_name             = "${local.ra_resource_name}-remove-policy-role"
+  configure_resource_access_role_name = "${local.ra_resource_name}-confi-res-access-role"
+  create_volume_snapshots_role_name   = "${local.ra_resource_name}-create-vol-snap-role"
+  delete_volume_snapshots_role_name   = "${local.ra_resource_name}-delete-vol-snap-role"
+
+  # Policy templates with role names
+  quarantine_user_policy           = templatefile("${path.module}/policies/quarantine-user-policy.json", { role_name = local.quarantine_user_role_name })
+  fetch_cloud_logs_policy          = templatefile("${path.module}/policies/fetch-cloud-logs-policy.json", { role_name = local.fetch_cloud_logs_role_name })
+  remove_policy_policy             = templatefile("${path.module}/policies/remove-policy-policy.json", { role_name = local.remove_policy_role_name })
+  configure_resource_access_policy = templatefile("${path.module}/policies/configure-resource-access-policy.json", { role_name = local.configure_resource_access_role_name })
+  create_volume_snapshots_policy   = templatefile("${path.module}/policies/create-volume-snapshots-policy.json", { role_name = local.create_volume_snapshots_role_name })
+  delete_volume_snapshots_policy   = templatefile("${path.module}/policies/delete-volume-snapshots-policy.json", { role_name = local.delete_volume_snapshots_role_name })
 
   # StackSet role configuration
   administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_admin_role[0].arn : var.stackset_admin_role_arn
@@ -222,7 +231,7 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
 # Lambda Execution Role: Quarantine User
 resource "aws_iam_role" "quarantine_user_role" {
   count = local.enable_quarantine_user ? 1 : 0
-  name  = "${local.ra_resource_name}-quarantine-user-role"
+  name  = local.quarantine_user_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -238,7 +247,7 @@ resource "aws_iam_role" "quarantine_user_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-quarantine-user-role"
+    Name = local.quarantine_user_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }
@@ -259,7 +268,7 @@ resource "aws_iam_role_policy" "quarantine_user_policy" {
 # Lambda Execution Role: Fetch Cloud Logs
 resource "aws_iam_role" "fetch_cloud_logs_role" {
   count = local.enable_fetch_cloud_logs ? 1 : 0
-  name  = "${local.ra_resource_name}-fetch-cloud-logs-role"
+  name  = local.fetch_cloud_logs_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -275,7 +284,7 @@ resource "aws_iam_role" "fetch_cloud_logs_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-fetch-cloud-logs-role"
+    Name = local.fetch_cloud_logs_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }
@@ -296,7 +305,7 @@ resource "aws_iam_role_policy" "fetch_cloud_logs_policy" {
 # Lambda Execution Role: Remove Policy
 resource "aws_iam_role" "remove_policy_role" {
   count = local.enable_quarantine_user ? 1 : 0
-  name  = "${local.ra_resource_name}-remove-policy-role"
+  name  = local.remove_policy_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -312,7 +321,7 @@ resource "aws_iam_role" "remove_policy_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-remove-policy-role"
+    Name = local.remove_policy_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }
@@ -333,7 +342,7 @@ resource "aws_iam_role_policy" "remove_policy_policy" {
 # Lambda Execution Role: Configure Resource Access
 resource "aws_iam_role" "configure_resource_access_role" {
   count = local.enable_make_private ? 1 : 0
-  name  = "${local.ra_resource_name}-confi-res-access-role"
+  name  = local.configure_resource_access_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -349,7 +358,7 @@ resource "aws_iam_role" "configure_resource_access_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-configure-resource-access-role"
+    Name = local.configure_resource_access_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }
@@ -370,7 +379,7 @@ resource "aws_iam_role_policy" "configure_resource_access_policy" {
 # Lambda Execution Role: Create Volume Snapshots
 resource "aws_iam_role" "create_volume_snapshots_role" {
   count = local.enable_create_volume_snapshot ? 1 : 0
-  name  = "${local.ra_resource_name}-create-vol-snap-role"
+  name  = local.create_volume_snapshots_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -386,7 +395,7 @@ resource "aws_iam_role" "create_volume_snapshots_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-create-volume-snapshots-role"
+    Name = local.create_volume_snapshots_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }
@@ -407,7 +416,7 @@ resource "aws_iam_role_policy" "create_volume_snapshots_policy" {
 # Lambda Execution Role: Delete Volume Snapshots
 resource "aws_iam_role" "delete_volume_snapshots_role" {
   count = local.enable_create_volume_snapshot ? 1 : 0
-  name  = "${local.ra_resource_name}-delete-vol-snap-role"
+  name  = local.delete_volume_snapshots_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -423,7 +432,7 @@ resource "aws_iam_role" "delete_volume_snapshots_role" {
   })
 
   tags = {
-    Name = "${local.ra_resource_name}-delete-volume-snapshots-role"
+    Name = local.delete_volume_snapshots_role_name
     "sysdig.com/response-actions/cloud-actions" = "true"
   }
 }

@@ -17,7 +17,7 @@
     {
       "Effect": "Allow",
       "Action": "sts:AssumeRole",
-      "Resource": "arn:aws:iam::*:role/ResponseActionsRemovePolicyDelegateRole"
+      "Resource": "arn:aws:iam::*:role/${role_name}"
     }
 
   ]
