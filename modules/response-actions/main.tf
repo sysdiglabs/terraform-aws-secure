@@ -571,6 +571,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
 
   parameters = {
     ResourceName                    = local.ra_resource_name
+    TemplateVersion                 = md5(file("${path.module}/templates/lambda-stackset.yaml"))
     S3BucketPrefix                  = var.s3_bucket_prefix
     ApiBaseUrl                      = var.api_base_url
     QuarantineUserRoleArn           = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].arn : ""
@@ -611,6 +612,7 @@ resource "aws_cloudformation_stack_set_instance" "lambda_functions" {
   stack_set_instance_region = each.key
 
   stack_set_name = aws_cloudformation_stack_set.lambda_functions.name
+
   operation_preferences {
     max_concurrent_percentage    = 100
     failure_tolerance_percentage = var.failure_tolerance_percentage

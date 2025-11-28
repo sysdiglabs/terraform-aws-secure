@@ -37,6 +37,7 @@ resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
   }
 
   parameters = {
+    TemplateVersion                       = md5(file("${path.module}/templates/delegate_roles_stackset.tpl"))
     QuarantineUserLambdaRoleArn           = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].arn : ""
     QuarantineUserRoleName                = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].name : ""
     FetchCloudLogsLambdaRoleArn           = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].arn : ""
@@ -84,6 +85,7 @@ resource "aws_cloudformation_stack_set_instance" "ra_delegate_roles" {
 
   stack_set_instance_region = tolist(local.region_set)[0]
   stack_set_name            = aws_cloudformation_stack_set.ra_delegate_roles[0].name
+
   deployment_targets {
     organizational_unit_ids = [each.value]
     accounts                = local.check_old_ouid_param ? null : (local.deployment_targets_accounts_filter == "NONE" ? null : local.deployment_targets_accounts.accounts_to_deploy)

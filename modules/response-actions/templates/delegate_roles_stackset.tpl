@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Sysdig Response Actions Delegate Roles - Multi-Account Deployment'
 
 Parameters:
+  TemplateVersion:
+    Type: String
+    Description: Template version hash to force updates
+    Default: "1"
   QuarantineUserLambdaRoleArn:
     Type: String
     Description: ARN of the Lambda execution role for quarantine user function

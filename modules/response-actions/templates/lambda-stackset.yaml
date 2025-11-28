@@ -5,6 +5,10 @@ Parameters:
   ResourceName:
     Type: String
     Description: Base name for all resources
+  TemplateVersion:
+    Type: String
+    Description: Template version hash to force updates
+    Default: "1"
   S3BucketPrefix:
     Type: String
     Description: Prefix for regional S3 buckets containing Lambda deployment packages (bucket name will be {prefix}-{region})
