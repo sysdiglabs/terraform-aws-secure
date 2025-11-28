@@ -85,6 +85,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-quarantine-user'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'quarantine-user-log-group'
 
   FetchCloudLogsLogGroup:
     Type: AWS::Logs::LogGroup
@@ -92,6 +95,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-fetch-cloud-logs'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'fetch-cloud-logs-log-group'
 
   RemovePolicyLogGroup:
     Type: AWS::Logs::LogGroup
@@ -99,6 +105,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-remove-policy'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'remove-policy-log-group'
 
   ConfigureResourceAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -106,6 +115,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-configure-resource-access'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'configure-resource-access-log-group'
 
   CreateVolumeSnapshotsLogGroup:
     Type: AWS::Logs::LogGroup
@@ -113,6 +125,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-create-volume-snapshots'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'create-volume-snapshots-log-group'
 
   DeleteVolumeSnapshotsLogGroup:
     Type: AWS::Logs::LogGroup
@@ -120,6 +135,9 @@ Resources:
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-delete-volume-snapshots'
       RetentionInDays: 7
+      Tags:
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'delete-volume-snapshots-log-group'
 
   # Lambda Functions (Regional Resources)
   QuarantineUserFunction:
@@ -145,6 +163,8 @@ Resources:
           Value: !Sub '${ResourceName}-quarantine-user'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'quarantine-user-lambda'
 
   FetchCloudLogsFunction:
     Type: AWS::Lambda::Function
@@ -169,6 +189,8 @@ Resources:
           Value: !Sub '${ResourceName}-fetch-cloud-logs'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'fetch-cloud-logs-lambda'
 
   RemovePolicyFunction:
     Type: AWS::Lambda::Function
@@ -193,6 +215,8 @@ Resources:
           Value: !Sub '${ResourceName}-remove-policy'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'remove-policy-lambda'
 
   ConfigureResourceAccessFunction:
     Type: AWS::Lambda::Function
@@ -217,6 +241,8 @@ Resources:
           Value: !Sub '${ResourceName}-configure-resource-access'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'configure-resource-access-lambda'
 
   CreateVolumeSnapshotsFunction:
     Type: AWS::Lambda::Function
@@ -241,6 +267,8 @@ Resources:
           Value: !Sub '${ResourceName}-create-volume-snapshots'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'create-volume-snapshots-lambda'
 
   DeleteVolumeSnapshotsFunction:
     Type: AWS::Lambda::Function
@@ -265,6 +293,8 @@ Resources:
           Value: !Sub '${ResourceName}-delete-volume-snapshots'
         - Key: 'sysdig.com/response-actions/cloud-actions'
           Value: 'true'
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'delete-volume-snapshots-lambda'
 
 Outputs:
   QuarantineUserFunctionArn:

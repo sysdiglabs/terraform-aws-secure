@@ -104,6 +104,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'configure-resource-access-delegate-role'
 
   # Delegate Role: Create Volume Snapshot
   CreateVolumeSnapshotDelegateRole:
@@ -150,6 +152,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'create-volume-snapshot-delegate-role'
 
   # Delegate Role: Delete Volume Snapshot
   DeleteVolumeSnapshotDelegateRole:
@@ -188,6 +192,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'delete-volume-snapshot-delegate-role'
 
   # Delegate Role: Fetch Cloud Logs
   FetchCloudLogsDelegateRole:
@@ -219,6 +225,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'fetch-cloud-logs-delegate-role'
 
   # Delegate Role: Quarantine User
   QuarantineUserRoleDelegateRole:
@@ -267,6 +275,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'quarantine-user-delegate-role'
 
   # Delegate Role: Remove Policy
   RemovePolicyDelegateRole:
@@ -303,6 +313,8 @@ Resources:
           Value: Terraform
         - Key: Purpose
           Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'remove-policy-delegate-role'
 
 Outputs:
   ConfigureAccessDelegateRoleName:
