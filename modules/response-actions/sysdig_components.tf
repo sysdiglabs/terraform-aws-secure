@@ -14,7 +14,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder" {
       responder_lambdas = {
         lambda_names       = local.enabled_lambda_names
         regions            = local.region_set
-        delegate_role_name = aws_iam_role.shared_cross_account_lambda_invoker
+        delegate_role_name = aws_iam_role.shared_cross_account_lambda_invoker.name
       }
     }
   })
@@ -31,24 +31,46 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder_roles" {
   instance   = "cloud-responder"
   version    = var.response_actions_version
   cloud_responder_roles_metadata = jsonencode({
-    aws = {
-      roles = concat(
-          local.enable_quarantine_user ? [
-          aws_iam_role.quarantine_user_role[0].arn,
-          aws_iam_role.remove_policy_role[0].arn
-        ] : [],
-          local.enable_fetch_cloud_logs ? [
-          aws_iam_role.fetch_cloud_logs_role[0].arn
-        ] : [],
-          local.enable_make_private ? [
-          aws_iam_role.configure_resource_access_role[0].arn
-        ] : [],
-          local.enable_create_volume_snapshot ? [
-          aws_iam_role.create_volume_snapshots_role[0].arn,
-          aws_iam_role.delete_volume_snapshots_role[0].arn
-        ] : []
-      )
-    }
+    roles = concat(
+      local.enable_quarantine_user ? [
+        {
+          aws = {
+            role_name = aws_iam_role.quarantine_user_role[0].arn
+          }
+        },
+        {
+          aws = {
+            role_name = aws_iam_role.remove_policy_role[0].arn
+          }
+        }
+      ] : [],
+      local.enable_fetch_cloud_logs ? [
+        {
+          aws = {
+            role_name = aws_iam_role.fetch_cloud_logs_role[0].arn
+          }
+        }
+      ] : [],
+      local.enable_make_private ? [
+        {
+          aws = {
+            role_name = aws_iam_role.configure_resource_access_role[0].arn
+          }
+        }
+      ] : [],
+      local.enable_create_volume_snapshot ? [
+        {
+          aws = {
+            role_name = aws_iam_role.create_volume_snapshots_role[0].arn
+          }
+        },
+        {
+          aws = {
+            role_name = aws_iam_role.delete_volume_snapshots_role[0].arn
+          }
+        }
+      ] : []
+    )
   })
 
   depends_on = [
