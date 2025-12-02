@@ -20,7 +20,6 @@ jobs:
 
     steps:
       - name: Trigger Onboarding job for this repo
-        if: ${{ steps.check-skip-sanity-test.outputs.SKIP_SANITY_TEST == 'false'}}
         id: trigger-jenkins-job
         uses: sysdiglabs/jenkins-job-trigger-action@1.1.0
         with:
