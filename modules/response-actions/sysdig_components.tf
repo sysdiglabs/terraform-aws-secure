@@ -8,7 +8,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder" {
   account_id = var.sysdig_secure_account_id
   type       = local.responder_component_type
   instance   = "cloud-responder"
-  version    = var.response_actions_version
+  version    = "v${var.response_actions_version}"
   cloud_responder_metadata = jsonencode({
     aws = {
       responder_lambdas = {
@@ -29,7 +29,7 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder_roles" {
   account_id = var.sysdig_secure_account_id
   type       = local.roles_component_type
   instance   = "cloud-responder"
-  version    = var.response_actions_version
+  version    = "v${var.response_actions_version}"
   cloud_responder_roles_metadata = jsonencode({
     roles = concat(
       local.enable_quarantine_user ? [
