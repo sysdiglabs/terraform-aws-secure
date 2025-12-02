@@ -35,8 +35,9 @@ jobs:
       - name: Trigger Onboarding job for this repo
         if: ${{ steps.check-skip-sanity-test.outputs.SKIP_SANITY_TEST == 'false'}}
         id: trigger-jenkins-job
-        uses: draios/jenkins-job-trigger-action@1.1.0
+        uses: sysdiglabs/jenkins-job-trigger-action@1.1.0
         with:
+          jenkins_external_base_url: ${{ secrets.JENKINS_EXTERNAL_BASE_URL }}
           jenkins_url: ${{ secrets.JENKINS_INTERNAL_URL }}
           jenkins_user: ${{ secrets.JENKINS_QA_API_USER }}
           jenkins_token: ${{ secrets.JENKINS_QA_API_TOKEN }}
