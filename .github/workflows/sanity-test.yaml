@@ -27,7 +27,7 @@ jobs:
           jenkins_url: ${{ secrets.JENKINS_INTERNAL_URL }}
           jenkins_user: ${{ secrets.JENKINS_BOT_API_USER}}
           jenkins_token: ${{ secrets.JENKINS_BOT_API_TOKEN}}
-          job_name: "qa/QA-secure/onboarding/terraform-aws-secure-onboarding-tests/"
+          job_name: "qa/job/QA-secure/job/onboarding/job/terraform-aws-secure-onboarding-tests/"
           job_params: |
             {
               "MODULE_BRANCH": "${{ github.head_ref }}"
