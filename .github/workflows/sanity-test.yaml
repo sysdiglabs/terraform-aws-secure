@@ -30,6 +30,6 @@ jobs:
           job_name: "qa/job/QA-secure/job/onboarding/job/terraform-aws-secure-onboarding-tests/"
           job_params: |
             {
-              "MODULE_BRANCH": "${{ github.head_ref }}"
+              "MODULE_BRANCH": "${{ github.head_ref || github.ref_name }}"
             }
           job_timeout: "5400"
