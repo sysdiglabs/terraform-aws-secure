@@ -25,8 +25,8 @@ jobs:
         with:
           jenkins_external_base_url: ${{ secrets.JENKINS_EXTERNAL_BASE_URL }}
           jenkins_url: ${{ secrets.JENKINS_INTERNAL_URL }}
-          jenkins_user: ${{ secrets.JENKINS_QA_API_USER }}
-          jenkins_token: ${{ secrets.JENKINS_QA_API_TOKEN }}
+          jenkins_user: ${{ secrets.JENKINS_BOT_API_USER}}
+          jenkins_token: ${{ secrets.JENKINS_BOT_API_TOKEN}}
           job_name: "qa/QA-secure/onboarding/terraform-aws-secure-onboarding-tests/"
           job_params: |
             {
