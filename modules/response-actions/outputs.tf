@@ -55,3 +55,15 @@ output "lambda_functions" {
     } : {}
   )
 }
+
+output "responder_component_id" {
+  value       = "${sysdig_secure_cloud_auth_account_component.aws_responder.type}/${sysdig_secure_cloud_auth_account_component.aws_responder.instance}"
+  description = "Component identifier of Response Actions responder integration created in Sysdig Backend"
+  depends_on  = [sysdig_secure_cloud_auth_account_component.aws_responder]
+}
+
+output "responder_roles_component_id" {
+  value       = "${sysdig_secure_cloud_auth_account_component.aws_responder_roles.type}/${sysdig_secure_cloud_auth_account_component.aws_responder_roles.instance}"
+  description = "Component identifier of Response Actions roles integration created in Sysdig Backend"
+  depends_on  = [sysdig_secure_cloud_auth_account_component.aws_responder_roles]
+}
