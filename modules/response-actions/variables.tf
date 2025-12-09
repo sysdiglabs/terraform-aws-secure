@@ -116,15 +116,10 @@ variable "response_actions_version" {
   default     = "0.0.15"
 }
 
-variable "s3_bucket_prefix" {
-  description = "Prefix for regional S3 buckets containing Lambda deployment packages. The bucket name will be constructed as {prefix}-{region}. These buckets should exist in each target region and contain the Lambda zip files."
+variable "lambda_packages_base_url" {
+  description = "Base URL for downloading Lambda deployment packages (e.g., https://example.com/packages). The module will automatically create regional S3 buckets and download the packages."
   type        = string
-}
-
-variable "cloud_lambdas_path" {
-  description = "The path where lambda code resides inside of regional S3 buckets"
-  type        = string
-  default     = "response-actions/cloud-lambdas"
+  default     = "https://download.sysdig.com/cloud-response-actions"
 }
 
 variable "enabled_response_actions" {

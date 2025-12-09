@@ -59,7 +59,8 @@ locals {
   administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_admin_role[0].arn : var.stackset_admin_role_arn
   execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_execution_role[0].name : var.stackset_execution_role_name
 
-  cloud_lambdas_path = "${var.cloud_lambdas_path}/${var.response_actions_version}"
+  # S3 bucket configuration for Lambda packages
+  s3_bucket_name = "${var.name}-${random_id.suffix.hex}-packages"
 
   # Response action enablement flags
   enable_make_private           = contains(var.enabled_response_actions, "make_private")
@@ -202,7 +203,6 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
       {
         Effect = "Allow"
         Action = [
-          "cloudformation:*",
           "lambda:*",
           "iam:CreateRole",
           "iam:DeleteRole",
@@ -213,6 +213,9 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
           "iam:AttachRolePolicy",
           "iam:DetachRolePolicy",
           "iam:GetRolePolicy",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:ListRoleTags",
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
@@ -220,13 +223,30 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
           "logs:UntagResource",
           "logs:TagLogGroup",
           "logs:ListTagsForResource",
+          "s3:CreateBucket",
+          "s3:DeleteBucket",
+          "s3:GetBucketLocation",
+          "s3:GetBucketVersioning",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:PutBucketTagging",
+          "s3:GetBucketTagging",
           "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
           "s3:ListBucket"
         ]
         Resource = "*"
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_stackset_execution_cloudformation" {
+  count      = var.auto_create_stackset_roles ? 1 : 0
+  role       = aws_iam_role.lambda_stackset_execution_role[0].name
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/AWSCloudFormationFullAccess"
 }
 
 data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
@@ -547,19 +567,89 @@ resource "aws_iam_role_policy" "delete_volume_snapshots_policy" {
   policy = local.delete_volume_snapshots_policy
 }
 
+# Lambda Execution Role: Package Downloader (Global, used by all regions)
+resource "aws_iam_role" "package_downloader_role" {
+  name = "${local.ra_resource_name}-package-downloader-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name                                         = "${local.ra_resource_name}-package-downloader-role"
+    "sysdig.com/response-actions/resource-name"  = "package-downloader-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "package_downloader_basic" {
+  policy_arn = "${local.arn_prefix}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.package_downloader_role.name
+}
+
+resource "aws_iam_role_policy" "package_downloader_policy" {
+  name = "${local.ra_resource_name}-package-downloader-policy"
+  role = aws_iam_role.package_downloader_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:GetObject"
+        ]
+        Resource = "${local.arn_prefix}:s3:::${local.s3_bucket_name}-*/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "${local.arn_prefix}:s3:::${local.s3_bucket_name}-*"
+      }
+    ]
+  })
+}
+
+# Wait for IAM role to propagate globally before using it
+resource "time_sleep" "wait_for_iam_role_propagation" {
+  depends_on = [
+    aws_iam_role.package_downloader_role,
+    aws_iam_role_policy.package_downloader_policy,
+    aws_iam_role_policy_attachment.package_downloader_basic
+  ]
+
+  create_duration = "10s"
+}
+
 #-----------------------------------------------------------------------------------------------------------------------------------------
 # S3 Bucket for Lambda deployment packages
 #
-# NOTE: Lambda functions fetch deployment packages from regional S3 buckets in a separate account.
-# The bucket naming follows the pattern: {s3_bucket_prefix}-{region}
+# The CloudFormation StackSet will create regional S3 buckets automatically in each deployed region.
+# The bucket naming follows the pattern: {s3_bucket_name}-{region}
 #
-# Each regional bucket should contain the following Lambda zip files under the ${var.cloud_lambdas_path}/${var.response_actions_version} path:
+# A custom Lambda function (PackageDownloaderFunction) will download the Lambda zip files from the provided
+# lambda_packages_base_url and upload them to the regional S3 buckets. The packages are downloaded from:
+# {lambda_packages_base_url}/v{version}/{lambda_name}.zip
+#
+# Lambda packages downloaded:
 # - quarantine_user.zip
 # - fetch_cloud_logs.zip
 # - remove_policy.zip
 # - configure_resource_access.zip
-# - create_volume_snapshot.zip
-# - delete_volume_snapshot.zip
+# - create_volume_snapshots.zip
+# - delete_volume_snapshots.zip
 #-----------------------------------------------------------------------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
@@ -597,8 +687,9 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
   parameters = {
     ResourceName                    = local.ra_resource_name
     TemplateVersion                 = md5(file("${path.module}/templates/lambda-stackset.yaml"))
-    S3BucketPrefix                  = var.s3_bucket_prefix
+    S3BucketName                    = local.s3_bucket_name
     ApiBaseUrl                      = var.api_base_url
+    PackageDownloaderRoleArn        = aws_iam_role.package_downloader_role.arn
     QuarantineUserRoleArn           = local.enable_quarantine_user ? aws_iam_role.quarantine_user_role[0].arn : ""
     FetchCloudLogsRoleArn           = local.enable_fetch_cloud_logs ? aws_iam_role.fetch_cloud_logs_role[0].arn : ""
     RemovePolicyRoleArn             = local.enable_quarantine_user ? aws_iam_role.remove_policy_role[0].arn : ""
@@ -611,7 +702,8 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
     ConfigureResourceAccessRoleName = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].name : ""
     CreateVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].name : ""
     DeleteVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].name : ""
-    CloudLambdasPath                = local.cloud_lambdas_path
+    ResponseActionsVersion          = var.response_actions_version
+    LambdaPackagesBaseUrl           = var.lambda_packages_base_url
     EnableQuarantineUser            = local.enable_quarantine_user ? "true" : "false"
     EnableFetchCloudLogs            = local.enable_fetch_cloud_logs ? "true" : "false"
     EnableMakePrivate               = local.enable_make_private ? "true" : "false"
@@ -622,7 +714,8 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
 
   depends_on = [
     aws_iam_role.lambda_stackset_admin_role,
-    aws_iam_role.lambda_stackset_execution_role
+    aws_iam_role.lambda_stackset_execution_role,
+    time_sleep.wait_for_iam_role_propagation
   ]
 }
 
