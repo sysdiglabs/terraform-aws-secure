@@ -23,8 +23,11 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_advanc
   type       = "FEATURE_SECURE_IDENTITY_ENTITLEMENT"
   enabled    = true
   components = concat(sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic.components, [module.cloud-logs.cloud_logs_component_id])
-  depends_on = [module.cloud-logs]
-  flags      = { "CIEM_FEATURE_MODE" : "advanced" }
+  depends_on = [
+    module.cloud-logs,
+    module.cloud-logs.wait_after_basic
+  ]
+  flags = { "CIEM_FEATURE_MODE" : "advanced" }
 
   lifecycle {
     ignore_changes = [flags, components]

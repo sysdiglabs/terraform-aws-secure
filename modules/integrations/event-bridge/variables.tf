@@ -131,3 +131,9 @@ variable "api_dest_rate_limit" {
   default     = 300
   description = "Rate limit for API Destinations"
 }
+
+variable "wait_after_basic_seconds" {
+  type        = number
+  description = "Number of seconds to wait after CIEM basic before proceeding (set to 0 to disable)."
+  default     = 30
+}

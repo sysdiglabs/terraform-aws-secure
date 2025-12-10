@@ -295,3 +295,17 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_event_bridge" {
     }
   })
 }
+
+locals {
+  wait_duration = format("%ds", var.wait_after_basic_seconds)
+}
+
+resource "time_sleep" "wait_after_ciem_basic" {
+  count           = var.wait_after_basic_seconds > 0 ? 1 : 0
+  create_duration = local.wait_duration
+}
+
+output "wait_after_basic" {
+  value       = var.wait_after_basic_seconds > 0 ? time_sleep.wait_after_ciem_basic : null
+  description = "Wait handle to delay downstream operations after basic (e.g., CIEM) by the configured seconds."
+}
