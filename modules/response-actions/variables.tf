@@ -99,12 +99,6 @@ variable "exclude_accounts" {
   default     = []
 }
 
-variable "api_dest_rate_limit" {
-  type        = number
-  default     = 300
-  description = "Rate limit for API Destinations"
-}
-
 variable "api_base_url" {
   description = "Base URL for the API service"
   type        = string
@@ -113,7 +107,7 @@ variable "api_base_url" {
 variable "response_actions_version" {
   description = "Response Actions version"
   type        = string
-  default     = "0.0.15"
+  default     = "0.0.16"
 }
 
 variable "lambda_packages_base_url" {

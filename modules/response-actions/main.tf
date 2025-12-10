@@ -139,8 +139,8 @@ resource "aws_iam_role" "lambda_stackset_admin_role" {
   })
 
   tags = {
-    Name                                         = "${local.ra_resource_name}-stackset-admin"
-    "sysdig.com/response-actions/resource-name"  = "stackset-admin"
+    Name                                        = "${local.ra_resource_name}-stackset-admin"
+    "sysdig.com/response-actions/resource-name" = "stackset-admin"
   }
 }
 
@@ -187,8 +187,8 @@ resource "aws_iam_role" "lambda_stackset_execution_role" {
   })
 
   tags = {
-    Name                                         = "${local.ra_resource_name}-stackset-execution"
-    "sysdig.com/response-actions/resource-name"  = "stackset-execution"
+    Name                                        = "${local.ra_resource_name}-stackset-execution"
+    "sysdig.com/response-actions/resource-name" = "stackset-execution"
   }
 }
 
@@ -284,8 +284,8 @@ resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
   })
 
   tags = {
-    Name                                         = "${local.ra_resource_name}-cross-account-invoker"
-    "sysdig.com/response-actions/resource-name"  = "cross-account-invoker"
+    Name                                        = "${local.ra_resource_name}-cross-account-invoker"
+    "sysdig.com/response-actions/resource-name" = "cross-account-invoker"
   }
 }
 
@@ -358,9 +358,9 @@ resource "aws_iam_role" "quarantine_user_role" {
   })
 
   tags = {
-    Name                                         = local.quarantine_user_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "quarantine-user-role"
+    Name                                        = local.quarantine_user_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "quarantine-user-role"
   }
 }
 
@@ -396,9 +396,9 @@ resource "aws_iam_role" "fetch_cloud_logs_role" {
   })
 
   tags = {
-    Name                                         = local.fetch_cloud_logs_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "fetch-cloud-logs-role"
+    Name                                        = local.fetch_cloud_logs_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "fetch-cloud-logs-role"
   }
 }
 
@@ -434,9 +434,9 @@ resource "aws_iam_role" "remove_policy_role" {
   })
 
   tags = {
-    Name                                         = local.remove_policy_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "remove-policy-role"
+    Name                                        = local.remove_policy_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "remove-policy-role"
   }
 }
 
@@ -472,9 +472,9 @@ resource "aws_iam_role" "configure_resource_access_role" {
   })
 
   tags = {
-    Name                                         = local.configure_resource_access_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "configure-resource-access-role"
+    Name                                        = local.configure_resource_access_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "configure-resource-access-role"
   }
 }
 
@@ -510,9 +510,9 @@ resource "aws_iam_role" "create_volume_snapshots_role" {
   })
 
   tags = {
-    Name                                         = local.create_volume_snapshots_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "create-volume-snapshots-role"
+    Name                                        = local.create_volume_snapshots_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "create-volume-snapshots-role"
   }
 }
 
@@ -548,9 +548,9 @@ resource "aws_iam_role" "delete_volume_snapshots_role" {
   })
 
   tags = {
-    Name                                         = local.delete_volume_snapshots_role_name
-    "sysdig.com/response-actions/cloud-actions"  = "true"
-    "sysdig.com/response-actions/resource-name"  = "delete-volume-snapshots-role"
+    Name                                        = local.delete_volume_snapshots_role_name
+    "sysdig.com/response-actions/cloud-actions" = "true"
+    "sysdig.com/response-actions/resource-name" = "delete-volume-snapshots-role"
   }
 }
 
@@ -585,8 +585,8 @@ resource "aws_iam_role" "package_downloader_role" {
   })
 
   tags = {
-    Name                                         = "${local.ra_resource_name}-package-downloader-role"
-    "sysdig.com/response-actions/resource-name"  = "package-downloader-role"
+    Name                                        = "${local.ra_resource_name}-package-downloader-role"
+    "sysdig.com/response-actions/resource-name" = "package-downloader-role"
   }
 }
 
@@ -667,11 +667,11 @@ resource "time_sleep" "wait_for_iam_role_propagation" {
 # with self-managed permissions.
 #-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "lambda_functions" {
-  name             = "${local.ra_resource_name}-lambda"
-  tags             = merge(var.tags, {
+  name = "${local.ra_resource_name}-lambda"
+  tags = merge(var.tags, {
     "sysdig.com/response-actions/resource-name" = "lambda-stackset"
   })
-  permission_model = "SELF_MANAGED"
+  permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
   administration_role_arn = local.administration_role_arn
   execution_role_name     = local.execution_role_name
