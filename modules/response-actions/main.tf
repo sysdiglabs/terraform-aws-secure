@@ -686,7 +686,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
 
   parameters = {
     ResourceName                    = local.ra_resource_name
-    TemplateVersion                 = md5(file("${path.module}/templates/lambda-stackset.yaml"))
+    TemplateVersion                 = md5(file("${path.module}/templates/lambda-stackset.tpl"))
     S3BucketName                    = local.s3_bucket_name
     ApiBaseUrl                      = var.api_base_url
     PackageDownloaderRoleArn        = aws_iam_role.package_downloader_role.arn
@@ -710,7 +710,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
     EnableCreateVolumeSnapshot      = local.enable_create_volume_snapshot ? "true" : "false"
   }
 
-  template_body = file("${path.module}/templates/lambda-stackset.yaml")
+  template_body = file("${path.module}/templates/lambda-stackset.tpl")
 
   depends_on = [
     aws_iam_role.lambda_stackset_admin_role,
