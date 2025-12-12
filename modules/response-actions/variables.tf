@@ -4,16 +4,6 @@ variable "is_organizational" {
   default     = false
 }
 
-variable "org_units" {
-  description = <<-EOF
-    TO BE DEPRECATED on 30th November, 2025: Please work with Sysdig to migrate to using `include_ouids` instead.
-    When set, list of Organization Unit IDs in which to setup EventBridge. By default, EventBridge will be setup in all accounts within the Organization.
-    This field is ignored if `is_organizational = false`
-    EOF
-  type        = set(string)
-  default     = []
-}
-
 variable "regions" {
   description = "(Optional) List of regions in which to setup Response Actions lambdas. By default, current region is selected"
   type        = set(string)

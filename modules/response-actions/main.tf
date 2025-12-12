@@ -743,4 +743,9 @@ resource "aws_cloudformation_stack_set_instance" "lambda_functions" {
     update = var.timeout
     delete = var.timeout
   }
+
+  depends_on = [
+    aws_iam_role_policy.lambda_stackset_execution_policy,
+    aws_iam_role_policy_attachment.lambda_stackset_execution_cloudformation
+  ]
 }
