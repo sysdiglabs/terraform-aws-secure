@@ -98,8 +98,6 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-      VersioningConfiguration:
-        Status: Enabled
       Tags:
         - Key: 'sysdig.com/response-actions/resource-name'
           Value: 'lambda-packages-bucket'

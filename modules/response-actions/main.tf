@@ -60,7 +60,7 @@ locals {
   execution_role_name     = var.auto_create_stackset_roles ? aws_iam_role.lambda_stackset_execution_role[0].name : var.stackset_execution_role_name
 
   # S3 bucket configuration for Lambda packages
-  s3_bucket_name = "${var.name}-${random_id.suffix.hex}-packages"
+  s3_bucket_name = "${local.ra_resource_name}-packages"
 
   # Response action enablement flags
   enable_make_private           = contains(var.enabled_response_actions, "make_private")
@@ -226,8 +226,6 @@ resource "aws_iam_role_policy" "lambda_stackset_execution_policy" {
           "s3:CreateBucket",
           "s3:DeleteBucket",
           "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
-          "s3:PutBucketVersioning",
           "s3:PutBucketPublicAccessBlock",
           "s3:GetBucketPublicAccessBlock",
           "s3:PutBucketTagging",
