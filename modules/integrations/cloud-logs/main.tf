@@ -347,8 +347,3 @@ resource "time_sleep" "wait_after_ciem_basic" {
   count           = var.wait_after_basic_seconds > 0 ? 1 : 0
   create_duration = local.wait_duration
 }
-
-output "post_ciem_basic_delay" {
-  value       = var.wait_after_basic_seconds > 0 ? time_sleep.wait_after_ciem_basic : null
-  description = "Wait handle to delay downstream operations after basic by the configured seconds."
-}
