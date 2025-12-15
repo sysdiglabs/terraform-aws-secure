@@ -67,3 +67,8 @@ output "responder_roles_component_id" {
   description = "Component identifier of Response Actions roles integration created in Sysdig Backend"
   depends_on  = [sysdig_secure_cloud_auth_account_component.aws_responder_roles]
 }
+
+output "wait_after_basic" {
+  value       = var.wait_after_basic_seconds > 0 ? time_sleep.wait_after_ciem_basic : null
+  description = "Wait handle to delay downstream operations after basic by the configured seconds."
+}

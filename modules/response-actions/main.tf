@@ -103,6 +103,8 @@ locals {
       local.delete_volume_snapshots_lambda_name
     ] : []
   )
+
+  wait_duration = format("%ds", var.wait_after_basic_seconds)
 }
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -746,4 +748,9 @@ resource "aws_cloudformation_stack_set_instance" "lambda_functions" {
     aws_iam_role_policy.lambda_stackset_execution_policy,
     aws_iam_role_policy_attachment.lambda_stackset_execution_cloudformation
   ]
+}
+
+resource "time_sleep" "wait_after_ciem_basic" {
+  count           = var.wait_after_basic_seconds > 0 ? 1 : 0
+  create_duration = local.wait_duration
 }

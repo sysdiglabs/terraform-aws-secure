@@ -125,3 +125,9 @@ variable "enabled_response_actions" {
     error_message = "Valid values for enabled_response_actions are: make_private, fetch_cloud_logs, create_volume_snapshot, quarantine_user"
   }
 }
+
+variable "wait_after_basic_seconds" {
+  type        = number
+  description = "Number of seconds to wait after CIEM basic before proceeding (set to 0 to disable)."
+  default     = 30
+}
