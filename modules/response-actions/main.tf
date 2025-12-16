@@ -343,7 +343,10 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
       length(local.enabled_lambda_role_arns) > 0 ? [{
         Effect = "Allow"
         Action = [
-          "iam:GetRole"
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
         ]
         Resource = local.enabled_lambda_role_arns
       }] : []
