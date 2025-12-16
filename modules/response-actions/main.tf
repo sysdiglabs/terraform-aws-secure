@@ -104,6 +104,24 @@ locals {
     ] : []
   )
 
+  # Build list of Lambda execution role ARNs for iam:GetRole policy based on enabled actions
+  enabled_lambda_role_arns = concat(
+    local.enable_quarantine_user ? [
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.quarantine_user_role_name}",
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.remove_policy_role_name}"
+    ] : [],
+    local.enable_fetch_cloud_logs ? [
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.fetch_cloud_logs_role_name}"
+    ] : [],
+    local.enable_make_private ? [
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.configure_resource_access_role_name}"
+    ] : [],
+    local.enable_create_volume_snapshot ? [
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.create_volume_snapshots_role_name}",
+      "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.delete_volume_snapshots_role_name}"
+    ] : []
+  )
+
   wait_duration = format("%ds", var.wait_after_basic_seconds)
 }
 
@@ -294,6 +312,7 @@ resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
 # 1. tag:GetResources - Allows discovering AWS resources by tags for response actions
 # 2. lambda:InvokeFunction - Allows invoking enabled Response Action Lambda functions
 # 3. lambda:GetFunction - Allows retrieving Lambda function details for validation
+# 4. iam:GetRole - Allows retrieving details about the IAM roles that Lambda functions assume
 #
 # The policy dynamically includes only the Lambda ARNs for enabled response actions, based on the
 # enabled_response_actions variable configuration.
@@ -320,6 +339,13 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
           "lambda:GetFunction"
         ]
         Resource = local.enabled_lambda_arns
+      }] : [],
+      length(local.enabled_lambda_role_arns) > 0 ? [{
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole"
+        ]
+        Resource = local.enabled_lambda_role_arns
       }] : []
     )
   })
