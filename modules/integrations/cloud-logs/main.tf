@@ -338,3 +338,12 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_cloud_logs" {
     aws_cloudformation_stack_set_instance.cloudlogs_s3_access_topic
   ]
 }
+
+locals {
+  wait_duration = format("%ds", var.wait_after_basic_seconds)
+}
+
+resource "time_sleep" "wait_after_ciem_basic" {
+  count           = var.wait_after_basic_seconds > 0 ? 1 : 0
+  create_duration = local.wait_duration
+}

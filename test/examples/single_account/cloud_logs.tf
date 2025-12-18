@@ -45,7 +45,10 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_advanc
     sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic.components,
     [module.cloud-logs.cloud_logs_component_id]
   )
-  depends_on = [module.cloud-logs]
+  depends_on = [
+    module.cloud-logs,
+    module.cloud-logs.post_ciem_basic_delay
+  ]
   flags = {
     "CIEM_FEATURE_MODE" = "advanced"
   }
