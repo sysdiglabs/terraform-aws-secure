@@ -13,3 +13,8 @@ output "kms_policy_instructions" {
     }
   ) : ""
 }
+
+output "post_ciem_basic_delay" {
+  value       = var.wait_after_basic_seconds > 0 ? time_sleep.wait_after_ciem_basic : null
+  description = "Wait handle to delay downstream operations after basic by the configured seconds."
+}
