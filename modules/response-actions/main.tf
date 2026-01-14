@@ -328,6 +328,80 @@ resource "aws_iam_role_policy" "shared_lambda_invoke_policy" {
 }
 
 #-----------------------------------------------------------------------------------------------------------------------------------------
+# This resource creates an IAM role for validating the Response Actions deployment.
+# This role is assumed by Sysdig's cloud identity to read and validate Lambda functions, IAM roles, and policies
+# created by this module.
+#
+# The role allows:
+# 1. Sysdig's trusted identity to assume the role using the tenant-specific external ID for security
+# 2. Reading Lambda functions matching the resource name pattern
+# 3. Reading IAM roles and their attached/inline policies matching the resource name pattern
+#-----------------------------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_role" "validation_role" {
+  name = "${local.ra_resource_name}-validation-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = local.trusted_identity
+        }
+        Condition = {
+          StringEquals = {
+            "sts:ExternalId" = data.sysdig_secure_tenant_external_id.external_id.external_id
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name                                        = "${local.ra_resource_name}-validation-role"
+    "sysdig.com/response-actions/resource-name" = "validation-role"
+  }
+}
+
+#-----------------------------------------------------------------------------------------------------------------------------------------
+# This policy grants read-only permissions for the validation role to:
+# 1. Read Lambda functions, their configurations, and policies created by this module
+# 2. Read IAM roles and their attached/inline policies created by this module
+#
+# Permissions are scoped to only resources matching the resource name pattern (${local.ra_resource_name}-*)
+#-----------------------------------------------------------------------------------------------------------------------------------------
+resource "aws_iam_role_policy" "validation_policy" {
+  name = "${local.ra_resource_name}-validation-policy"
+  role = aws_iam_role.validation_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:GetFunction",
+          "lambda:GetPolicy",
+          "lambda:ListFunctions"
+        ]
+        Resource = "${local.arn_prefix}:lambda:*:${data.aws_caller_identity.current.account_id}:function:${local.ra_resource_name}-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
+        ]
+        Resource = "${local.arn_prefix}:iam::${data.aws_caller_identity.current.account_id}:role/${local.ra_resource_name}-*"
+      }
+    ]
+  })
+}
+
+#-----------------------------------------------------------------------------------------------------------------------------------------
 # IAM Roles for Lambda Functions (Created Once in Management Account)
 #
 # These roles are created globally in the management account and are used by Lambda functions
