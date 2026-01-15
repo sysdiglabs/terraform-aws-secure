@@ -278,7 +278,7 @@ resource "aws_iam_role" "shared_cross_account_lambda_invoker" {
         }
         Condition = {
           StringEquals = {
-            "sts:ExternalId" = "cloud-actions-lambda-invoke-access"
+            "sts:ExternalId" = data.sysdig_secure_tenant_external_id.external_id.external_id
           }
         }
       }
