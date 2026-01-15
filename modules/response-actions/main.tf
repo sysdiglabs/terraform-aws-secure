@@ -253,6 +253,8 @@ data "sysdig_secure_trusted_cloud_identity" "trusted_identity" {
   cloud_provider = "aws"
 }
 
+data "sysdig_secure_tenant_external_id" "external_id" {}
+
 #-----------------------------------------------------------------------------------------------------------------------------------------
 # This resource creates an IAM role in the source account with permissions to invoke Response Action Lambda functions.
 # This role is assumed by Sysdig's cloud identity to trigger automated response actions.
