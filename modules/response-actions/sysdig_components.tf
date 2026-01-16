@@ -35,38 +35,38 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder_roles" {
       local.enable_quarantine_user ? [
         {
           aws = {
-            role_name = aws_iam_role.quarantine_user_role[0].arn
+            role_name = aws_iam_role.quarantine_user_role[0].name
           }
         },
         {
           aws = {
-            role_name = aws_iam_role.remove_policy_role[0].arn
+            role_name = aws_iam_role.remove_policy_role[0].name
           }
         }
       ] : [],
       local.enable_fetch_cloud_logs ? [
         {
           aws = {
-            role_name = aws_iam_role.fetch_cloud_logs_role[0].arn
+            role_name = aws_iam_role.fetch_cloud_logs_role[0].name
           }
         }
       ] : [],
       local.enable_make_private ? [
         {
           aws = {
-            role_name = aws_iam_role.configure_resource_access_role[0].arn
+            role_name = aws_iam_role.configure_resource_access_role[0].name
           }
         }
       ] : [],
       local.enable_create_volume_snapshot ? [
         {
           aws = {
-            role_name = aws_iam_role.create_volume_snapshots_role[0].arn
+            role_name = aws_iam_role.create_volume_snapshots_role[0].name
           }
         },
         {
           aws = {
-            role_name = aws_iam_role.delete_volume_snapshots_role[0].arn
+            role_name = aws_iam_role.delete_volume_snapshots_role[0].name
           }
         }
       ] : []
