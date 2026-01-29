@@ -62,6 +62,18 @@ Parameters:
     Default: "true"
     AllowedValues: ["true", "false"]
     Description: Enable create and delete volume snapshot delegate roles
+  ValidationRoleName:
+    Type: String
+    Description: Name for the validation role
+  TrustedIdentity:
+    Type: String
+    Description: ARN of the Sysdig trusted identity
+  ExternalId:
+    Type: String
+    Description: External ID for assuming the validation role
+  ResourceNamePrefix:
+    Type: String
+    Description: Prefix for resource names to scope IAM permissions
 
 Conditions:
   CreateQuarantineUserResources: !Equals [!Ref EnableQuarantineUser, "true"]
@@ -320,6 +332,43 @@ Resources:
         - Key: 'sysdig.com/response-actions/resource-name'
           Value: 'remove-policy-delegate-role'
 
+  # Validation Role: Read-only access for validating Response Actions deployment
+  ValidationDelegateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref ValidationRoleName
+      Description: Validation role for reading Response Actions resources
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrustedIdentity
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+      Policies:
+        - PolicyName: response-actions-validation
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'iam:GetRole'
+                  - 'iam:GetRolePolicy'
+                  - 'iam:ListRolePolicies'
+                  - 'iam:ListAttachedRolePolicies'
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${ResourceNamePrefix}-*'
+      Tags:
+        - Key: ManagedBy
+          Value: Terraform
+        - Key: Purpose
+          Value: ResponseActions
+        - Key: 'sysdig.com/response-actions/resource-name'
+          Value: 'validation-delegate-role'
+
 Outputs:
   ConfigureAccessDelegateRoleName:
     Condition: CreateMakePrivateResources
@@ -345,3 +394,6 @@ Outputs:
     Condition: CreateQuarantineUserResources
     Value: !Ref RemovePolicyDelegateRole
     Description: Name of the remove policy delegate role
+  ValidationDelegateRoleName:
+    Value: !Ref ValidationDelegateRole
+    Description: Name of the validation delegate role

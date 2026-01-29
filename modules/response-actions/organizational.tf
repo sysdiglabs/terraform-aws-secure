@@ -50,6 +50,10 @@ resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
     CreateVolumeSnapshotsRoleName        = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].name : ""
     DeleteVolumeSnapshotsLambdaRoleArn   = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].arn : ""
     DeleteVolumeSnapshotsRoleName        = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].name : ""
+    ValidationRoleName                   = "${local.ra_resource_name}-validation-role"
+    TrustedIdentity                      = local.trusted_identity
+    ExternalId                           = data.sysdig_secure_tenant_external_id.external_id.external_id
+    ResourceNamePrefix                   = local.ra_resource_name
     EnableQuarantineUser                 = local.enable_quarantine_user ? "true" : "false"
     EnableFetchCloudLogs                 = local.enable_fetch_cloud_logs ? "true" : "false"
     EnableMakePrivate                    = local.enable_make_private ? "true" : "false"
