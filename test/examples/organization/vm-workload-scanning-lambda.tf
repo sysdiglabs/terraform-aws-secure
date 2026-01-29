@@ -1,5 +1,5 @@
 module "vm_workload_scanning" {
-  source                   = "sysdiglabs/secure/aws//modules/vm-workload-scanning"
+  source                   = "../../../modules/vm-workload-scanning"
   sysdig_secure_account_id = module.onboarding.sysdig_secure_account_id
   is_organizational        = module.onboarding.is_organizational
 
