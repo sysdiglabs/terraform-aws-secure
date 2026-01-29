@@ -33,7 +33,11 @@ resource "sysdig_secure_cloud_auth_account_component" "aws_responder_roles" {
   instance   = "cloud-responder"
   version    = "v${var.response_actions_version}"
   cloud_responder_roles_metadata = jsonencode({
-    validation_role_name = aws_iam_role.validation_role.name
+    validation_role = {
+      aws = {
+        role_name = aws_iam_role.validation_role.name
+      }
+    }
     roles = concat(
       local.enable_quarantine_user ? [
         {
