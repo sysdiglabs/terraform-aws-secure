@@ -42,7 +42,7 @@ resource "sysdig_secure_cloud_auth_account_feature" "identity_entitlement_advanc
   type       = "FEATURE_SECURE_IDENTITY_ENTITLEMENT"
   enabled    = true
   components = concat(
-    sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic.components,
+    tolist(sysdig_secure_cloud_auth_account_feature.identity_entitlement_basic.components),
     [module.cloud-logs.cloud_logs_component_id]
   )
   depends_on = [module.cloud-logs]
