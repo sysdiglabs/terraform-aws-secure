@@ -25,6 +25,8 @@ data "aws_organizations_organization" "org" {
 }
 
 locals {
+  response_actions_version = "1.0.2"
+
   # fetch the AWS Root OU under org
   # As per https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#organization-structure, there can be only one root
   root_org_unit = var.is_organizational ? [for root in data.aws_organizations_organization.org[0].roots : root.id] : []

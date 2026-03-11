@@ -778,7 +778,7 @@ resource "aws_cloudformation_stack_set" "lambda_functions" {
     ConfigureResourceAccessRoleName = local.enable_make_private ? aws_iam_role.configure_resource_access_role[0].name : ""
     CreateVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.create_volume_snapshots_role[0].name : ""
     DeleteVolumeSnapshotsRoleName   = local.enable_create_volume_snapshot ? aws_iam_role.delete_volume_snapshots_role[0].name : ""
-    ResponseActionsVersion          = var.response_actions_version
+    ResponseActionsVersion          = local.response_actions_version
     LambdaPackagesBaseUrl           = var.lambda_packages_base_url
     EnableQuarantineUser            = local.enable_quarantine_user ? "true" : "false"
     EnableFetchCloudLogs            = local.enable_fetch_cloud_logs ? "true" : "false"

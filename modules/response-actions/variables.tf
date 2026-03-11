@@ -95,9 +95,10 @@ variable "api_base_url" {
 }
 
 variable "response_actions_version" {
-  description = "Response Actions version"
+  description = "Deprecated: this variable is no longer used. The version is hardcoded to 1.0.2."
   type        = string
-  default     = "0.0.16"
+  default     = null
+  nullable    = true
 }
 
 variable "lambda_packages_base_url" {
