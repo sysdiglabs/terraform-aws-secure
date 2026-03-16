@@ -324,15 +324,14 @@ Resources:
     Condition: CreateQuarantineUserResources
     DependsOn:
       - QuarantineUserLogGroup
-      - QuarantineUserPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-quarantine-user'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref QuarantineUserRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/quarantine_user.zip'
+        S3Bucket: !GetAtt QuarantineUserPackage.Bucket
+        S3Key: !GetAtt QuarantineUserPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -352,15 +351,14 @@ Resources:
     Condition: CreateFetchCloudLogsResources
     DependsOn:
       - FetchCloudLogsLogGroup
-      - FetchCloudLogsPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-fetch-cloud-logs'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref FetchCloudLogsRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/fetch_cloud_logs.zip'
+        S3Bucket: !GetAtt FetchCloudLogsPackage.Bucket
+        S3Key: !GetAtt FetchCloudLogsPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -380,15 +378,14 @@ Resources:
     Condition: CreateQuarantineUserResources
     DependsOn:
       - RemovePolicyLogGroup
-      - RemovePolicyPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-remove-policy'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref RemovePolicyRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/remove_policy.zip'
+        S3Bucket: !GetAtt RemovePolicyPackage.Bucket
+        S3Key: !GetAtt RemovePolicyPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -408,15 +405,14 @@ Resources:
     Condition: CreateMakePrivateResources
     DependsOn:
       - ConfigureResourceAccessLogGroup
-      - ConfigureResourceAccessPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-configure-resource-access'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref ConfigureResourceAccessRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/configure_resource_access.zip'
+        S3Bucket: !GetAtt ConfigureResourceAccessPackage.Bucket
+        S3Key: !GetAtt ConfigureResourceAccessPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -436,15 +432,14 @@ Resources:
     Condition: CreateVolumeSnapshotResources
     DependsOn:
       - CreateVolumeSnapshotsLogGroup
-      - CreateVolumeSnapshotsPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-create-volume-snapshots'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref CreateVolumeSnapshotsRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/create_volume_snapshots.zip'
+        S3Bucket: !GetAtt CreateVolumeSnapshotsPackage.Bucket
+        S3Key: !GetAtt CreateVolumeSnapshotsPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:
@@ -464,15 +459,14 @@ Resources:
     Condition: CreateVolumeSnapshotResources
     DependsOn:
       - DeleteVolumeSnapshotsLogGroup
-      - DeleteVolumeSnapshotsPackage
     Properties:
       FunctionName: !Sub '${ResourceName}-delete-volume-snapshots'
       Runtime: python3.12
       Handler: app.index.handler
       Role: !Ref DeleteVolumeSnapshotsRoleArn
       Code:
-        S3Bucket: !Ref LambdaPackagesBucket
-        S3Key: !Sub '${ResponseActionsVersion}/delete_volume_snapshots.zip'
+        S3Bucket: !GetAtt DeleteVolumeSnapshotsPackage.Bucket
+        S3Key: !GetAtt DeleteVolumeSnapshotsPackage.Key
       Timeout: 300
       MemorySize: 128
       Environment:

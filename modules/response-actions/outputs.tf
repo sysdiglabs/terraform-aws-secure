@@ -72,3 +72,8 @@ output "wait_after_basic" {
   value       = var.wait_after_basic_seconds > 0 ? time_sleep.wait_after_ciem_basic : null
   description = "Wait handle to delay downstream operations after basic by the configured seconds."
 }
+
+output "validation_role_arn" {
+  value       = aws_iam_role.validation_role.arn
+  description = "ARN of the validation role for reading Response Actions resources"
+}
