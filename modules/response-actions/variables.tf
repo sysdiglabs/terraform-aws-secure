@@ -95,7 +95,7 @@ variable "api_base_url" {
 }
 
 variable "response_actions_version" {
-  description = "Deprecated: this variable is no longer used. The version is hardcoded to 1.0.2."
+  description = "Deprecated: this variable is no longer used. The version is hardcoded to 1.0.3."
   type        = string
   default     = null
   nullable    = true
