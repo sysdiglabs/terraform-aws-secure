@@ -5,6 +5,7 @@
       "Effect": "Allow",
       "Action": [
         "s3:GetBucketLocation",
+        "s3:DeletePublicAccessBlock",
         "s3:GetBucketPublicAccessBlock",
         "s3:PutBucketPublicAccessBlock",
         "s3:ListAllMyBuckets"
