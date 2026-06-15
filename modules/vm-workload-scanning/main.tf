@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "functions" {
       "lambda:GetFunctionConfiguration",
       "lambda:GetRuntimeManagementConfig",
       "lambda:ListFunctions",
-      "lambda:ListTagsForResource",
+      "lambda:ListTags",
       "lambda:GetLayerVersionByArn",
       "lambda:GetLayerVersion",
       "lambda:ListLayers",
