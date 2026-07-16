@@ -105,7 +105,6 @@ Resources:
   # Package Downloader Lambda (per region)
   PackageDownloaderLogGroup:
     Type: AWS::Logs::LogGroup
-    DeletionPolicy: Retain
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ResourceName}-package-downloader'
       RetentionInDays: 7
