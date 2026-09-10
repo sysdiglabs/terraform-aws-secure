@@ -11,7 +11,7 @@ terraform {
     }
     sysdig = {
       source  = "sysdiglabs/sysdig"
-      version = "~> 3.5"
+      version = "~> 3.11"
     }
     time = {
       source  = "hashicorp/time"
