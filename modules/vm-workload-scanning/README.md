@@ -51,6 +51,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_enable_aws_partner_tag"></a> [enable_aws_partner_tag](#input_enable_aws_partner_tag) | Add the AWS Partner Revenue Measurement tag (`aws-apn-id-900918371795` = `pc:60xgt35ue7dm4pb1j44e9emhc`) to the resources this module creates, so AWS can attribute their spend to Sysdig. Set to `false` to opt out. | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input_tags) | sysdig secure-for-cloud tags. always include 'product' default tag for resource-group proper functioning | `map(string)` | <pre>{<br>"product": "sysdig-secure-for-cloud"<br>}</pre> | no |
 | <a name="input_is_organizational"></a> [is_organizational](#input_is_organizational) | Set this field to 'true' to deploy Agentless Workload Scanning to an AWS Organization (Or specific OUs) | `bool` | `false` | no |
 | <a name="input_timeout"></a> [timeout](#input_timeout) | Default timeout values for create, update, and delete operations | `string` | `"30m"` | no |

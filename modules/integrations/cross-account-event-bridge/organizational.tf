@@ -9,7 +9,7 @@ resource "aws_cloudformation_stack_set" "eb-rule-stackset" {
   count = var.is_organizational ? 1 : 0
 
   name             = join("-", [local.eb_resource_name, "EBRuleOrg"])
-  tags             = var.tags
+  tags             = local.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
 
@@ -40,7 +40,7 @@ resource "aws_cloudformation_stack_set" "eb-role-stackset" {
   count = var.is_organizational ? 1 : 0
 
   name             = join("-", [local.eb_resource_name, "EBRoleOrg"])
-  tags             = var.tags
+  tags             = local.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
 

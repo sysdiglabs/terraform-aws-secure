@@ -98,7 +98,7 @@ resource "aws_cloudformation_stack_set" "scanning_role_stackset" {
   count = var.is_organizational ? 1 : 0
 
   name             = join("-", [local.ecr_role_name, "ScanningRoleOrg"])
-  tags             = var.tags
+  tags             = local.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
 
