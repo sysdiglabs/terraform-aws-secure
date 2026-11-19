@@ -101,6 +101,11 @@ Every module adds the tag `aws-apn-id-900918371795` = `pc:60xgt35ue7dm4pb1j44e9e
 
 The tag is added only in the commercial `aws` partition (not in GovCloud or China). To opt out, for example when your tag policies reject unknown tags, set `enable_aws_partner_tag = false` on each module.
 
+Keep in mind when you upgrade:
+* In organizational installs, the first `terraform apply` after the upgrade updates every stack set, which redeploys all stack instances. This can take a while in large organizations, and member accounts whose stack set execution role can't tag resources fail.
+* The tag counts toward the AWS limit of 50 tags per resource. If you already pass 50 tags, opt out.
+* The onboarding role keeps the tags it already has, so an upgrade doesn't add the tag to it and opting out doesn't remove it.
+
 
 ## Troubleshooting
 
