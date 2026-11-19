@@ -108,7 +108,7 @@ resource "random_id" "suffix" {
 resource "aws_iam_role" "cloudlogs_s3_access" {
   count              = local.is_cross_account ? 0 : 1
   name               = local.role_name
-  tags               = var.tags
+  tags               = local.tags
   assume_role_policy = data.aws_iam_policy_document.assume_cloudlogs_s3_access_role.json
   depends_on         = [null_resource.validation]
 
@@ -193,7 +193,7 @@ resource "aws_sns_topic" "cloudtrail_notifications" {
   count    = var.create_topic ? 1 : 0
   provider = aws.sns
   name     = local.topic_name
-  tags     = var.tags
+  tags     = local.tags
 }
 
 resource "aws_sns_topic_policy" "cloudtrail_notifications" {
@@ -264,7 +264,7 @@ resource "aws_cloudformation_stack_set" "cloudlogs_s3_access" {
     ignore_changes = [administration_role_arn]
   }
 
-  tags = var.tags
+  tags = local.tags
 }
 
 # StackSet instance for the bucket account

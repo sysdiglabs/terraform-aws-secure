@@ -70,7 +70,7 @@ resource "aws_iam_policy" "ecr_scanning" {
   name        = "${local.ecr_role_name}-ecr"
   description = "Grants Sysdig Secure access to ECR images"
   policy      = data.aws_iam_policy_document.scanning.json
-  tags        = var.tags
+  tags        = local.tags
 }
 
 resource "aws_iam_policy" "functions_scanning" {
@@ -79,7 +79,7 @@ resource "aws_iam_policy" "functions_scanning" {
   name        = "${local.ecr_role_name}-functions"
   description = "Grants Sysdig Secure access to AWS Lambda"
   policy      = data.aws_iam_policy_document.functions[0].json
-  tags        = var.tags
+  tags        = local.tags
 }
 
 data "aws_iam_policy_document" "scanning_assume_role_policy" {
@@ -107,7 +107,7 @@ data "aws_iam_policy_document" "scanning_assume_role_policy" {
 
 resource "aws_iam_role" "scanning" {
   name               = local.ecr_role_name
-  tags               = var.tags
+  tags               = local.tags
   assume_role_policy = data.aws_iam_policy_document.scanning_assume_role_policy.json
 }
 

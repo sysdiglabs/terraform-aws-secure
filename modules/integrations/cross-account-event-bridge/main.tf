@@ -60,7 +60,7 @@ resource "aws_iam_role" "event_bus_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetAdministrationRoleForEB"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -98,7 +98,7 @@ resource "aws_iam_role" "event_bus_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetExecutionRoleForEB"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -136,7 +136,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_executi
 
 resource "aws_iam_role" "event_bus_invoke_remote_event_bus" {
   name = local.eb_resource_name
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -210,7 +210,7 @@ resource "aws_iam_role_policy" "event_bus_invoke_remote_event_bus_policy" {
 resource "aws_cloudformation_stack_set" "primary-acc-stackset" {
   # for single installs, primary account is the singleton account provided. for org installs, it is the mgmt account
   name                    = join("-", [local.eb_resource_name, "EBRulePrimaryAcc"])
-  tags                    = var.tags
+  tags                    = local.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
   administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.event_bus_stackset_admin_role[0].arn : var.stackset_admin_role_arn

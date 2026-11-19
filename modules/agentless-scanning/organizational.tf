@@ -19,7 +19,7 @@ resource "aws_cloudformation_stack_set" "ou_resources_stackset" {
   count = var.is_organizational ? 1 : 0
 
   name             = join("-", [local.scanning_resource_name, "organization"])
-  tags             = var.tags
+  tags             = local.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
 

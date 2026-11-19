@@ -54,7 +54,7 @@ resource "aws_iam_role" "event_bus_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetAdministrationRoleForEBApiDest"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -91,7 +91,7 @@ resource "aws_iam_role" "event_bus_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "AWSCloudFormationStackSetExecutionRoleForEBApiDest"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -128,7 +128,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "event_bus_stackset_executi
 #-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "event_bridge_api_destination_role" {
   name = local.eb_resource_name
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -219,7 +219,7 @@ resource "aws_iam_role_policy" "event_bridge_api_destination_policy" {
 #-----------------------------------------------------------------------------------------------------------------------------------------
 resource "aws_cloudformation_stack_set" "eb_rule_and_api_dest_stackset" {
   name                    = join("-", [local.eb_resource_name, "EBRuleAndApiDestination"])
-  tags                    = var.tags
+  tags                    = local.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
   administration_role_arn = var.auto_create_stackset_roles ? aws_iam_role.event_bus_stackset_admin_role[0].arn : var.stackset_admin_role_arn

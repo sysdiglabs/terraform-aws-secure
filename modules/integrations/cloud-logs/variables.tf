@@ -106,3 +106,9 @@ variable "wait_after_basic_seconds" {
   description = "Number of seconds to wait after CIEM basic before proceeding (set to 0 to disable)."
   default     = 30
 }
+
+variable "enable_aws_partner_tag" {
+  type        = bool
+  default     = true
+  description = "Add the AWS Partner Revenue Measurement tag (aws-apn-id-900918371795 = pc:60xgt35ue7dm4pb1j44e9emhc) to the resources this module creates, so AWS can attribute their spend to Sysdig. The tag has no effect on how the resources work. Set to false to opt out, for example when tag policies reject unknown tags."
+}

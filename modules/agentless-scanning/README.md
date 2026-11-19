@@ -57,6 +57,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_auto_create_stackset_roles"></a> [auto\_create\_stackset\_roles](#input\_auto\_create\_stackset\_roles) | Whether to auto create the custom stackset roles to run SELF\_MANAGED stackset. Default is true | `bool` | `true` | no |
+| <a name="input_enable_aws_partner_tag"></a> [enable\_aws\_partner\_tag](#input\_enable\_aws\_partner\_tag) | Add the AWS Partner Revenue Measurement tag (`aws-apn-id-900918371795` = `pc:60xgt35ue7dm4pb1j44e9emhc`) to the resources this module creates, so AWS can attribute their spend to Sysdig. Set to `false` to opt out. | `bool` | `true` | no |
 | <a name="input_failure_tolerance_percentage"></a> [failure\_tolerance\_percentage](#input\_failure\_tolerance\_percentage) | The percentage of accounts, per Region, for which stack operations can fail before AWS CloudFormation stops the operation in that Region | `number` | `90` | no |
 | <a name="input_is_organizational"></a> [is\_organizational](#input\_is\_organizational) | (Optional) Set this field to 'true' to deploy Agentless Scanning to an AWS Organization (Or specific OUs) | `bool` | `false` | no |
 | <a name="input_kms_key_deletion_window"></a> [kms\_key\_deletion\_window](#input\_kms\_key\_deletion\_window) | Deletion window for shared KMS key | `number` | `7` | no |

@@ -17,7 +17,7 @@ resource "aws_cloudformation_stack_set" "ra_delegate_roles" {
   count = var.is_organizational ? 1 : 0
 
   name = join("-", [local.ra_resource_name, "delegate-roles"])
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     "sysdig.com/response-actions/resource-name" = "delegate-roles-stackset"
   })
   permission_model = "SERVICE_MANAGED"
