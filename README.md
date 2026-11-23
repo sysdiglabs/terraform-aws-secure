@@ -95,6 +95,17 @@ For contributing to existing modules or adding new modules, below are some of th
 * integrations modules are shared and could enable multiple features. Hence, one should be careful with changes to them.
 * Module naming follows the pattern with "-" , resource and variable naming follows the pattern with "_".
 
+## AWS Partner Revenue Measurement tag
+
+Every module adds the tag `aws-apn-id-900918371795` = `pc:60xgt35ue7dm4pb1j44e9emhc` to the resources it creates, on top of the `tags` you pass. AWS [Partner Revenue Measurement](https://docs.aws.amazon.com/PRM/latest/aws-prm-onboarding-guide/resource-tagging.html) uses it to attribute the spend of these resources to Sysdig as an AWS Partner. The tag does not change how the resources work, does not grant access and does not send data anywhere. Stack sets propagate it to the resources they deploy in member accounts.
+
+The tag is added only in the commercial `aws` partition (not in GovCloud or China). To opt out, for example when your tag policies reject unknown tags, set `enable_aws_partner_tag = false` on each module.
+
+Keep in mind when you upgrade:
+* In organizational installs, the first `terraform apply` after the upgrade updates every stack set, which redeploys all stack instances. This can take a while in large organizations, and member accounts whose stack set execution role can't tag resources fail.
+* The tag counts toward the AWS limit of 50 tags per resource. If you already pass 50 tags, opt out.
+* The onboarding role keeps the tags it already has, so an upgrade doesn't add the tag to it and opting out doesn't remove it.
+
 
 ## Troubleshooting
 

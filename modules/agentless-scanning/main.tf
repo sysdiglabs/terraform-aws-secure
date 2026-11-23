@@ -75,7 +75,7 @@ resource "aws_iam_role" "scanning_stackset_admin_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "${local.scanning_resource_name}-AdministrationRole"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -105,7 +105,7 @@ resource "aws_iam_role" "scanning_stackset_execution_role" {
   count = !var.auto_create_stackset_roles ? 0 : 1
 
   name = "${local.scanning_resource_name}-ExecutionRole"
-  tags = var.tags
+  tags = local.tags
 
   assume_role_policy = <<EOF
 {
@@ -145,7 +145,7 @@ resource "aws_iam_role_policy_attachments_exclusive" "scanning_stackset_executio
 
 resource "aws_cloudformation_stack_set" "primary_acc_stackset" {
   name                    = join("-", [local.scanning_resource_name, "account"])
-  tags                    = var.tags
+  tags                    = local.tags
   permission_model        = "SELF_MANAGED"
   capabilities            = ["CAPABILITY_NAMED_IAM"]
   administration_role_arn = local.administration_role_arn

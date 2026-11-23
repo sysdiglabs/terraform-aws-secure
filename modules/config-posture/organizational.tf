@@ -6,7 +6,7 @@ resource "aws_cloudformation_stack_set" "stackset" {
   count = var.is_organizational ? 1 : 0
 
   name             = local.config_posture_role_name
-  tags             = var.tags
+  tags             = local.tags
   permission_model = "SERVICE_MANAGED"
   capabilities     = ["CAPABILITY_NAMED_IAM"]
 

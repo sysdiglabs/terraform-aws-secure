@@ -28,7 +28,7 @@ locals {
 #----------------------------------------------------------
 resource "aws_iam_role" "onboarding_role" {
   name               = local.onboarding_role_name
-  tags               = var.tags
+  tags               = local.tags
   assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",

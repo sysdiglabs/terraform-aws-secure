@@ -76,3 +76,9 @@ variable "enable_automatic_onboarding" {
   default     = false
   description = "true/false whether Sysdig should automatically discover latest set of accounts in onboarded organization or not"
 }
+
+variable "enable_aws_partner_tag" {
+  type        = bool
+  default     = true
+  description = "Add the AWS Partner Revenue Measurement tag (aws-apn-id-900918371795 = pc:60xgt35ue7dm4pb1j44e9emhc) to the resources this module creates, so AWS can attribute their spend to Sysdig. The tag has no effect on how the resources work. Set to false to opt out, for example when tag policies reject unknown tags."
+}

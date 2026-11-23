@@ -28,7 +28,7 @@ locals {
 #----------------------------------------------------------
 resource "aws_iam_role" "cspm_role" {
   name               = local.config_posture_role_name
-  tags               = var.tags
+  tags               = local.tags
   assume_role_policy = <<EOF
 {
     "Version": "2012-10-17",
